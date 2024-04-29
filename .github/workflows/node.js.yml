@@ -26,5 +26,4 @@ jobs:
         cache: 'npm'
     - run: npm ci
     - run: |
-        touch .env
-        echo "${{ secrets.DEV_FILE }}"
+        echo "${{ secrets.DEV_FILE }}" > .env
