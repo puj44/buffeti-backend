@@ -15,7 +15,7 @@ app.use(express.urlencoded({extended:false}));
 app.use(cors(corsOptions));
 app.set("trust proxy", true);
 
-app.get('/', (req, res) => {
+app.get('/test', (req, res) => {
     return res.status(200).send('Working');
 });
 
