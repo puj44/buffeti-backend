@@ -1,4 +1,5 @@
 const express = require('express');
+const PORT = process.env.PORT || 3001;
 require('dotenv').config()
 const app = express();
 const bodyParser = require('body-parser');
@@ -19,4 +20,4 @@ app.get('/api', (req, res) => {
     return res.status(200).send('Working');
 });
 
-app.listen(process.env.PORT || 3000, () => {console.log("Server started.")});
+app.listen(PORT, () => {console.log("Server started.")});
