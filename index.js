@@ -19,4 +19,4 @@ app.get('/', (req, res) => {
     return res.status(200).send('Working');
 });
 
-app.listen(process.env.PORT || 3001, process.env.HOST || "::");
+app.listen(process.env.PORT || 3000, () => {console.log("Server started.")});
