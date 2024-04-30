@@ -1,9 +1,8 @@
 const express = require('express');
-const PORT = process.env.PORT || 8443;
+const PORT = process.env.PORT || 3001;
 require('dotenv').config()
 const app = express();
-var http = require('http');
-var https = require('https');
+
 const bodyParser = require('body-parser');
 const cors=require('cors');
   app.use((req, res, next) => {
@@ -20,7 +19,5 @@ app.set("trust proxy", true);
 app.get('/api', (req, res) => {
     return res.status(200).send('Working');
 });
-var httpServer = http.createServer(app);
-// For http
-httpServer.listen(PORT);
-// app.listen(PORT, () => {console.log("Server started.")});
+
+app.listen(PORT, () => {console.log("Server started.")});
