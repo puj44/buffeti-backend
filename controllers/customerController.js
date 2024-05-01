@@ -7,7 +7,6 @@ const Users = require('../db/models/users');
 const getCustomers = async (req,res) =>{
     try{
         const users = await Users.query().select();
-        console.log("users",users);
         sendRes(res,200,
             {
                 message:"Customers Fetched Successfully",
