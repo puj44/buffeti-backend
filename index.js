@@ -4,10 +4,16 @@ const PORT = process.env.PORT || 3001;
 const app = express();
 const router = express.Router();
 
+
 const routes = require('./routes')
 const bodyParser = require('body-parser');
 
 const cors=require('cors');
+
+//knex
+const dbSetup = require("./db/dbSetup");
+dbSetup();
+
 
 app.use((req, res, next) => {
   res.append('Access-Control-Allow-Origin', ['*']);
