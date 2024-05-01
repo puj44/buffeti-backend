@@ -11,11 +11,8 @@ const bodyParser = require('body-parser');
 const cors=require('cors');
 
 //knex
-const knexConfig = require('./db/knexfile');
-const Knex = require('knex');
-const { Model } = require('objection')
-const knex = Knex(knexConfig.development);
-Model.knex(knex);
+const dbSetup = require("./db/dbSetup");
+dbSetup();
 
 
 app.use((req, res, next) => {
