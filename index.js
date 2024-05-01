@@ -4,10 +4,19 @@ const PORT = process.env.PORT || 3001;
 const app = express();
 const router = express.Router();
 
+
 const routes = require('./routes')
 const bodyParser = require('body-parser');
 
 const cors=require('cors');
+
+//knex
+const knexConfig = require('./knexfile');
+const Knex = require('knex');
+const { Model } = require('objection')
+const knex = Knex(knexConfig.development);
+Model.knex(knex);
+
 
 app.use((req, res, next) => {
   res.append('Access-Control-Allow-Origin', ['*']);
