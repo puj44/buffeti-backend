@@ -1,6 +1,6 @@
 const express = require('express');
-const PORT = process.env.PORT || 3001;
 require('dotenv').config()
+const PORT = process.env.PORT || 3001;
 const app = express();
 
 const bodyParser = require('body-parser');
@@ -20,4 +20,4 @@ app.get('/api', (req, res) => {
 });
 
 
-app.listen(PORT, () => {console.log("Server started.")});
+app.listen(PORT, (err) => { if(err) console.log(err); console.log("Server started on PORT:",PORT)});
