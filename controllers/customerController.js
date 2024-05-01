@@ -20,7 +20,7 @@ const getCustomers = async (req,res) =>{
 // Insert Customer Data API
 const insertCustomer = async (req,res) =>{
     try{
-        const users = await Users.query().insert({name:req.body?.name});
+        // const users = await Users.query().insert({name:req.body?.name});
         sendRes(res,200,{message:"Customer inserted Successfully"})
     }catch(err){
         sendErr(res,err)
