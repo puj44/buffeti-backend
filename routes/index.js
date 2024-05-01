@@ -11,6 +11,10 @@ const router = express.Router();
 //customer route
 router.use("/customers",customerRoutes);
 
+router.use("/", (req,res) => {
+    res.status(404).send("Route not defined");
+})
+
 module.exports = function(app) {
     app.use('/api/v1', router);
 };

@@ -22,5 +22,8 @@ app.use(cors());
 
 
 routes(app);
+app.use("*", (req,res) => {
+  res.status(502).send("");
+})
 
 app.listen(PORT, (err) => { if(err) console.log(err); console.log("Server started on PORT:",PORT)});
