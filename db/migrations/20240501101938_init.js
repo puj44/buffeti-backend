@@ -3,7 +3,7 @@
  * @returns { Promise<void> }
  */
 exports.up = function(knex) {
-    return knex.schema.createTableIfNotExists('users', (table)=>{
+    return knex.schema.createTableIfNotExists('customers', (table)=>{
         table.increments();
         table.string('name').notNullable();
         table.timestamps(true,true);
@@ -15,4 +15,5 @@ exports.up = function(knex) {
  * @returns { Promise<void> }
  */
 exports.down = function(knex) {
+    return knex.schema.dropTableIfExists('users');
 };
