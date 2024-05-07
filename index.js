@@ -22,6 +22,7 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use('/static',express.static(join(process.cwd(),"public")));
 app.use(bodyParser.json());
 app.use(express.urlencoded({extended:false}));
 app.use(cors());
