@@ -17,7 +17,6 @@ const corsOptions = {
 const dbSetup = require("./db/dbSetup");
 
 dbSetup();
-// app.use(express.json());
 
 
 app.use((req, res, next) => {
@@ -28,6 +27,7 @@ app.use((req, res, next) => {
 });
 
 //access config consts
+app.use(express.json());
 // app.use('/static',express.static(join(process.cwd(),"public")));
 app.use(bodyParser.json());
 app.use(express.urlencoded({extended:false}));
