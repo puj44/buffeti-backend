@@ -2,13 +2,7 @@
 //Models
 const customersModel = require('../db/models/customers')
 
-//Twilio
-const accountID = process.env.ACCOUNT_ID;
-const authToken = process.env.AUTH_TOKEN;
-const serviceSID = process.env.SERVICE_SID;
-const client = require('twilio')(accountID, authToken, {
-    lazyLoading: false
-});
+const {client,serviceSID} = require('./../config/twilio');
 
 
 // let date = [{"time":"2024-05-12T07:12:28.000Z"},{"time":"2024-05-12T07:13:30.000Z"}]
@@ -32,8 +26,10 @@ const sendOtp =  async (req, res) => {
     let result;
 
     try{
-
-        await client.verify
+        // await client.verify.v2.services
+        // .create({friendlyName: 'My First Verify Service'})
+        // .then(service => console.log(service.sid));
+         const result =await client.verify
             .v2
             .services(serviceSID)
             .verifications.create({
@@ -41,8 +37,8 @@ const sendOtp =  async (req, res) => {
                 channel: 'sms',
             })
             .then(verifications => verifications);
-            attempt_array_length = result.sendCodeAttempts.length();
-            lastAttempttime = new Date(verifications.sendCodeAttempts[attempt_array_length].time).getTime();
+            // attempt_array_length = result?.sendCodeAttempts?.length();
+            // lastAttempttime = new Date(verifications.sendCodeAttempts?.[attempt_array_length].time).getTime();
             res.status(200).send();
     }catch(error){
         res.status(error?.status || 400).send(error?.message || 'Something went wrong!');

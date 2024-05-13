@@ -11,7 +11,7 @@ const router = express.Router();
 
 //routes
 router.use("/customers",customerRoutes);
-// router.use("/auth",authRoutes);
+router.use("/auth",authRoutes);
 
 router.use("/", (req,res) => {
     res.status(404).send("Route not defined");
