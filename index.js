@@ -3,16 +3,20 @@ require('dotenv').config()
 const PORT = process.env.PORT || 3001;
 const app = express();
 const router = express.Router();
-
-
 const routes = require('./routes')
 const bodyParser = require('body-parser');
-
 const cors=require('cors');
-
+const corsOptions = {
+  origin: [
+    "http://localhost:3000"
+  ],
+  credentials: true
+}
 //knex
 const dbSetup = require("./db/dbSetup");
+
 dbSetup();
+app.use(express.json());
 
 
 app.use((req, res, next) => {
@@ -25,12 +29,12 @@ app.use((req, res, next) => {
 app.use('/static',express.static(join(process.cwd(),"public")));
 app.use(bodyParser.json());
 app.use(express.urlencoded({extended:false}));
-app.use(cors());
+app.use(cors(corsOptions));
 
 
 routes(app);
 app.use("*", (req,res) => {
-  res.status(502).send("");
+  res.status(502).send("Something went wrong!");
 })
 
 app.listen(PORT, (err) => { if(err) console.log(err); console.log("Server started on PORT:",PORT)});
