@@ -34,7 +34,7 @@ app.use(express.urlencoded({extended:false}));
 app.use(cors());
 
 
-app.use(cookieParser);
+app.use(cookieParser());
 routes(app);
 app.use("*", (req,res) => {
   res.status(502).send("Something went wrong!");
