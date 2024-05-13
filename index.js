@@ -5,10 +5,11 @@ const app = express();
 const router = express.Router();
 const routes = require('./routes')
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 const cors=require('cors');
 const corsOptions = {
   origin: [
-    "http://localhost:3000"
+    "*"
   ],
   credentials: true
 }
@@ -16,22 +17,24 @@ const corsOptions = {
 const dbSetup = require("./db/dbSetup");
 
 dbSetup();
-app.use(express.json());
+// app.use(express.json());
 
 
 app.use((req, res, next) => {
   res.append('Access-Control-Allow-Origin', ['*']);
-  res.append('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+  res.append('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
   res.append('Access-Control-Allow-Headers', 'Content-Type');
   next();
 });
 
-app.use('/static',express.static(join(process.cwd(),"public")));
+//access config consts
+// app.use('/static',express.static(join(process.cwd(),"public")));
 app.use(bodyParser.json());
 app.use(express.urlencoded({extended:false}));
-app.use(cors(corsOptions));
+app.use(cors());
 
 
+app.use(cookieParser);
 routes(app);
 app.use("*", (req,res) => {
   res.status(502).send("Something went wrong!");

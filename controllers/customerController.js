@@ -1,7 +1,7 @@
 const sendRes = require("./sendResponse");
 const sendErr = require("./sendError");
 
-const Users = require('../db/models/users');
+const Users = require('../db/models/customers');
 
 // Get All Customers Data API
 const getCustomers = async (req,res) =>{

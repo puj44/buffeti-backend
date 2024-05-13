@@ -1,8 +1,3 @@
-const express = require('express');
-const app = express();
-const cookieParser = require('cookie-parser');
-const cors = require('cors');
-const bodyParser = require('body-parser');
 
 //Models
 const customersModel = require('../db/models/customers')
@@ -15,10 +10,6 @@ const client = require('twilio')(accountID, authToken, {
     lazyLoading: false
 });
 
-//access config consts
-app.use(cookieParser);
-app.use(cors());
-app.use(bodyParser.json());
 
 // let date = [{"time":"2024-05-12T07:12:28.000Z"},{"time":"2024-05-12T07:13:30.000Z"}]
 // const len = date.length;
@@ -51,7 +42,7 @@ const sendOtp =  async (req, res) => {
             })
             .then(verifications => verifications);
             attempt_array_length = result.sendCodeAttempts.length();
-            lastAttempttime = new Date(verifications.sendCodeAttempts[attempt_array_length].time).getTime;
+            lastAttempttime = new Date(verifications.sendCodeAttempts[attempt_array_length].time).getTime();
             res.status(200).send();
     }catch(error){
         res.status(error?.status || 400).send(error?.message || 'Something went wrong!');
