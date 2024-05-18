@@ -3,8 +3,8 @@ const router =  express.Router();
 const auth = require('../controllers/authenticationController');
 
 //all Authentication routes
-router.post("/sendOtp",auth.sendOtp);
-router.post("/verifyOtp",auth.verifyOtp);
+router.post("/sign-in",auth.signin);
+router.post("/verify-otp",auth.verifyOtp);
 
 module.exports = router;
 

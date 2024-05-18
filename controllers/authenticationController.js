@@ -3,43 +3,38 @@
 const customersModel = require('../db/models/customers')
 
 const {client,serviceSID} = require('./../config/twilio');
+const redisClient = require('../config/redisClient');
+const mongoClient = require('../config/MongoClient');
+const sendSMS = require("./../common/sendOtp");
 
-
-// let date = [{"time":"2024-05-12T07:12:28.000Z"},{"time":"2024-05-12T07:13:30.000Z"}]
-// const len = date.length;
-// const d = JSON.parse(date);
-// console.log(len,d);
-// let result =[{"time": "2024-05-12T07:12:28.000Z"},{"time": "2024-05-12T07:13:30.000Z"},{"time": "2024-05-12T07:19:59.000Z"}]
-// let attempt_array_length =result.length;
-// let lastAttempttime = result[attempt_array_length];
-// function getValueByKey(object, row){
-//     return object[row];
-// }
-// console.log(getValueByKey(result[attempt_array_length],"time"));
-
-const sendOtp =  async (req, res) => {
+const signin =  async (req, res) => {
 
     const phoneNumber = req.body.phoneNumber;
 
-    let lastAttempttime;
-    let attempt_array_length;
-    let result;
 
     try{
+        //CALL sendOtp function
+        const response = await sendSMS(phoneNumber);
+        console.log(response);
+        //SEND RESPONSE AND PAYLOAD(IF EXISTS) ACCORDING TO RESPONSE OBJECT RETURNED
+
+
+
+        
         // await client.verify.v2.services
         // .create({friendlyName: 'My First Verify Service'})
         // .then(service => console.log(service.sid));
-         const result =await client.verify
-            .v2
-            .services(serviceSID)
-            .verifications.create({
-                to: `+91${phoneNumber}`,
-                channel: 'sms',
-            })
-            .then(verifications => verifications);
-            // attempt_array_length = result?.sendCodeAttempts?.length();
-            // lastAttempttime = new Date(verifications.sendCodeAttempts?.[attempt_array_length].time).getTime();
-            res.status(200).send();
+        //  const result =await client.verify
+        //     .v2
+        //     .services(serviceSID)
+        //     .verifications.create({
+        //         to: `+91${phoneNumber}`,
+        //         channel: 'sms',
+        //     })
+        //     .then(verifications => verifications);
+        //     // attempt_array_length = result?.sendCodeAttempts?.length();
+        //     // lastAttempttime = new Date(verifications.sendCodeAttempts?.[attempt_array_length].time).getTime();
+        //     res.status(200).send();
     }catch(error){
         res.status(error?.status || 400).send(error?.message || 'Something went wrong!');
     }
@@ -49,32 +44,32 @@ const verifyOtp = async (req, res) =>{
 
     try{
 
-        const phoneNumber = req.body.phoneNumber;
-        const otp = req.body.otp;
+        // const phoneNumber = req.body.phoneNumber;
+        // const otp = req.body.otp;
 
-        //getting phone number from database
-        const customer = await customersModel.query()
-            .select('phoneNumber')
-            .where('phoneNumber',phoneNumber);
-        const customerJson = JSON.parse(customer);
+        // //getting phone number from database
+        // const customer = await customersModel.query()
+        //     .select('phoneNumber')
+        //     .where('phoneNumber',phoneNumber);
+        // const customerJson = JSON.parse(customer);
 
-        //inserting phoneNumber if not exist in database.
-        if(customerJson.phoneNumber !== phoneNumber){
-            const insertCustomer = await customersModel.query()
-                .insert({
-                    phoneNumber : phoneNumber
-                });
-        }
+        // //inserting phoneNumber if not exist in database.
+        // if(customerJson.phoneNumber !== phoneNumber){
+        //     const insertCustomer = await customersModel.query()
+        //         .insert({
+        //             phoneNumber : phoneNumber
+        //         });
+        // }
 
-        //verify OTP
-        await client.verify
-            .v2
-            .services(serviceSID)
-            .verificationChecks.create({
-                to: `+91${phoneNumber}`,
-                code: otp,
-            })
-            .then(verificationChecks => res.status(200).send(verificationChecks));
+        // //verify OTP
+        // await client.verify
+        //     .v2
+        //     .services(serviceSID)
+        //     .verificationChecks.create({
+        //         to: `+91${phoneNumber}`,
+        //         code: otp,
+        //     })
+        //     .then(verificationChecks => res.status(200).send(verificationChecks));
     }catch(error){
         res.status(error?.status || 400).send(error?.message || 'Something went wrong!');
     }
@@ -94,13 +89,9 @@ const verifyOtp = async (req, res) =>{
 //     "channel": "sms"
 //   }
 
-const authenticate =async (req, res) =>{
-
-
-}
 
 module.exports = {
-    sendOtp,
+    signin,
     verifyOtp,
 }
 
