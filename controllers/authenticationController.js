@@ -3,19 +3,24 @@
 const customersModel = require('../db/models/customers')
 
 const {client,serviceSID} = require('./../config/twilio');
-const redisClient = require('../config/redisClient');
 const mongoClient = require('../config/MongoClient');
 const sendSMS = require("./../common/sendOtp");
+const sendRes = require("../controllers/sendResponse");
 
 const signin =  async (req, res) => {
 
-    const phoneNumber = req.body.phoneNumber;
+    const mobile_number = req.body.mobile_number;
 
 
     try{
         //CALL sendOtp function
-        const response = await sendSMS(phoneNumber);
-        console.log(response);
+        const response = sendSMS(mobile_number);
+        sendRes(res,200,
+            {
+                message:"Otp Sent successfully!",
+                data:response
+            }
+        );
         //SEND RESPONSE AND PAYLOAD(IF EXISTS) ACCORDING TO RESPONSE OBJECT RETURNED
 
 
