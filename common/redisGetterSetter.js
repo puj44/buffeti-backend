@@ -23,5 +23,15 @@ async function set (key,data, stringify = false){
     return;
 }
 
+async function remove(key){
+    await client.connect();
+
+    await client.del(key);
+
+    await client.disconnect();
+    return;
+}
+
 module.exports.get = get;
 module.exports.set = set;
+module.exports.remove = remove;

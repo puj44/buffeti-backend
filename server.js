@@ -20,7 +20,7 @@ dbSetup();
 
 
 app.use((req, res, next) => {
-  res.append('Access-Control-Allow-Origin', ['*']);
+  res.append('Access-Control-Allow-Origin', ['http://127.0.0.1']);
   res.append('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
   res.append('Access-Control-Allow-Headers', 'Content-Type');
   next();
@@ -32,19 +32,6 @@ app.use(express.json());
 app.use(bodyParser.json());
 app.use(express.urlencoded({extended:false}));
 app.use(cors());
-// async function client123(){
-//   const client = createClient()
-//   .on('error', err => {
-//       console.log('Redis Client Error', err)})
-//    const redisClient = await client.connect();
-//       console.log("asdasd",await redisClient.set("asd","asd"))
-// }
-// client123()
-//  client.set("ke","ads");
-// const  {createClient} = require('redis');
-// const client = createClient({url:"redis://127.0.0.1:6379"})
-// .on('error', err => {
-//     console.log('Redis Client Error', err)})
 
 app.use(cookieParser());
 routes(app);

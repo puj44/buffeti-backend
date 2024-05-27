@@ -14,11 +14,11 @@ const signin =  async (req, res) => {
 
     try{
         //CALL sendOtp function
-        const response = sendSMS(mobile_number);
-        sendRes(res,200,
+        const response = await sendSMS(mobile_number);
+        sendRes(res,response?.status,
             {
-                message:"Otp Sent successfully!",
-                data:response
+                message:response?.message,
+                data:{...response?.data ?? {}}
             }
         );
         //SEND RESPONSE AND PAYLOAD(IF EXISTS) ACCORDING TO RESPONSE OBJECT RETURNED
