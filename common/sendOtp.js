@@ -2,16 +2,15 @@
 
 const {serviceSID} = require('../config/twilio');
 const moment = require('moment');
-const { get, set, remove } = require('./redisGetterSetter');
+const { get, set } = require('./redisGetterSetter');
 
+const prefix = process.env.PREFIX_OTP;
 
-async function sendOtp(res,mobile_number){
-    const prefix = "otp-";
+async function sendOtp(mobile_number){
     const phoneCacheKey = prefix+mobile_number;
 
     let loginData = await get(phoneCacheKey,true);
     const OTP = "123456";
-    // await remove(phoneCacheKey);
 
     if (loginData != null){
 
@@ -52,7 +51,7 @@ async function sendOtp(res,mobile_number){
             let secondsLeft = 0;
             if(secondsDifference > 30){
                 
-                // obj.attempts =  obj.attempts - 1;
+                obj.attempts =  obj.attempts - 1;
                 obj.lastRequest = moment(new Date());
                 await set(phoneCacheKey, obj, true);
             }else{

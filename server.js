@@ -2,27 +2,26 @@ const express = require('express');
 require('dotenv').config()
 const PORT = process.env.PORT || 3001;
 const app = express();
-const router = express.Router();
 const routes = require('./routes')
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const cors=require('cors');
-const corsOptions = {
-  origin: [
-    "*"
-  ],
-  credentials: true
-}
-//knex
-const dbSetup = require("./db/dbSetup");
+const { ValidationError } = require('express-validation');
+// const corsOptions = {
+//   origin: [
+//     "*"
+//   ],
 
-dbSetup();
+//   credentials: true
+// }
+
 
 
 app.use((req, res, next) => {
-  res.append('Access-Control-Allow-Origin', ['http://127.0.0.1']);
+  res.append('Access-Control-Allow-Origin', ['*']);
   res.append('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-  res.append('Access-Control-Allow-Headers', 'Content-Type');
+  res.append('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-Type');
+  res.append('Access-Control-Allow-Credentials', true)
   next();
 });
 
@@ -35,6 +34,15 @@ app.use(cors());
 
 app.use(cookieParser());
 routes(app);
+
+app.use(function(err, req, res, next) {
+  if (err instanceof ValidationError) {
+    return res.status(err.statusCode).json(err)
+  }
+
+  return res.status(500).json(err)
+})
+
 app.use("*", (req,res) => {
   res.status(502).send("Something went wrong!");
 })
