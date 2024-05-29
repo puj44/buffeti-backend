@@ -27,7 +27,7 @@ jobs:
           cd /home/buffeti/www/buffeti-backend
           export NVM_DIR=~/.nvm
           source ~/.nvm/nvm.sh
-          npm --help
-          git pull
+          git fetch
+          git pull --rebase
           npm install
           pm2 restart buffeti_backend
