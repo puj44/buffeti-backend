@@ -28,7 +28,6 @@ jobs:
           export NVM_DIR=~/.nvm
           source ~/.nvm/nvm.sh
           git fetch
-          git reset --hard HEAD
           git clean -dfx
           git pull
           npm install
