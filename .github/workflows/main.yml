@@ -28,8 +28,7 @@ jobs:
           export NVM_DIR=~/.nvm
           source ~/.nvm/nvm.sh
           git fetch
-          git clean -dfx
-          git pull
+          git pull --rebase
           npm install
           pm2 restart buffeti_backend_dev
 
