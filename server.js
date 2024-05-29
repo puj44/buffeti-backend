@@ -44,7 +44,7 @@ app.use(function(err, req, res, next) {
 })
 
 app.use("*", (req,res) => {
-  res.status(502).send("Something went wrong!");
+  res.status(500).send("Something went wrong!");
 })
 
 app.listen(PORT, (err) => { if(err) console.log(err); console.log("Server started on PORT:",PORT)});
