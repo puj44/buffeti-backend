@@ -27,9 +27,10 @@ jobs:
           cd /home/buffeti/www/dev/buffeti-backend
           export NVM_DIR=~/.nvm
           source ~/.nvm/nvm.sh
-          git fetch --all
-          git branch dev
-          git reset --hard origin/dev
+          git fetch
+          git reset --hard HEAD
+          git clean -dfx
+          git pull
           npm install
           pm2 restart buffeti_backend
 
