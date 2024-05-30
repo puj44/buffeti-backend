@@ -4,21 +4,14 @@ const mongoClient = require('../config/MongoClient');
 const sendSMS = require("./../common/sendOtp");
 const sendRes = require("../controllers/sendResponse");
 const sendError = require("../controllers/sendError");
-
 const {get, set, remove} = require("../common/redisGetterSetter");
-
 const jwt = require('jsonwebtoken');
-
 const prefix = process.env.PREFIX_OTP;
-
 const key = process.env.JWT_KEY;
 
 const signin =  async (req, res) => {
 
-    const mobile_number = req.body?.mobile_number;
-    if(!mobile_number){
-        return sendRes(res, 400, { message:"Mobile Number is not valid"})
-    }
+    const mobile_number = req.body.mobile_number;
 
     try{
         //CALL sendOtp function
@@ -37,8 +30,8 @@ const signin =  async (req, res) => {
 const verifyOtp = async (req, res) =>{
 
     try{
-        const mobile_number = req.body?.mobile_number;
-        const otp = req.body?.otp;
+        const mobile_number = req.body.mobile_number;
+        const otp = req.body.otp;
         const phoneCacheKey = prefix+mobile_number;
         const value = await get(phoneCacheKey,true);
 
@@ -66,7 +59,6 @@ const verifyOtp = async (req, res) =>{
         
 
     }catch(error){
-        console.log("here",error);
         sendError(res,error);
     }
 }

@@ -4,10 +4,10 @@ const express = require('express');
 const router = express.Router();
 
 // Middleware to log requests
-// router.use((req, res, next) => {
-//     console.log('Request received:', req.method, req.url);
-//     next();
-// });
+router.use((req, res, next) => {
+    console.log('Request received:', req.method, req.url);
+    next();
+});
 
 //routes
 router.use("/customers",customerRoutes);

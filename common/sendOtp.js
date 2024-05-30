@@ -1,16 +1,14 @@
-
-
 const {serviceSID} = require('../config/twilio');
 const moment = require('moment');
 const { get, set } = require('./redisGetterSetter');
-
+const otpGenerator = require('otp-generator');
 const prefix = process.env.PREFIX_OTP;
 
 async function sendOtp(mobile_number){
     const phoneCacheKey = prefix+mobile_number;
 
     let loginData = await get(phoneCacheKey,true);
-    const OTP = "123456";
+    const OTP = otpGenerator.generate(6, { upperCaseAlphabets: false, specialChars: false });
 
     if (loginData != null){
 
@@ -72,7 +70,6 @@ async function sendOtp(mobile_number){
         const obj = {
             "otp":OTP,
             "lastRequest":moment(new Date()),
-            "previousRequest":moment(new Date()),
             'attempts': 4, 
         }
         await set(phoneCacheKey,obj,true);
@@ -85,14 +82,19 @@ async function sendOtp(mobile_number){
     async function OtpRequest(){
         try{
             // SEND OTP
-            let res =await client.verify
-                        .v2
-                        .services(serviceSID)
-                        .verifications.create({
-                            to: `+91${mobile_number}`,
-                            channel: 'sms',
-                    })
-                    .then(verifications => verifications);
+            if(process.env.ENV === "DEV"){
+                let res =await client.verify
+                            .v2
+                            .services(serviceSID)
+                            .verifications.create({
+                                to: `+91${mobile_number}`,
+                                channel: 'sms',
+                                message:"Your Buffeti verification code is: "+OTP
+                        })
+                        .then(verifications => verifications);
+            }else{
+                //client sms API
+            }
 
         }catch(err){
             sendError(res,err);

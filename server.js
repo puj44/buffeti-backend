@@ -9,7 +9,7 @@ const cors=require('cors');
 const { ValidationError } = require('express-validation');
 // const corsOptions = {
 //   origin: [
-//     "*"
+//     "*"S
 //   ],
 
 //   credentials: true
