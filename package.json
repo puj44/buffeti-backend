@@ -4,10 +4,7 @@
   "description": "C2C Catering Backend",
   "main": "server.js",
   "scripts": {
-    "make-seed": "npx knex seed:make dev --knexfile ./db.knexfile.js",
-    "migrate": "npx knex migrate:latest --knexfile ./db/knexfile.js",
-    "seed": "npx knex seed:run --knexfile ./db/knexfile.js",
-    "down": "npx knex migrate:down --knexfile ./db/knexfile.js",
+    "seed": "node ./db/seed/seedDatabase.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
     "dev": "nodemon server.js"

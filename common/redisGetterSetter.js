@@ -1,10 +1,10 @@
 const client = require('../config/redisClient');
-
+const prefix = process.env.ENV === "PRODUCTION" ? "prod_" : "dev_"
 async function get(key, parseData = false) {
 
     await client.connect();
 
-    let data = await client.get(key);
+    let data = await client.get(prefix+key);
 
     if(parseData && data){
         data = await JSON.parse(data);
@@ -17,7 +17,7 @@ async function get(key, parseData = false) {
 async function set (key,data, stringify = false){
     await client.connect();
     const value = stringify ? JSON.stringify(data) : data;
-    await client.set(key,value);
+    await client.set(prefix+key,value);
 
     await client.disconnect();
     return;
@@ -26,7 +26,7 @@ async function set (key,data, stringify = false){
 async function remove(key){
     await client.connect();
 
-    await client.del(key);
+    await client.del(prefix+key);
 
     await client.disconnect();
     return;

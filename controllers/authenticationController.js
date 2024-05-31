@@ -1,6 +1,5 @@
 
 //Models
-const mongoClient = require('../config/MongoClient');
 const sendSMS = require("./../common/sendOtp");
 const sendRes = require("../controllers/sendResponse");
 const sendError = require("../controllers/sendError");
@@ -34,7 +33,7 @@ const verifyOtp = async (req, res) =>{
         const otp = req.body.otp;
         const phoneCacheKey = prefix+mobile_number;
         const value = await get(phoneCacheKey,true);
-
+        
         if(!value || !value?.otp){
             return sendRes(res, 402, {message:"There's a problem verifying the OTP, try again"});
         }
@@ -42,7 +41,7 @@ const verifyOtp = async (req, res) =>{
         if(value.otp.toString() !== otp.toString()){
             return sendRes(res, 400, {message:"OTP is invalid."});
         }
-        
+        //todo: find doc and set _id.... also full name...
         let token = jwt.sign({_id: phoneCacheKey,'mobile_number':mobile_number}, key,{expiresIn: '72h'}); // TODO: After MONGODB registration, store ID of user instead of phoneCacheKey
 
         await remove(phoneCacheKey);
