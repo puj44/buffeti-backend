@@ -7,15 +7,15 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const cors=require('cors');
 const { ValidationError } = require('express-validation');
+const mongoose = require('mongoose');
 // const corsOptions = {
 //   origin: [
-//     "*"
+//     "*"S
 //   ],
 
 //   credentials: true
 // }
-
-
+mongoose.connect(process.env.MONGO_URL);
 
 app.use((req, res, next) => {
   res.append('Access-Control-Allow-Origin', ['*']);

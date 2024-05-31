@@ -1,9 +1,13 @@
-const {Model} = require('objection');
+const mongoose = require('mongoose');
+const { Schema, Model} = mongoose;
 
-class customers extends Model {
-    static get tableName(){
-        return 'customers'
-    }
-}
+const customersSchema = new Schema({
+    name: {type: String},
+    mobile_number: {type: Number, unique: true, required: true},
+    email:{type: String, match: /^[a-z0-9]+@[a-z]+\.[a-z]{2,3}$/, default:null}, 
+    is_email_verified:{type:Boolean, default:false}
+});
 
-module.exports = customers;
+class customers extends Model {}
+
+module.exports = mongoose.model(customersModel, customersSchema, 'customers');
