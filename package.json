@@ -4,7 +4,8 @@
   "description": "C2C Catering Backend",
   "main": "server.js",
   "scripts": {
-    "seed": "node ./db/seed/seedDatabase.js",
+    "seed": "node ./db/seeds/seedDatabase.js",
+    "reset-cache": "node ./config/redisCacheInitialize.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
     "dev": "nodemon server.js"

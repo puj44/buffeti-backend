@@ -1,6 +1,9 @@
 const sendErr = require('../../controllers/sendError');
 const menuOptions = require('../models/menuOptions');
+const mongoose = require('mongoose');
+require('dotenv').config()
 
+mongoose.connect(process.env.MONGO_URL);
 const menuOptionsData =  [
     {
         "name":"Click2Cater",
@@ -16,14 +19,17 @@ const menuOptionsData =  [
     },
 ];
 
+
 async function SeedDatabase() {
     try{
-        await menuOptions.create(menuOptionsData).then((d)=>d).catch((err)=>err);
+        await menuOptions.insertMany(menuOptionsData).then((d)=>d).catch((err)=> console.log("Menu Options: ",err))
+        process.exit(0);
     }
     catch(err){
         console.log("Seed error:",err);
-
+        process.exit(1)
     }
+  
 }
 
 SeedDatabase();
