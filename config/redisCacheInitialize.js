@@ -25,11 +25,15 @@ async function initializeCache(){
     //SET MENU OPTIONS
     const menuData = await menuOptions.find({}).then((d) => d).catch((err) => err);
     const menuObj = {};
-    (!menuData?.errorResponse && menuData?.length) &&
-    menuData.map((md,idx)=>{
-       menuObj[md.slug.toString()] = md.name;
-    })
-    await set(keys.menuOptions,menuObj,true);
+    if(!menuData?.errorResponse && menuData?.length){
+        menuData.map((md,idx)=>{
+           menuObj[md.slug.toString()] = md.name;
+        })
+        await set(keys.menuOptions,menuObj,true);
+    }else{
+        console.log("Err Menu Option: ",JSON.stringify(menuData?.errorResponse))
+        return;
+    }
     
     //REST HERE....
 

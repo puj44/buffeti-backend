@@ -22,7 +22,7 @@ const key = process.env.JWT_KEY;
 
 // Insert Customer Data API
 const insertCustomer = async (req,res) =>{
-    const {name,mobile_number, email} = req.body;
+    const {name, mobile_number, email} = req.body;
 
     let token;
     try{
