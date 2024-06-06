@@ -6,22 +6,24 @@ const { convertToSlug } = require('../convertToSlug');
 //     message:message
 // }
 
-const indexes ={
-    "item":0,
-    "category":1,
-    "sub_category":2,
-    "serving_per_pax":3,
-    "unit":4,
-    "rate_per_serving":5,
-    "additional_serving":6,
-    "additional_serving_unit":7,
-    "additional_serving_rate":8,
-    "preparation":9,
-    "jain":10,
-    "extra_items":11
+const c2cIndexes ={
+    "package":0,
+    "items":1,
+    "description":2,
+    "pricing1":3,
+    "pricing2":4,
+    "pricing3":5,
 }
 
-async function c2cItems(sheet){
+const miniMealsIndexes ={
+    "package":0,
+    "category":1,
+    "jain":2,
+    "price":3,
+    "description":4,
+}
+
+async function miniMealsAndThaliItems(sheet){
     try{
         const jsonData = xlsx.utils.sheet_to_json(sheet, {header:1});
         let globalObj = {
@@ -29,12 +31,6 @@ async function c2cItems(sheet){
 
             },
             "categories":{
-
-            },
-            "extra-items":{
-
-            },
-            "preparations":{
 
             }
         };
@@ -76,11 +72,9 @@ async function c2cItems(sheet){
                             if((row[indexes.sub_category])){
                                 sub_cat["slug"] =  convertToSlug(row[indexes.sub_category]);
                                 sub_cat["name"] = row[indexes.sub_category].toString().trim();
-                                globalObj["categories"][categorySlug]["sub_categories"] = {
-                                    ...globalObj["categories"][categorySlug]["sub_categories"],
+                                globalObj["categories"][categorySlug]["sub_category"] = {
                                     [sub_cat.slug]:sub_cat.name
                                 }
-                                console.log("SUB_CATEGORIES",categorySlug,globalObj["categories"][categorySlug]["sub_categories"]);
                             }
                             if(row[indexes.extra_items] && row[indexes.extra_items].toString().trim() !== ""){
                                 //COMMA SEPERATE INTO ARRAY
@@ -134,7 +128,7 @@ async function c2cItems(sheet){
         return {
             type:"success",
             menu:"c2c",
-            data: {...globalObj}
+            message: globalObj
         };
     }catch(err){
         return {
@@ -144,4 +138,4 @@ async function c2cItems(sheet){
     }
 }
 
-module.exports = c2cItems
+module.exports = packages

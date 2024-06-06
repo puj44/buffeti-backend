@@ -1,5 +1,5 @@
-const sendRes = require("./sendResponse");
-const sendErr = require("./sendError");
+const sendRes = require("../common/sendResponse");
+const sendErr = require("../common/sendError");
 const customers = require('../db/models/customers');
 const jwt = require('jsonwebtoken');
 const errorHandling = require("../common/mongoErrorHandling");

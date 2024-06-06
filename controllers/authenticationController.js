@@ -1,8 +1,8 @@
 
 //Models
 const sendSMS = require("./../common/sendOtp");
-const sendRes = require("../controllers/sendResponse");
-const sendError = require("../controllers/sendError");
+const sendRes = require("../common/sendResponse");
+const sendError = require("../common/sendError");
 const {get, set, remove} = require("../common/redisGetterSetter");
 const jwt = require('jsonwebtoken');
 const prefix = process.env.PREFIX_OTP;
