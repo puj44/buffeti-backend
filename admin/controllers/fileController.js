@@ -5,8 +5,8 @@ const snackBoxItems = require("../common/upload-file-process/snackBoxItems");
 const sendErr = require("../../common/sendError");
 const sendRes = require("../../common/sendResponse");
 const { convertToSlug } = require("../common/convertToSlug");
-const items = require("../db/models/items");
-const categories = require("../db/models/categories");
+const items = require("../../db/models/items");
+const categories = require("../../db/models/categories");
 
 
 
@@ -23,11 +23,7 @@ const categories = require("../db/models/categories");
         // }
         let c2c = {};
         let snackBox = {};
-        let toBeInserted = {
-            [location]:{
-
-            }
-        };
+        let errors = [];
         const workbook = xlsx.read(buffer, {type:"buffer"});
         // const sheetNames = workbook.SheetNames;
         // console.log(sheetNames);
@@ -39,15 +35,19 @@ const categories = require("../db/models/categories");
         ]).then((results) => {
             if(results?.length > 0){
                 results.map((menus)=>{
-                    switch (menus.menu) {
-                        case "c2c":
-                            c2c = {...menus.data};
-                            break;
-                        case "snackBox":
-                            snackBox = {...menus.data};
-                            break;
-                        default:
-                            break;
+                    if(menus.type === "error"){
+                        errors.push(menus.message);
+                    }else{
+                        switch (menus.menu) {
+                            case "c2c":
+                                c2c = {...menus.data};
+                                break;
+                            case "snackBox":
+                                snackBox = {...menus.data};
+                                break;
+                            default:
+                                break;
+                        }
                     }
                 })
                 // toBeInserted[location] ={
@@ -68,8 +68,8 @@ const categories = require("../db/models/categories");
             menu_option:"click2cater",
             categories:c2c.categories,
         }
-        const categoriesResult = await categories.create(categoryObj).then((d)=>d).catch((err)=>err);
-        console.log("OBJECT:",categoryObj?.categories?.beverages?.sub_categories);
+        await categories.deleteOne({location:location});
+        await categories.create(categoryObj).then((d)=>d).catch((err)=>err);
         if(categoryObj?.errorResponse){
             const errorMessage = await errorHandling(categoryObj?.errorResponse);
             return sendRes(
@@ -79,11 +79,6 @@ const categories = require("../db/models/categories");
         //TODO: initialize cache key object 
         // const users = await Users.query().insert({name:req.body?.name});
         return sendRes(
-            // res.cookie(
-            //     "token",
-            //     token,
-            //     {expires: new Date(Date.now() + 72 * 3600000),httpOnly:true,sameSite:'none', secure:true}
-            // ), 
             res,
             200, 
             {message:"files successfully uploaded!"}

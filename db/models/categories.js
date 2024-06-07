@@ -1,15 +1,16 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
-const subCategorySchema = new Schema({
-  type: Map,
-  of: String,
-},{_id:false});
+// const subCategorySchema = new Schema({
+//   type: Map,
+//   of: String,
+// },{_id:false});
 
 const categorySchema = new Schema({
   name: { type: String, required: true },
   sub_categories: {
-    type: subCategorySchema,
+    type: Map,
+    of: String,
     default: {},
   },
 },{_id:false});

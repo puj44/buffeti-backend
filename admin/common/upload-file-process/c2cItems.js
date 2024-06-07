@@ -47,40 +47,49 @@ async function c2cItems(sheet){
                     if((row?.[indexes.item]) && (row?.[indexes.item]?.toString()?.trim() !== "")){
                         const category = row[indexes?.category]?.toString()?.trim();
                         //MAIN ITEM OBJECT
-                        let itemObj = {
-
-                        };
+                        let itemObj = {};
                         const itemSlug = convertToSlug(row?.[indexes.item]);
                         const categorySlug =  convertToSlug(category);
+                        const jain = row[indexes.jain]?.toString()?.trim()?.toLowerCase();
                         itemObj ={
                             "slug":itemSlug,
                             "item_name":row[indexes.item],
                             "serving_per_pax":Number(row[indexes.serving_per_pax]),
                             "unit":row[indexes.unit].toString().trim().toLowerCase(),
                             "category":category,
-                            "sub_category":row[indexes.sub_category]?.toString()?.trim(),
+                            "sub_category":row[indexes.sub_category]?.toString()?.trim() ?? null,
                             "rate_per_serving":Number(row[indexes.rate_per_serving]),
                             "is_additonal_serving":row[indexes.additional_serving] ? true : false,
                             "additional_serving": row[indexes.additional_serving] ? Number(row[indexes.additional_serving]):null,
                             "additional_serving_unit":row[indexes.additional_serving_unit] ? row[indexes.additional_serving_unit].toString().trim().toLowerCase():null,
                             "additional_serving_rate":row[indexes.additional_serving_rate] ? Number(row[indexes.additional_serving_rate]):null,
-
+                            "is_jain": jain === "y" || jain === "j" ? true :false
+                        }
+                        //ADD JAIN ITEMS PREPARATIONS IF EXISTS
+                        if(jain !== "" && jain !== "y" && jain !== "j"){
+                            let jainItems = {};
+                            jain?.split(",")?.map((eI)=>{
+                                const slug = convertToSlug(eI);
+                                jainItems[slug] = eI.toString().trim();
+                            });
+                            itemObj["jain_preparations"] = jainItems;
                         }
                         //SAVE CATEGORY
                         if(category?.toLowerCase() !== "extra-item" && category.toLowerCase() !== "preparation"){
                             let sub_cat = {}
                             
                             globalObj["categories"][categorySlug] = {
-                                name:category,
+                                ...globalObj["categories"][categorySlug],
+                                name:category
                             }
+                            // APPEND SUB CATEGORIES TO CORRESPONDING CATEGORY
                             if((row[indexes.sub_category])){
                                 sub_cat["slug"] =  convertToSlug(row[indexes.sub_category]);
                                 sub_cat["name"] = row[indexes.sub_category].toString().trim();
-                                globalObj["categories"][categorySlug]["sub_categories"] = {
+                                globalObj['categories'][categorySlug]["sub_categories"] = {
                                     ...globalObj["categories"][categorySlug]["sub_categories"],
                                     [sub_cat.slug]:sub_cat.name
                                 }
-                                console.log("SUB_CATEGORIES",categorySlug,globalObj["categories"][categorySlug]["sub_categories"]);
                             }
                             if(row[indexes.extra_items] && row[indexes.extra_items].toString().trim() !== ""){
                                 //COMMA SEPERATE INTO ARRAY
@@ -125,8 +134,7 @@ async function c2cItems(sheet){
                             }
                         }
                     }else{
-                        console.log("ROW",row);
-                        throw Error("Problem at row number: "+rowIndex+1)
+                        throw Error("Package Menu - Problem at row number: "+rowIndex+1)
                     }
                 }
             });
