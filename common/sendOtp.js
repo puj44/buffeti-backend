@@ -9,7 +9,7 @@ async function sendOtp(mobile_number){
 
     let loginData = await get(phoneCacheKey,true);
     const OTP = otpGenerator.generate(6, { upperCaseAlphabets: false, specialChars: false });
-
+    console.log(await get("ahmedabad_click2cater_items"))
     if (loginData != null){
 
         let obj = loginData;
@@ -45,7 +45,6 @@ async function sendOtp(mobile_number){
         } 
         else {
             let secondsDifference = moment(new Date()).diff(moment(obj.lastRequest),"seconds");
-            console.log(moment(new Date()),moment(obj.lastRequest), "HERE", secondsDifference);
             let secondsLeft = 0;
             if(secondsDifference > 30){
                 
