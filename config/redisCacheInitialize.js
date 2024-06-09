@@ -48,7 +48,8 @@ async function initializeCache(){
     const categoriesData = await categories.find({}).then((d) => d).catch((err) => err);
     if(!categoriesData?.errorResponse && categoriesData?.length){
          await categoriesData.forEach(async(c,idx)=>{
-            await set(`${c.location}_${c.menu_option}_${keys.categories}`, c.categories,true);
+            const obj = c.toObject({flattenMaps:true});
+            await set(`${obj.location}_${obj.menu_option}_${keys.categories}`, obj.categories,true);
         })
     }else{
         console.log("Err Categories: ",JSON.stringify(categoriesData?.errorResponse))
@@ -56,17 +57,18 @@ async function initializeCache(){
     }
     const itemsData = await ItemsModel.find({}).then((d) => d).catch((err) => err);
     if(!itemsData?.errorResponse && itemsData?.length){
-         await itemsData.forEach(async(c,idx)=>{
-            await set(`${c.location}_${c.menu_option}_${keys.items}`, c.menu_items,true);
-            await set(`${c.location}_${c.menu_option}_${keys.extra_items}`, c.extra_items,true);
-            await set(`${c.location}_${c.menu_option}_${keys.preparations}`, c.preparations,true);
+         await itemsData.filter(async(data,idx)=>{
+            const item = data.toObject({flattenMaps:true});
+            await set(`${item.location}_${item.menu_option}_${keys.items}`, item.menu_items,true);
+            await set(`${item.location}_${item.menu_option}_${keys.extra_items}`, item.extra_items,true);
+            await set(`${item.location}_${item.menu_option}_${keys.preparations}`, item.preparations,true);
         })
     }else{
         console.log("Err Items: ",JSON.stringify(itemsData?.errorResponse))
         return;
     }
     // 
-
+    console.log(await get("ahmedabad_click2cater_items"));
     //RETURN
     return true;
 }
