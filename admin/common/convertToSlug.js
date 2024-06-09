@@ -12,7 +12,8 @@ function convertToSlug(str){
         "@",
         "!",
         "[",
-        "]"
+        "]",
+        "="
     ]
     // REMOVE SYMBOLS
     symbols.map((d)=>{
@@ -23,7 +24,7 @@ function convertToSlug(str){
     string = string.replaceAll(" ","-");
     string = string.replaceAll("&","and");
     string = string.replaceAll("(","-");
-
+    string = string.replaceAll("--","-");
     return string;
     
 }

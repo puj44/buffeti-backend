@@ -22,6 +22,7 @@ const menuOptionsData =  [
 
 async function SeedDatabase() {
     try{
+        await menuOptions.deleteMany({});
         await menuOptions.insertMany(menuOptionsData).then((d)=>d).catch((err)=> console.log("Menu Options: ",err))
         process.exit(0);
     }

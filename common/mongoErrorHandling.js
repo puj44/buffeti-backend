@@ -10,6 +10,8 @@ async function errorHandling(errorResponse){
         switch(errorResponse.code){
             case 11000:
                 return `${label} already exists!`
+            default:
+                return `${errorResponse.message}`
         }
     }
 }

@@ -50,7 +50,7 @@ async function c2cItems(sheet){
                         let itemObj = {};
                         const itemSlug = convertToSlug(row?.[indexes.item]);
                         const categorySlug =  convertToSlug(category);
-                        const jain = row[indexes.jain]?.toString()?.trim()?.toLowerCase();
+                        const jain = row[indexes.jain]?.toString()?.trim();
                         itemObj ={
                             "slug":itemSlug,
                             "item_name":row[indexes.item],
@@ -63,10 +63,11 @@ async function c2cItems(sheet){
                             "additional_serving": row[indexes.additional_serving] ? Number(row[indexes.additional_serving]):null,
                             "additional_serving_unit":row[indexes.additional_serving_unit] ? row[indexes.additional_serving_unit].toString().trim().toLowerCase():null,
                             "additional_serving_rate":row[indexes.additional_serving_rate] ? Number(row[indexes.additional_serving_rate]):null,
-                            "is_jain": jain === "y" || jain === "j" ? true :false
+                            "is_jain": jain !== "" ? true :false,
+                            "images":[]
                         }
                         //ADD JAIN ITEMS PREPARATIONS IF EXISTS
-                        if(jain !== "" && jain !== "y" && jain !== "j"){
+                        if(jain !== "" && jain?.toLowerCase() !== "y" && jain?.toLowerCase() !== "j"){
                             let jainItems = {};
                             jain?.split(",")?.map((eI)=>{
                                 const slug = convertToSlug(eI);
@@ -113,8 +114,13 @@ async function c2cItems(sheet){
                                 });
                                 itemObj["preparations"] = extraItemsArr;
                             }
-                            globalObj["items"][categorySlug] = {
-                                ...globalObj["items"][categorySlug],
+                            if(!globalObj["items"][categorySlug]){
+                                globalObj["items"][categorySlug] = {
+                                    category_name: category
+                                };
+                            }
+                            globalObj["items"][categorySlug]["items"] = {
+                                ...globalObj["items"][categorySlug]["items"],
                                 [itemSlug]:itemObj
                             }
                         }
