@@ -76,7 +76,7 @@ const Packages = require("../../db/models/packages");
         }else{
             
             //ADD CATEGORIES
-            await Categories.deleteOne({location:location},{session});
+            await Categories.deleteOne({location:location,menu_option:"click2cater"},{session});
             await Categories.create([{
                 location:location,
                 menu_option:"click2cater",
@@ -97,6 +97,16 @@ const Packages = require("../../db/models/packages");
             //ADD TYPE OF PACKAGES
             await Packages.deleteMany({location:location, menu_option:"click2cater"},{session}).then((d)=>d).catch((err)=> console.log(err));
             await Packages.insertMany([...typeOfPackage],{session})
+
+            //ADD SNACK BOX CATEGORIES AND ITEMS
+            await Categories.deleteOne({location:location,menu_option:"snack-boxes"},{session});
+            await Categories.create([{
+                location:location,
+                menu_option:"snack-boxes",
+                categories:snackBox.categories,
+            }],{session});
+            await Items.deleteMany({location:location, menu_option:"snack-boxes"},{session});
+            await Items.insertMany([...snackBox.items],{session});
 
             //COMMIT
             await session.commitTransaction();
