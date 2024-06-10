@@ -4,6 +4,8 @@ const keys = require("./keys");
 const menuOptions = require("../db/models/menuOptions");
 const categories = require("../db/models/categories");
 const ItemsModel = require("../db/models/items");
+const ExtraItems = require("../db/models/extraItems");
+const Preparations = require("../db/models/preparations");
 require('dotenv').config()
 
 mongoose.connect(process.env.MONGO_URL);
@@ -32,20 +34,23 @@ async function forgetCache(){
 //set keys
 
 async function initializeCache(){
+    try{
+
     //SET MENU OPTIONS
-    const menuData = await menuOptions.find({}).then((d) => d).catch((err) => err);
+    const menuData = await menuOptions.find({}).then((d) => d).catch((err) => ({ errorResponse: err }));
     let menuObj = {};
     if(!menuData?.errorResponse && menuData?.length){
         menuData.map((md,idx)=>{
            menuObj[md.slug.toString()] = md.name;
         })
-        await set(keys.menuOptions,menuObj,true);
+            await set(keys.menuOptions,menuObj,true);
+      
     }else{
-        console.log("Err Menu Option: ",JSON.stringify(menuData?.errorResponse))
+        console.log("Err Menu Option: ",JSON.stringify(menuData))
         return;
     }
-    
-    const categoriesData = await categories.find({}).then((d) => d).catch((err) => err);
+    //SET CATEGORIES AND SUB CATEGORIES
+    const categoriesData = await categories.find({}).then((d) => d).catch((err) => ({ errorResponse: err }));
     if(!categoriesData?.errorResponse && categoriesData?.length){
          await categoriesData.forEach(async(c,idx)=>{
             const obj = c.toObject({flattenMaps:true});
@@ -55,22 +60,90 @@ async function initializeCache(){
         console.log("Err Categories: ",JSON.stringify(categoriesData?.errorResponse))
         return;
     }
-    const itemsData = await ItemsModel.find({}).then((d) => d).catch((err) => err);
+    //SET ITEMS
+    const itemsData = await ItemsModel.find({}).then((d) => d).catch((err) => ({ errorResponse: err }));
+    let locationBasedObj = {};
     if(!itemsData?.errorResponse && itemsData?.length){
-         await itemsData.map(async(data,idx)=>{
-            const item = data.toObject({flattenMaps:true});
-
-            await Promise.all([await set(`${item.location}_${item.menu_option}_${keys.items}`, item.menu_items,true),
-            await set(`${item.location}_${item.menu_option}_${keys.extra_items}`, item.extra_items,true),
-            await set(`${item.location}_${item.menu_option}_${keys.preparations}`, item.preparations,true)]);
-            console.log(await get(`${item.location}_${item.menu_option}_${keys.extra_items}`));
+         await itemsData.map((data,idx)=>{
+            let item = data.toObject({flattenMaps:true});
+            delete item.createdAt;
+            delete item.updatedAt;
+            delete item.__v;
+            locationBasedObj[item.location] = {
+                [item.menu_option]:{
+                    ...locationBasedObj[item.location]?.[item.menu_option],
+                    [item.category.slug]:{
+                        ...locationBasedObj[item.location]?.[item.category.slug] ?? {},
+                        [item.sub_category?.slug ?? item.category.slug]:{
+                            ...locationBasedObj[item.location]?.[item.category.slug]?.[item.sub_category?.slug ?? item.category.slug] ?? {},
+                            [item.slug]:item
+                        }
+                    }
+                }
+            }
+          
+        });
+        locationBasedObj && Object.keys(locationBasedObj).length > 0 &&
+        Object.keys(locationBasedObj).map(async(loc)=>{
+            Object.keys(locationBasedObj[loc]).map(async(menu)=>{
+                await set(`${loc}_${menu}_${keys.items}`, locationBasedObj[loc][menu],true);
+            })
         })
     }else{
-        console.log("Err Items: ",JSON.stringify(itemsData?.errorResponse))
-        return;
+        console.log("Err Items: ",JSON.stringify(itemsData))
+        return true;
+    }
+      //SET EXTRA ITEMS
+      const extraItemsData = await ExtraItems.find({}).then((d) => d).catch((err) => ({ errorResponse: err }));
+      locationBasedObj = {};
+      if(!extraItemsData?.errorResponse && extraItemsData?.length){
+           await extraItemsData.map((data,idx)=>{
+              let item = data.toObject({flattenMaps:true});
+              delete item.createdAt;
+              delete item.updatedAt;
+              delete item.__v;
+              locationBasedObj[item.location] = {
+                  ...locationBasedObj[item.location],
+                  [item.slug]:item
+              }
+            
+          });
+          locationBasedObj && Object.keys(locationBasedObj).length > 0 &&
+          Object.keys(locationBasedObj).map(async(loc)=>{
+              await set(`${loc}_click2cater_${keys.extra_items}`, locationBasedObj[loc],true);
+          })
+      }else{
+          console.log("Err Extra Items: ",JSON.stringify(extraItemsData))
+          return true;
+      }
+
+       //SET PREPARATIONS
+       const preparationsData = await Preparations.find({}).then((d) => d).catch((err) => ({ errorResponse: err }));
+       locationBasedObj = {};
+       if(!preparationsData?.errorResponse && preparationsData?.length){
+            await preparationsData.map((data,idx)=>{
+               let item = data.toObject({flattenMaps:true});
+               delete item.createdAt;
+               delete item.updatedAt;
+               delete item.__v;
+               locationBasedObj[item.location] = {
+                   ...locationBasedObj[item.location],
+                   [item.slug]:item
+               }
+             
+           });
+           if(locationBasedObj && Object.keys(locationBasedObj).length > 0)
+           for (const loc of Object.keys(locationBasedObj)) {
+            await set(`${loc}_click2cater_${keys.preparations}`, locationBasedObj[loc], true);
+            }
+       }else{
+           console.log("Err Preparations Items: ",JSON.stringify(preparationsData))
+           return true;
+       }
+    }catch(err){
+        console.log(err)
     }
     // 
-    
     //RETURN
     return true;
 }
@@ -79,11 +152,16 @@ async function initializeCache(){
 
 
 async function resetCache(){
+    let isFinished = false;
     const response = await forgetCache();
     if(response){
-        await initializeCache();
+        if(await initializeCache()){
+            isFinished = true;
+        }
     }
-    process.exit(0);
+    if(isFinished){
+        process.exit(0);
+    }
 }
 
 resetCache();
