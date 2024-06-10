@@ -10,6 +10,8 @@ const { default: mongoose } = require("mongoose");
 
 const errorHandling = require("../../common/mongoErrorHandling");
 const Items = require("../../db/models/items");
+const ExtraItems = require("../../db/models/extraItems");
+const Preparations = require("../../db/models/preparations");
 
  const uploadFile = async(req,res) =>{
      const conn = mongoose.connection;
@@ -26,8 +28,8 @@ const Items = require("../../db/models/items");
         const snackBoxMenu = workbook.Sheets[workbook.SheetNames[2]];
 
         const result =await Promise.all([
-            await c2cItems(packageMenu),
-            await snackBoxItems(snackBoxMenu)
+            await c2cItems(packageMenu,location),
+            await snackBoxItems(snackBoxMenu,location)
         ]).then((results) => {
             if(results?.length > 0){
                 results.map((menus)=>{
@@ -74,15 +76,14 @@ const Items = require("../../db/models/items");
             }],{session});
 
             //ADD ITEMS, EXTRA ITEMS AND PREPARATIONS
-            await Items.deleteOne({location:location},{session});
-            await Items.create([{
-                location,
-                menu_option:"click2cater",
-                menu_items:c2c.items,
-                extra_items:c2c["extra-items"],
-                preparations:c2c.preparations,
-            }],{session})
-
+            await Items.deleteMany({location:location, menu_option:"click2cater"},{session});
+            await Items.insertMany([...c2c.items],{session});
+       
+            await ExtraItems.deleteMany({location:location, menu_option:"click2cater"},{session}).then((d)=>d).catch((err)=> console.log(err));
+            await ExtraItems.insertMany([...c2c["extra-items"]],{session});
+         
+            await Preparations.deleteMany({location:location, menu_option:"click2cater"},{session}).then((d)=>d).catch((err)=> console.log(err));
+            await Preparations.insertMany([...c2c.preparations],{session})
 
 
             //COMMIT

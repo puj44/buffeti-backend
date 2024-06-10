@@ -57,18 +57,20 @@ async function initializeCache(){
     }
     const itemsData = await ItemsModel.find({}).then((d) => d).catch((err) => err);
     if(!itemsData?.errorResponse && itemsData?.length){
-         await itemsData.filter(async(data,idx)=>{
+         await itemsData.map(async(data,idx)=>{
             const item = data.toObject({flattenMaps:true});
-            await set(`${item.location}_${item.menu_option}_${keys.items}`, item.menu_items,true);
-            await set(`${item.location}_${item.menu_option}_${keys.extra_items}`, item.extra_items,true);
-            await set(`${item.location}_${item.menu_option}_${keys.preparations}`, item.preparations,true);
+
+            await Promise.all([await set(`${item.location}_${item.menu_option}_${keys.items}`, item.menu_items,true),
+            await set(`${item.location}_${item.menu_option}_${keys.extra_items}`, item.extra_items,true),
+            await set(`${item.location}_${item.menu_option}_${keys.preparations}`, item.preparations,true)]);
+            console.log(await get(`${item.location}_${item.menu_option}_${keys.extra_items}`));
         })
     }else{
         console.log("Err Items: ",JSON.stringify(itemsData?.errorResponse))
         return;
     }
     // 
-    console.log(await get("ahmedabad_click2cater_items"));
+    
     //RETURN
     return true;
 }

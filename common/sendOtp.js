@@ -9,7 +9,7 @@ async function sendOtp(mobile_number){
 
     let loginData = await get(phoneCacheKey,true);
     const OTP = otpGenerator.generate(6, { upperCaseAlphabets: false, specialChars: false });
-    console.log(await get("ahmedabad_click2cater_items"))
+    console.log(await get("ahmedabad_click2cater_extra_items"))
     if (loginData != null){
 
         let obj = loginData;

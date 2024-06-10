@@ -21,24 +21,18 @@ const indexes ={
     "extra_items":11
 }
 
-async function c2cItems(sheet){
+async function c2cItems(sheet,location){
     try{
         const jsonData = xlsx.utils.sheet_to_json(sheet, {header:1});
         let globalObj = {
-            "items":{
-
-            },
+            "items":[],
             "categories":{
 
             },
-            "extra-items":{
-
-            },
-            "preparations":{
-
-            }
+            "extra-items":[],
+            "preparations":[]
         };
-        // console.log(jsonData);
+
         if(jsonData?.length <= 0){
             throw Error("Data not found");
         }else{
@@ -51,30 +45,28 @@ async function c2cItems(sheet){
                         const itemSlug = convertToSlug(row?.[indexes.item]);
                         const categorySlug =  convertToSlug(category);
                         const jain = row[indexes.jain]?.toString()?.trim();
+                        
                         itemObj ={
                             "slug":itemSlug,
                             "item_name":row[indexes.item],
+
+                            "location":location,
+                            "menu_option":"click2cater",
+
                             "serving_per_pax":Number(row[indexes.serving_per_pax]),
                             "unit":row[indexes.unit].toString().trim().toLowerCase(),
-                            "category":category,
-                            "sub_category":row[indexes.sub_category]?.toString()?.trim() ?? null,
+                            "category":{"slug":categorySlug,"name":category},
+                            "sub_category":row[indexes.sub_category]?.toString()?.trim() ? {"slug":convertToSlug(row[indexes.sub_category]?.toString()?.trim()), "name":row[indexes.sub_category]?.toString()?.trim() }:{},
                             "rate_per_serving":Number(row[indexes.rate_per_serving]),
                             "is_additonal_serving":row[indexes.additional_serving] ? true : false,
                             "additional_serving": row[indexes.additional_serving] ? Number(row[indexes.additional_serving]):null,
                             "additional_serving_unit":row[indexes.additional_serving_unit] ? row[indexes.additional_serving_unit].toString().trim().toLowerCase():null,
                             "additional_serving_rate":row[indexes.additional_serving_rate] ? Number(row[indexes.additional_serving_rate]):null,
-                            "is_jain": jain !== "" ? true :false,
+                            "is_jain": jain !== "" && jain ? true :false,
                             "images":[]
-                        }
-                        //ADD JAIN ITEMS PREPARATIONS IF EXISTS
-                        if(jain !== "" && jain?.toLowerCase() !== "y" && jain?.toLowerCase() !== "j"){
-                            let jainItems = {};
-                            jain?.split(",")?.map((eI)=>{
-                                const slug = convertToSlug(eI);
-                                jainItems[slug] = eI.toString().trim();
-                            });
-                            itemObj["jain_preparations"] = jainItems;
-                        }
+                        };
+
+                       
                         //SAVE CATEGORY
                         if(category?.toLowerCase() !== "extra-item" && category.toLowerCase() !== "preparation"){
                             let sub_cat = {}
@@ -110,33 +102,53 @@ async function c2cItems(sheet){
                                 let extraItemsArr = {};
                                 strArr.map((eI)=>{
                                     const slug = convertToSlug(eI);
-                                    extraItemsArr[slug] = eI.toString().trim();
+                                    extraItemsArr[slug] = {"name":eI.toString().trim()};
                                 });
                                 itemObj["preparations"] = extraItemsArr;
                             }
-                            if(!globalObj["items"][categorySlug]){
-                                globalObj["items"][categorySlug] = {
-                                    category_name: category
-                                };
+
+                             //ADD JAIN ITEMS PREPARATIONS IF EXISTS
+                            if(jain !== "" && jain?.toLowerCase() !== "y" && jain?.toLowerCase() !== "j"){
+                                let jainItems = {};
+                                jain?.split(",")?.map((eI)=>{
+                                    const slug = convertToSlug(eI);
+                                    jainItems[slug] = eI.toString().trim();
+                                    if(itemObj["preparations"][slug] && Object.keys(itemObj["preparations"][slug])?.length > 0){
+                                        itemObj["preparations"][slug].is_jain = true
+                                    }
+                                });
+                                itemObj["jain_preparations"] = jainItems;
+                                
                             }
-                            globalObj["items"][categorySlug]["items"] = {
-                                ...globalObj["items"][categorySlug]["items"],
-                                [itemSlug]:itemObj
-                            }
+
+
+                           
+                            globalObj["items"].push(itemObj)
                         }
-                        //SAVE EXTRA ITEMS
-                        else if(category?.toLowerCase() !== "preparation"){
-                            globalObj["extra-items"] = {
-                                ...globalObj["extra-items"],
-                                [itemSlug]:itemObj
+                        else{
+
+                            delete itemObj.category
+                            delete itemObj.sub_category
+                            delete itemObj.is_additonal_serving
+                            delete itemObj.additional_serving
+                            delete itemObj.additional_serving_unit
+                            delete itemObj.additional_serving_rate
+                            delete itemObj.images
+                            delete itemObj.jain_preparations
+
+                            //SAVE EXTRA ITEMS
+                            if(category?.toLowerCase() !== "preparation"){
+                                globalObj["extra-items"].push(itemObj)
+                                
                             }
-                            
-                        }
-                        //SAVE PREPARATIONS
-                        else if(category?.toLowerCase() === "preparation"){
-                            globalObj["preparations"] = {
-                                ...globalObj["preparations"],
-                                [itemSlug]:itemObj
+                            //SAVE PREPARATIONS
+                            else if(category?.toLowerCase() === "preparation"){
+
+                                delete itemObj.unit;
+                                delete itemObj.rate_per_serving;
+                                delete itemObj.serving_per_pax;
+
+                                globalObj["preparations"].push(itemObj)
                             }
                         }
                     }else{

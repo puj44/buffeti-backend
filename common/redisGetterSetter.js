@@ -20,7 +20,6 @@ async function set (key,data, stringify = false){
     }
     const value = stringify ? JSON.stringify(data) : data;
     await client.set((prefix+key),value);
-    console.log(key,"Here",value);
     
     return true;
 }
