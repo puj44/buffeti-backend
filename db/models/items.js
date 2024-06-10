@@ -79,7 +79,7 @@ const itemsSchema = new Schema({
     location: { type: String, required: true , index:true},
     menu_option: { type: String, required: true, index:true },
 
-    slug: { type: String, required: true },
+    slug: { type: String, required: true,index:true  },
     item_name: { type: String, required: true },
     serving_per_pax: { type: Number, required: true },
     unit: { type: String, required: true },

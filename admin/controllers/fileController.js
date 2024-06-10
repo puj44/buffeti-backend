@@ -12,6 +12,8 @@ const errorHandling = require("../../common/mongoErrorHandling");
 const Items = require("../../db/models/items");
 const ExtraItems = require("../../db/models/extraItems");
 const Preparations = require("../../db/models/preparations");
+const { typeOfPackages } = require("../common/upload-file-process/packagesItems");
+const Packages = require("../../db/models/packages");
 
  const uploadFile = async(req,res) =>{
      const conn = mongoose.connection;
@@ -22,13 +24,16 @@ const Preparations = require("../../db/models/preparations");
         const buffer = req.file.buffer;
         let c2c = {};
         let snackBox = {};
+        let typeOfPackage = [];
         let errors = [];
         const workbook = xlsx.read(buffer, {type:"buffer"});
         const packageMenu = workbook.Sheets[workbook.SheetNames[0]];
+        const packagesData = workbook.Sheets[workbook.SheetNames[1]];
         const snackBoxMenu = workbook.Sheets[workbook.SheetNames[2]];
 
         const result =await Promise.all([
             await c2cItems(packageMenu,location),
+            await typeOfPackages(packagesData,location),
             await snackBoxItems(snackBoxMenu,location)
         ]).then((results) => {
             if(results?.length > 0){
@@ -39,6 +44,9 @@ const Preparations = require("../../db/models/preparations");
                         switch (menus.menu) {
                             case "c2c":
                                 c2c = {...menus.data};
+                                break;
+                            case "typeOfPackage":
+                                typeOfPackage = [...menus.data];
                                 break;
                             case "snackBox":
                                 snackBox = {...menus.data};
@@ -84,7 +92,11 @@ const Preparations = require("../../db/models/preparations");
          
             await Preparations.deleteMany({location:location, menu_option:"click2cater"},{session}).then((d)=>d).catch((err)=> console.log(err));
             await Preparations.insertMany([...c2c.preparations],{session})
+            c2c = {};
 
+            //ADD TYPE OF PACKAGES
+            await Packages.deleteMany({location:location, menu_option:"click2cater"},{session}).then((d)=>d).catch((err)=> console.log(err));
+            await Packages.insertMany([...typeOfPackage],{session})
 
             //COMMIT
             await session.commitTransaction();
@@ -99,7 +111,7 @@ const Preparations = require("../../db/models/preparations");
       }
         
     }catch(err){
-        console.log("err",err?.errors)
+        console.log("err",err)
         //ROLLBACK
         await session.abortTransaction();
         return sendErr(res,err);

@@ -13,7 +13,9 @@ function convertToSlug(str){
         "!",
         "[",
         "]",
-        "="
+        "=",
+        "-",
+        "#"
     ]
     // REMOVE SYMBOLS
     symbols.map((d)=>{
