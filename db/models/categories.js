@@ -16,8 +16,8 @@ const categorySchema = new Schema({
 },{_id:false});
 
 const categoriesSchema = new Schema({
-  location: { type: String, required: true },
-  menu_option: { type: String, required: true },
+  location: { type: String, required: true, index:true },
+  menu_option: { type: String, required: true, index:true },
   categories: {
     type: Map,
     of: categorySchema,
