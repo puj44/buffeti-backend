@@ -1,6 +1,7 @@
 function convertToSlug(str){
     let string = str?.toString()?.trim()?.toLowerCase();
     const symbols = [
+        " )",
         ")",
         "+",
         "/",

@@ -14,6 +14,8 @@ const ExtraItems = require("../../db/models/extraItems");
 const Preparations = require("../../db/models/preparations");
 const { typeOfPackages } = require("../common/upload-file-process/packagesItems");
 const Packages = require("../../db/models/packages");
+const MiniMeals = require("../../db/models/miniMeals");
+const miniMeals = require("../common/upload-file-process/miniMeals");
 
  const uploadFile = async(req,res) =>{
      const conn = mongoose.connection;
@@ -25,16 +27,19 @@ const Packages = require("../../db/models/packages");
         let c2c = {};
         let snackBox = {};
         let typeOfPackage = [];
+        let miniMealsPackages = [];
         let errors = [];
         const workbook = xlsx.read(buffer, {type:"buffer"});
         const packageMenu = workbook.Sheets[workbook.SheetNames[0]];
         const packagesData = workbook.Sheets[workbook.SheetNames[1]];
         const snackBoxMenu = workbook.Sheets[workbook.SheetNames[2]];
+        const miniMealsMenu = workbook.Sheets[workbook.SheetNames[3]];
 
         const result =await Promise.all([
             await c2cItems(packageMenu,location),
             await typeOfPackages(packagesData,location),
-            await snackBoxItems(snackBoxMenu,location)
+            await snackBoxItems(snackBoxMenu,location),
+            await miniMeals(miniMealsMenu,location),
         ]).then((results) => {
             if(results?.length > 0){
                 results.map((menus)=>{
@@ -50,6 +55,9 @@ const Packages = require("../../db/models/packages");
                                 break;
                             case "snackBox":
                                 snackBox = {...menus.data};
+                                break;
+                            case "miniMeals":
+                                miniMealsPackages = [...menus.data];
                                 break;
                             default:
                                 break;
@@ -87,15 +95,15 @@ const Packages = require("../../db/models/packages");
             await Items.deleteMany({location:location, menu_option:"click2cater"},{session});
             await Items.insertMany([...c2c.items],{session});
        
-            await ExtraItems.deleteMany({location:location, menu_option:"click2cater"},{session}).then((d)=>d).catch((err)=> console.log(err));
+            await ExtraItems.deleteMany({location:location, menu_option:"click2cater"},{session})
             await ExtraItems.insertMany([...c2c["extra-items"]],{session});
          
-            await Preparations.deleteMany({location:location, menu_option:"click2cater"},{session}).then((d)=>d).catch((err)=> console.log(err));
+            await Preparations.deleteMany({location:location, menu_option:"click2cater"},{session})
             await Preparations.insertMany([...c2c.preparations],{session})
             c2c = {};
 
             //ADD TYPE OF PACKAGES
-            await Packages.deleteMany({location:location, menu_option:"click2cater"},{session}).then((d)=>d).catch((err)=> console.log(err));
+            await Packages.deleteMany({location:location, menu_option:"click2cater"},{session})
             await Packages.insertMany([...typeOfPackage],{session})
 
             //ADD SNACK BOX CATEGORIES AND ITEMS
@@ -107,6 +115,10 @@ const Packages = require("../../db/models/packages");
             }],{session});
             await Items.deleteMany({location:location, menu_option:"snack-boxes"},{session});
             await Items.insertMany([...snackBox.items],{session});
+
+            //ADD MINI MEALS PACKAGES
+            await MiniMeals.deleteMany({location:location},{session})
+            await MiniMeals.insertMany([...miniMealsPackages],{session});
 
             //COMMIT
             await session.commitTransaction();
