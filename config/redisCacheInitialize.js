@@ -8,6 +8,7 @@ const ExtraItems = require("../db/models/extraItems");
 const Preparations = require("../db/models/preparations");
 const MiniMeals = require("../db/models/miniMeals");
 const Packages = require("../db/models/packages");
+const DeliveryFees = require("../db/models/deliveryFees");
 require('dotenv').config()
 
 mongoose.connect(process.env.MONGO_URL);
@@ -187,6 +188,28 @@ async function initializeCache(){
         }
        }else{
             console.log("Err Mini Meals Items: ",JSON.stringify(miniMealsData));
+            return true;
+       }
+
+       //SET DELIVERY FEES
+       const deliveryFeesData = await DeliveryFees.find({}).then((d) => d).catch((err) => ({ errorResponse: err}));
+       if(!deliveryFeesData?.errorResponse && deliveryFeesData?.length){
+        let globalObj = {};
+        for (const obj of deliveryFeesData){
+            if(!globalObj[obj.location]){
+                globalObj[obj.location] = [];
+            }
+            globalObj[obj.location].push({
+                min:obj.min,
+                max:obj?.max ?? undefined,
+                fees:obj.fees
+            })
+        }
+        for(const loc of Object.keys(globalObj)){
+            await set(`${loc}_${keys.delivery_fees}`,globalObj[loc],true);
+        }
+       }else{
+            console.log("Err Delivery Fees: ",JSON.stringify(deliveryFeesData));
             return true;
        }
 

@@ -1,4 +1,5 @@
 const sendErr = require('../../common/sendError');
+const DeliveryFees = require('../models/deliveryFees');
 const menuOptions = require('../models/menuOptions');
 const mongoose = require('mongoose');
 require('dotenv').config()
@@ -19,11 +20,48 @@ const menuOptionsData =  [
     },
 ];
 
+const deliveryFeesData = [
+    {
+        min:0,
+        max:5,
+        fees:0,
+        location:"ahmedabad"
+    },
+    {
+        min:5,
+        max:10,
+        fees:199,
+        location:"ahmedabad"
+    },
+    {
+        min:10,
+        max:20,
+        fees:299,
+        location:"ahmedabad"
+    },
+    {
+        min:20,
+        max:30,
+        fees:399,
+        location:"ahmedabad"
+    },
+    {
+        min:30,
+        max:undefined,
+        fees:499,
+        location:"ahmedabad"
+    },
+]
+
 
 async function SeedDatabase() {
     try{
         await menuOptions.deleteMany({});
-        await menuOptions.insertMany(menuOptionsData).then((d)=>d).catch((err)=> console.log("Menu Options: ",err))
+        await menuOptions.insertMany(menuOptionsData).then((d)=>d).catch((err)=> console.log("Menu Options: ",err));
+
+        await DeliveryFees.deleteMany({});
+        await DeliveryFees.insertMany(deliveryFeesData).then((d)=>d).catch((err)=> console.log("Menu Options: ",err));
+
         process.exit(0);
     }
     catch(err){
