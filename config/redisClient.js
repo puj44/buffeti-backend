@@ -1,4 +1,7 @@
 const  {createClient} = require('redis');
-const client = createClient().on('error', err => {
-    console.log('Redis Client Error', err)})
+const client = createClient({
+    password:process.env.REDIS_PASSWORD ?? null
+}).on('error', err => {
+    console.log('Redis Client Error', err)});
+    
 module.exports =  client;

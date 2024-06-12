@@ -1,0 +1,87 @@
+const jwt = require("jsonwebtoken");
+
+const privateKey = `-----BEGIN RSA PRIVATE KEY-----
+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
+-----END RSA PRIVATE KEY-----`;
+
+const publicKey = `-----BEGIN PUBLIC KEY-----
+MIICITANBgkqhkiG9w0BAQEFAAOCAg4AMIICCQKCAgBqpsRxe0ex5s2nZ/B2fbB8
+Kk+wXjrZ6AIicNYNwbLo1tWAL08heOUTnz4fs/CL2TUJeuvgjUh/4ZDG2WTb2dkK
+TWlsTN3fDauDMWG/azQpKvuDxJUSbe5bpvX2W0N1I4zodQiGKPmcz946uo2ejb/m
+p5GCIVz6gg70P6zbMQfCGQ8p7MWr0cFs1GxPksgg82sltvHY7L5AS0lURroI3Mxy
+bDuQWgz41gCyxGq7OeAah0b8Xz+avr1IAbl3keM4cK/g9CqG2nx+Uyw9yFADA9+j
+mYgyiyokyv4ty1vV6uqJ+i9Q6jm2Uytq1HCtVI4XVt08z+8Ti8k8UPUYURMuUoU/
+N4sV7rvhnCisR0Eo4gWVU2CB5c8bCbw0FOrn2NgdMm2j76GNSeDZ8wF4yfJfFXd7
+gW0ZynvnLKBFc/qEhNSWPewpC/MUbbGNsh2DLPiodlWPHYQulpiVXuAO0F21gUPq
+hEh6e74rZ3O7+8g2ytHdj7yIIDboo/VRkJjew7EyHRuYnN4fEsey22E3+ZS6zeef
+12iwq7rsD4OHYKVJdZXCKYOnBVovVykJsu4vpfeHYEBK2YNqfw/C0JrnN5ceeCHn
+dMtjeiWy+OBZ3tV4mMJ7WG8GG4FjmdGoDxpYnW29Vsu2QFUOVjzhx76gaBo3es1e
+HvWBdb+KkuswP+p/L2izzQIDAQAB
+-----END PUBLIC KEY-----`;
+
+//SIGN JWT
+
+ function signJWT(payload,expiresIn){
+    return jwt.sign(payload, privateKey, {algorithm:'RS256',expiresIn});
+}
+
+//VERIFY JWT
+
+ function verifyJWT(token){
+    try{
+        const decoded = jwt.verify(token, publicKey)
+        return {payload:decoded, expired:false};
+    }catch(err){
+        return {payload:null, expired:typeof err?.message?.include === "function"?err?.message?.include("jwt expired") : err?.message};
+    }
+}
+
+module.exports = {signJWT,verifyJWT}
