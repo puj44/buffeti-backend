@@ -1,3 +1,4 @@
+require('dotenv').config()
 const {get,set,remove} = require("../common/redisGetterSetter");
 const mongoose = require('mongoose');
 const keys = require("./keys");
@@ -9,7 +10,6 @@ const Preparations = require("../db/models/preparations");
 const MiniMeals = require("../db/models/miniMeals");
 const Packages = require("../db/models/packages");
 const DeliveryFees = require("../db/models/deliveryFees");
-require('dotenv').config()
 
 mongoose.connect(process.env.MONGO_URL);
 
