@@ -22,7 +22,7 @@ app.use((req, res, next) => {
 
 //access config consts
 app.use(express.json());
-// app.use('/static',express.static(join(process.cwd(),"public")));
+app.use('/statics',express.static("public"));
 app.use(bodyParser.json());
 app.use(express.urlencoded({extended:false}));
 app.use(cors());
