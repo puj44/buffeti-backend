@@ -12,6 +12,8 @@ const upload = multer({storage:storage})
 
 //all Admin Routes
 router.post("/sign-in",validator(adminRequests.signin),authentication.signin);
+
+//Authenticated Routes
 router.post("/csv-upload",authenticateUser,upload.single("file"),uploadFile);
 
 
