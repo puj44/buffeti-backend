@@ -6,6 +6,7 @@ const getMenuOptions = async(req,res) =>{
     try{
 
         const menuOptions = await get(`menu_options`,true);
+        console.log(await get("ahmedabad_click2cater_packages",true));
         return sendRes(
             res,
             200,

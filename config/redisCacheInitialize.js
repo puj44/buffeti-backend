@@ -7,6 +7,7 @@ const ItemsModel = require("../db/models/items");
 const ExtraItems = require("../db/models/extraItems");
 const Preparations = require("../db/models/preparations");
 const MiniMeals = require("../db/models/miniMeals");
+const Packages = require("../db/models/packages");
 require('dotenv').config()
 
 mongoose.connect(process.env.MONGO_URL);
@@ -24,7 +25,7 @@ async function forgetCache(){
         `ahmedabad_click2cater_${keys.preparations}`,
         `bangalore_click2cater_${keys.preparations}`,
         `ahmedabad__mini-meals_${keys.items}`,
-        `banglore__mini-meals_${keys.items}`,
+        `bangalore__mini-meals_${keys.items}`,
     ]
     
     cacheKeys.map(async(k)=>{
@@ -144,8 +145,35 @@ async function initializeCache(){
            return true;
        }
 
+       //SET TYPE OF PACKAGES (Click2Cater)
+       const packagesData = await Packages.find({}).then((d) => d).catch((err) => ({ errorResponse: err}));
+       if(!packagesData?.errorResponse && packagesData?.length){
+        let globalObj = {};
+        for (const obj of packagesData){
+            globalObj[obj.location] = {
+                ...globalObj[obj.location],
+                [obj.menu_option]:{
+                    ...globalObj[obj.location]?.[obj.menu_option],
+                    [obj.category?.slug]:{
+                        ...globalObj[obj.location]?.[obj.menu_option]?.[obj.category?.slug],
+                        [obj.slug]:obj
+                    }
+                }
+                
+            }
+        }
+        for(const loc of Object.keys(globalObj)){
+            for(const menu of Object.keys(globalObj[loc])){
+                await set(`${loc}_${menu}_${keys.packages}`,globalObj[loc][menu],true);
+            }
+        }
+       }else{
+            console.log("Err Type of Packages: ",JSON.stringify(packagesData));
+            return true;
+       }
+
        //SET MINI-MEALS
-       const miniMealsData = await MiniMeals.find({}).select({}).then((d) => d).catch((err) => ({ errorResponse: err}));
+       const miniMealsData = await MiniMeals.find({}).then((d) => d).catch((err) => ({ errorResponse: err}));
        if(!miniMealsData?.errorResponse && miniMealsData?.length){
         let globalObj = {};
         for (const obj of miniMealsData){
@@ -163,7 +191,7 @@ async function initializeCache(){
        }
 
     }catch(err){
-        console.log(err)
+        console.log("CACHE ERROR:",err)
     }
     // 
     //RETURN
