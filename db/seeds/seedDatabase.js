@@ -1,4 +1,4 @@
-const sendErr = require('../../controllers/sendError');
+const sendErr = require('../../common/sendError');
 const menuOptions = require('../models/menuOptions');
 const mongoose = require('mongoose');
 require('dotenv').config()
@@ -14,8 +14,8 @@ const menuOptionsData =  [
         "slug":"snack-boxes"
     },
     {
-        "name":"Mini Thali",
-        "slug":"mini-thali"
+        "name":"Mini Meals",
+        "slug":"mini-meals"
     },
 ];
 

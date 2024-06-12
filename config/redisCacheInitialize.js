@@ -6,6 +6,7 @@ const categories = require("../db/models/categories");
 const ItemsModel = require("../db/models/items");
 const ExtraItems = require("../db/models/extraItems");
 const Preparations = require("../db/models/preparations");
+const MiniMeals = require("../db/models/miniMeals");
 require('dotenv').config()
 
 mongoose.connect(process.env.MONGO_URL);
@@ -22,6 +23,8 @@ async function forgetCache(){
         `bangalore_click2cater_${keys.extra_items}`,
         `ahmedabad_click2cater_${keys.preparations}`,
         `bangalore_click2cater_${keys.preparations}`,
+        `ahmedabad__mini-meals_${keys.mini-meals}`,
+        `banglore__mini-meals_${keys.mini-meals}`,
     ]
     
     cacheKeys.map(async(k)=>{
@@ -140,6 +143,30 @@ async function initializeCache(){
            console.log("Err Preparations Items: ",JSON.stringify(preparationsData))
            return true;
        }
+
+       //SET MINI-MEALS
+       const miniMealsData = (await MiniMeals.find({}).then((d) => d)).catch((err) => ({ errorResponse: err}));
+       locationBasedObj = {};
+       if(!miniMealsData?.errorResponse && miniMealsData?.length){
+            await miniMealsData.map((data, idx)=>{
+                let item = data.toObject({flattenMaps:true});
+                delete item.createdAt;
+                delete item.updatedAt;
+                delete item._v;
+                locationBasedObj[item.location] = {
+                    ...locationBasedObj[item.location],
+                    [item.slug]:item
+                }
+            });
+            if(locationBasedObj && Object.keys(locationBasedObj).length > 0)
+            for (const loc of Object.keys(locationBasedObj)){
+                await set(`${loc}_mini-meals_${keys.mini_meals}`, locationBasedObj[loc], true);
+            }
+       }else{
+            console.log("Err Mini Meals Items: ",JSON.stringify(miniMealsData));
+            return true;
+       }
+
     }catch(err){
         console.log(err)
     }

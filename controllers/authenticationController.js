@@ -7,6 +7,7 @@ const {get, set, remove} = require("../common/redisGetterSetter");
 const jwt = require('jsonwebtoken');
 const prefix = process.env.PREFIX_OTP;
 const key = process.env.JWT_KEY;
+const Customers = require("../db/models/customers");
 
 const signin =  async (req, res) => {
 
@@ -33,27 +34,23 @@ const verifyOtp = async (req, res) =>{
         const otp = req.body.otp;
         const phoneCacheKey = prefix+mobile_number;
         const value = await get(phoneCacheKey,true);
+        let token;
         
-        if(!value || !value?.otp){
-            return sendRes(res, 402, {message:"There's a problem verifying the OTP, try again"});
-        }
+        const response = await verifyOtp(mobile_number,otp);
+        Customers.findOne({mobile_number: mobile_number}).then((d)=>{
+            token = jwt.sign({_id: d._id,'name': d.name,'mobile_number': d.mobile_number}, key,{expiresIn: '72h'});
 
-        if(value.otp.toString() !== otp.toString()){
-            return sendRes(res, 400, {message:"OTP is invalid."});
-        }
-        //todo: find doc and set _id.... also full name...
-        let token = jwt.sign({_id: phoneCacheKey,'mobile_number':mobile_number}, key,{expiresIn: '72h'}); // TODO: After MONGODB registration, store ID of user instead of phoneCacheKey
-
+        }).catch((err)=>err);
+        
         await remove(phoneCacheKey);
-
-        return sendRes(
+        return sendRes(res,
             res.cookie(
                 "token",
                 token,
                 {expires: new Date(Date.now() + 72 * 3600000),httpOnly:true,sameSite:'none', secure:true}
             ), 
-            200, 
-            {message:"OTP verified successfully!"}
+            response?.status, 
+            {message:response?.message}
         );
         
 
