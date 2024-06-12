@@ -1,11 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const homepage= require("../controllers/customerController");
 const validator = require("../middlewares/validator");
-//const {customerRequests} = require("../middlewares/requests/customerRequests");
+const { getMenuOptions } = require('../controllers/homepageController');
 
-//all customer routes
-//router.post("/sign-up",);
-//router.get("/",customers.getCustomers);
+router.get("/menu-options",getMenuOptions);
 
 module.exports = router;

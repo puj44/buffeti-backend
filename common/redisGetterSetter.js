@@ -24,19 +24,25 @@ async function set (key,data, stringify = false){
         await client.set((prefix+key)?.toString(),value);
         return true;
     }catch(err){
-        console.log("Error: ",err);
+        console.log(key,"Error Cache SET: ",err);
         return true;
     }
     
 }
 
 async function remove(key){
-    if(!client.isOpen){
-        await client.connect()
+    try{
+
+        if(!client.isOpen){
+            await client.connect()
+        }
+        await client.del((prefix+key));
+        return true;
+    }catch(err){
+        console.log(key,"Error Cache REMOVE: ",err);
+        return true;
     }
-    await client.del((prefix+key));
     
-    return true;
 }
 
 module.exports.get = get;

@@ -9,7 +9,7 @@ const miniMealsSchema = new Schema({
     price:{ type: Number, required: true },
     description:{ type: String, required: true },
     is_jain:{ type: Boolean, default: false },
-});
+},{timestamps:true});
 
 const MiniMeals = mongoose.model('mini_meals', miniMealsSchema);
 

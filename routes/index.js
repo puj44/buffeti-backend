@@ -1,6 +1,7 @@
 const customerRoutes = require("./customerRoutes");
 const authRoutes = require("./authenticationRoutes")
 const adminRoutes = require("./adminRoutes");
+const homeRoutes = require("./homepageRoutes");
 const express = require('express');
 const router = express.Router();
 
@@ -11,9 +12,10 @@ const router = express.Router();
 // });
 
 //routes
+router.use("/admin",adminRoutes);
 router.use("/customers",customerRoutes);
 router.use("/auth",authRoutes);
-router.use("/admin",adminRoutes);
+router.use("/home",homeRoutes);
 
 router.use("/", (req,res) => {
     res.status(404).send("Route not defined");

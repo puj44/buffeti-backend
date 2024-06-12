@@ -1,6 +1,6 @@
-const {serviceSID} = require('../config/twilio');
+const {serviceSID, client} = require('../config/twilio');
 const moment = require('moment');
-const { get, set } = require('./redisGetterSetter');
+const { get, set, remove } = require('./redisGetterSetter');
 const otpGenerator = require('otp-generator');
 const prefix = process.env.PREFIX_OTP;
 
@@ -8,17 +8,19 @@ async function sendOtp(mobile_number){
     const phoneCacheKey = prefix+mobile_number;
 
     let loginData = await get(phoneCacheKey,true);
-    const OTP = otpGenerator.generate(6, { upperCaseAlphabets: false, specialChars: false });
+    const OTP = otpGenerator.generate(6, { digits:true, upperCaseAlphabets:false, lowerCaseAlphabets:false, specialChars:false });
+    console.log("OTP: ",OTP);
     if (loginData != null){
 
         let obj = loginData;
-        obj.otp = OTP;
-    
+        
+        
         if (loginData.attempts == 0){
             let timeUntilNextAttempt = moment(new Date()).diff(moment(obj.lastRequest),"seconds");
-            if (timeUntilNextAttempt <= 600){
+            if (timeUntilNextAttempt >= 600){
                 await OtpRequest(); 
                 //set attempt back to 5
+                obj.otp = OTP;
                 obj.attempts = 5;
                 obj.lastRequest = moment(new Date());
                 await set(phoneCacheKey, obj, true);
@@ -37,7 +39,7 @@ async function sendOtp(mobile_number){
                     message:"Maximum Attempt reached! Please try again after "+secondsLeft+" seconds",
                     data:{
                         "secondsLeft":secondsLeft, //convert in seconds
-                        "attempts-":obj.attempts
+                        "attempts":obj.attempts
                     }
                 } 
             }
@@ -46,7 +48,7 @@ async function sendOtp(mobile_number){
             let secondsDifference = moment(new Date()).diff(moment(obj.lastRequest),"seconds");
             let secondsLeft = 0;
             if(secondsDifference > 30){
-                
+                obj.otp = OTP;
                 obj.attempts =  obj.attempts - 1;
                 obj.lastRequest = moment(new Date());
                 await set(phoneCacheKey, obj, true);
@@ -90,12 +92,15 @@ async function sendOtp(mobile_number){
                                 message:"Your Buffeti verification code is: "+OTP
                         })
                         .then(verifications => verifications);
+                return true;
             }else{
+                return true;
                 //client sms API
             }
 
         }catch(err){
-            sendError(res,err);
+            console.log("ASd",err);
+            return false;
         }
     }
 }
