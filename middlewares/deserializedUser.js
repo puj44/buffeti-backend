@@ -16,7 +16,7 @@ function deserializedUser(req,res, next){
 
         return next()
     }catch(err){
-        console.log("USER MIDDLEWARE ERROR: ",err);
+        console.log("USER DESERIALIZE ERROR: ",err);
         next()
     }
 }

@@ -2,6 +2,8 @@ const sendErr = require('../../common/sendError');
 const DeliveryFees = require('../models/deliveryFees');
 const menuOptions = require('../models/menuOptions');
 const mongoose = require('mongoose');
+const users = require('../models/users');
+const bcrypt = require("bcrypt")
 require('dotenv').config()
 
 mongoose.connect(process.env.MONGO_URL);
@@ -61,8 +63,17 @@ async function SeedDatabase() {
 
         await DeliveryFees.deleteMany({});
         await DeliveryFees.insertMany(deliveryFeesData).then((d)=>d).catch((err)=> console.log("Menu Options: ",err));
+        
+        await users.deleteOne({email:"pujan007mm@gmail.com"});
+        await users.create({
+            email:"pujan007mm@gmail.com",
+            password:"$2b$10$tUi7Hnd9Hbjm1WaV8WWaEOreXP41xMrwMEFFnj1OvR0kAqcYxbSb.",
+            name:"Super Admin",
+            is_super_admin:true
+        }).then((d)=>d).catch((err)=> console.log("Admin Users: ",err));
 
         process.exit(0);
+
     }
     catch(err){
         console.log("Seed error:",err);

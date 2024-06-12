@@ -1,8 +1,8 @@
 const Joi = require("../../middlewares/schemas");
 const adminRequests = {
     signin:{
-        username: Joi.string().required().label("Name"),
-        password: Joi.numberString().len().required(),
+        email: Joi.string().required().label("Email"),
+        password: Joi.string().required().label("Password"),
     },
 }
 

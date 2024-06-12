@@ -46,7 +46,7 @@ const verifyOtp = async (req, res) =>{
                     "name":customer.name,
                     "mobile_number":customer.mobile_number
                 },
-                '1h'
+                '72h'
             )
             
             res.cookie(
