@@ -1,5 +1,5 @@
 const customerRoutes = require("./customerRoutes");
-const authRoutes = require("./authenticationRoutes")
+const authRoutes = require("./AuthenticationRoutes")
 const adminRoutes = require("./adminRoutes");
 const homeRoutes = require("./homepageRoutes");
 const express = require('express');
