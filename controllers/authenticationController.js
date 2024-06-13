@@ -82,7 +82,7 @@ const verifyOtp = async (req, res) =>{
     }
 }
 
- const checkstatus= async (req, res) => {
+const checkstatus= async (req, res) => {
     const token = req.header.accessToken;
     if(token === null || token === undefined){
 
@@ -94,8 +94,8 @@ const verifyOtp = async (req, res) =>{
         
     } 
 
-    jwt.verify(token, key, (error,result)=>{
-        if(error){
+    const payload = verifyJWT(token).payload;
+        if(payload === null){
             return sendRes(res,403,
                 {
                     message:"Access token is not valid"
@@ -112,7 +112,6 @@ const verifyOtp = async (req, res) =>{
                 }
             }
         );
-    }) 
 }
 
 
