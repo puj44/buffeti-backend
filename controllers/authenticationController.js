@@ -82,8 +82,42 @@ const verifyOtp = async (req, res) =>{
     }
 }
 
+ const checkstatus= async (req, res) => {
+    const token = req.header.accessToken;
+    if(token === null || token === undefined){
+
+        return sendRes(res,401,
+            {
+                message:"Access token is missing or invalid"
+            }
+        );
+        
+    } 
+
+    jwt.verify(token, key, (error,result)=>{
+        if(error){
+            return sendRes(res,403,
+                {
+                    message:"Access token is not valid"
+                }
+            );
+        }
+
+        return sendRes(
+            res, 
+            200, 
+            {
+                data: {
+                    user:verifyJWT(accessToken).payload ?? {},
+                }
+            }
+        );
+    }) 
+}
+
 
 module.exports = {
     signin,
     verifyOtp,
+    checkstatus
 }
