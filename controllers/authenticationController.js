@@ -108,10 +108,15 @@ const checkstatus= async (req, res) => {
             200, 
             {
                 data: {
-                    user:verifyJWT(accessToken).payload ?? {},
+                    user: payload ?? {},
                 }
             }
         );
+}
+
+const signout = async (req, res) => {
+    res.clearCookie('token',{httpOnly:true, sameSite:'none',secure:true});
+    res.status(200).send({'links':[{title:'Home', path:'/'},{ title: `About us`, path: `/about` },{ title: `Product`, path: `/product/all/1` },{ title: `FAQ`, path: `/faq` },{ title: `Login`, path: `/login` }],userType:''});
 }
 
 

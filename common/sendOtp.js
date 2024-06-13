@@ -8,8 +8,12 @@ async function sendOtp(mobile_number){
     const phoneCacheKey = prefix+mobile_number;
 
     let loginData = await get(phoneCacheKey,true);
+    
+    if(process.env.ENV === "DEV"){
+        const OTP = 123456;
+    }
+
     const OTP = otpGenerator.generate(6, { digits:true, upperCaseAlphabets:false, lowerCaseAlphabets:false, specialChars:false });
-    console.log("OTP: ",OTP);
     if (loginData != null){
 
         let obj = loginData;
