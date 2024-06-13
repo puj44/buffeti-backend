@@ -83,15 +83,23 @@ async function sendOtp(mobile_number){
         try{
             // SEND OTP
             if(process.env.ENV === "DEV"){
-                let res =await client.verify
-                            .v2
-                            .services(serviceSID)
-                            .verifications.create({
-                                to: `+91${mobile_number}`,
-                                channel: 'sms',
-                                message:"Your Buffeti verification code is: "+OTP
-                        })
-                        .then(verifications => verifications);
+                // let res =await client.verify
+                //             .v2
+                //             .services(serviceSID)
+                //             .verifications.create({
+                //                 to: `+91${mobile_number}`,
+                //                 channel: 'sms',
+                //                 message:"Your Buffeti verification code is: "+OTP
+                //         })
+                //         .then(verifications => verifications);
+
+                client.messages
+                    .create({
+                        body: `Your Buffeti verification code is:${OTP}. This code will expire in 10 minutes.`,
+                        from: `+91${mobile_number}`,
+                        to: '+18777804236'
+                    })
+                    .then(message => console.log(message.sid));
                 return true;
             }else{
                 return true;
