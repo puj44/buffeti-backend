@@ -11,8 +11,6 @@ const sendSMS = require("./../common/sendOtp");
 
 const insertCustomer = async (req,res) =>{
     const {name, mobile_number, email} = req.body;
-    const phoneCacheKey = prefix+mobile_number;
-
     try{
 
         //if account exists...
