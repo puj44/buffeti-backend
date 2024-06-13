@@ -82,8 +82,46 @@ const verifyOtp = async (req, res) =>{
     }
 }
 
+const checkstatus= async (req, res) => {
+    const token = req.header.accessToken;
+    if(token === null || token === undefined){
+
+        return sendRes(res,401,
+            {
+                message:"Access token is missing or invalid"
+            }
+        );
+        
+    } 
+
+    const payload = verifyJWT(token).payload;
+        if(payload === null){
+            return sendRes(res,403,
+                {
+                    message:"Access token is not valid"
+                }
+            );
+        }
+
+        return sendRes(
+            res, 
+            200, 
+            {
+                data: {
+                    user: payload ?? {},
+                }
+            }
+        );
+}
+
+const signout = async (req, res) => {
+    res.clearCookie('token',{httpOnly:true, sameSite:'none',secure:true});
+    res.status(200).send({'links':[{title:'Home', path:'/'},{ title: `About us`, path: `/about` },{ title: `Product`, path: `/product/all/1` },{ title: `FAQ`, path: `/faq` },{ title: `Login`, path: `/login` }],userType:''});
+}
+
 
 module.exports = {
     signin,
     verifyOtp,
+    checkstatus
 }
