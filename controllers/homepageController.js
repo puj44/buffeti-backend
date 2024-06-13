@@ -6,6 +6,7 @@ const getMenuOptions = async(req,res) =>{
     try{
 
         const menuOptions = await get(`menu_options`,true);
+        
         return sendRes(
             res,
             200,
@@ -18,9 +19,28 @@ const getMenuOptions = async(req,res) =>{
         )
 
     }catch(err){
+        console.log("Get Menu Option Error:",err);
         sendErr(res,err)
     }
 }
 
+const getPackages = async(req,res) =>{
+    try{
+        const {menuOption} = req.params;
 
-module.exports = {getMenuOptions}
+      
+
+        return sendRes(
+            res,
+            200,
+            {
+                message:"Packages fetched successfully!"
+            }
+        )
+    }catch(err){
+        console.log("Get Packages Error:",err);
+        sendErr(res,err)
+    }
+
+}
+module.exports = {getMenuOptions,getPackages}

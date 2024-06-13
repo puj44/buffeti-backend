@@ -1,4 +1,4 @@
-const Joi = require("../../middlewares/schemas");
+const Joi = require("../../middlewares/validator/schemas");
 const adminRequests = {
     signin:{
         email: Joi.string().required().label("Email"),

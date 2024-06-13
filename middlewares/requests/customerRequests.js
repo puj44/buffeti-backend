@@ -1,4 +1,4 @@
-const Joi = require("../schemas");
+const Joi = require("../validator/schemas");
 const customerRequests = {
     signup:{
         name: Joi.string().required().label("Name"),

@@ -1,4 +1,4 @@
-const Joi = require("../schemas");
+const Joi = require("../validator/schemas");
 const authRequests = {
     signin:{
         mobile_number: Joi.numberString().len(10).required(),
