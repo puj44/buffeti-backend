@@ -7,6 +7,7 @@ const keys = {
     mini_meals:"mini_meals",
     packages:"packages",
     delivery_fees:"delivery_fees",
+    filters:"filters",
 };
 
 module.exports = keys

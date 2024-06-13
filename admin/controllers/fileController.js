@@ -22,7 +22,8 @@ const miniMeals = require("../common/upload-file-process/miniMeals");
      const session = await conn.startSession();
      session.startTransaction();
     try{
-        const location = req.body.location;
+        const location = req.body.location || req.headers?.location;
+        if(!location) return sendRes(res, 402, {message:"Location is required"})
         const buffer = req.file.buffer;
         let c2c = {};
         let snackBox = {};

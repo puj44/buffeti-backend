@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const customers = require("../controllers/customerController");
-const validator = require("../middlewares/validator");
+const validator = require("../middlewares/validator/validator");
 const {customerRequests} = require("../middlewares/requests/customerRequests");
 
 //all customer routes

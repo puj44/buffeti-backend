@@ -1,8 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const validator = require("../middlewares/validator");
-const { getMenuOptions } = require('../controllers/homepageController');
+const validator = require("../middlewares/validator/validator");
+const { getMenuOptions,getPackages } = require('../controllers/homepageController');
+const { homeRequests } = require('../middlewares/requests/homeRequests');
+const slugs = require('../middlewares/validator/slugs');
+const validateLocation = require('../middlewares/validateLocation');
 
 router.get("/menu-options",getMenuOptions);
+router.get(`/get-packages/:menuOption(${slugs.menuOption})`,validateLocation ,validator(homeRequests.getPackages, true) ,getPackages);
 
 module.exports = router;

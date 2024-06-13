@@ -1,12 +1,12 @@
-const sendErr = require('../../common/sendError');
+
 const DeliveryFees = require('../models/deliveryFees');
 const menuOptions = require('../models/menuOptions');
 const mongoose = require('mongoose');
 const users = require('../models/users');
-const bcrypt = require("bcrypt")
+const Locations = require('../models/locations');
 require('dotenv').config()
 
-mongoose.connect(process.env.MONGO_URL);
+
 const menuOptionsData =  [
     {
         "name":"Click2Cater",
@@ -55,19 +55,29 @@ const deliveryFeesData = [
     },
 ]
 
+const locations = [
+    {
+        location:"ahmedabad"
+    }
+]
 
 async function SeedDatabase() {
     try{
+        await mongoose.connect(process.env.MONGO_URL);
+        
+        await Locations.deleteMany({});
+        await Locations.insertMany(locations).then((d)=>d).catch((err)=> console.log("Locations: ",err));
+
         await menuOptions.deleteMany({});
         await menuOptions.insertMany(menuOptionsData).then((d)=>d).catch((err)=> console.log("Menu Options: ",err));
 
         await DeliveryFees.deleteMany({});
-        await DeliveryFees.insertMany(deliveryFeesData).then((d)=>d).catch((err)=> console.log("Menu Options: ",err));
+        await DeliveryFees.insertMany(deliveryFeesData).then((d)=>d).catch((err)=> console.log("Delivery Fees: ",err));
         
         await users.deleteOne({email:"pujan007mm@gmail.com"});
         await users.create({
             email:"pujan007mm@gmail.com",
-            password:"$2b$10$tUi7Hnd9Hbjm1WaV8WWaEOreXP41xMrwMEFFnj1OvR0kAqcYxbSb.",
+            password: process.env.DEFAULT_ADMIN_PASSWORD,
             name:"Super Admin",
             is_super_admin:true
         }).then((d)=>d).catch((err)=> console.log("Admin Users: ",err));
