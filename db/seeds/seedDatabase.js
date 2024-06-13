@@ -67,7 +67,7 @@ async function SeedDatabase() {
         await users.deleteOne({email:"pujan007mm@gmail.com"});
         await users.create({
             email:"pujan007mm@gmail.com",
-            password:"$2b$10$tUi7Hnd9Hbjm1WaV8WWaEOreXP41xMrwMEFFnj1OvR0kAqcYxbSb.",
+            password: process.env.ADMIN_PASSWORD,
             name:"Super Admin",
             is_super_admin:true
         }).then((d)=>d).catch((err)=> console.log("Admin Users: ",err));
