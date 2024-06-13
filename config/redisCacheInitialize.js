@@ -227,7 +227,10 @@ async function initializeCache(){
             //SET PACKAGES
             globalObj[obj.location] = {
                 ...globalObj[obj.location],
-                [obj.slug]:obj
+                [obj.category?.slug]:{
+                    ...globalObj[obj.location]?.[obj.category?.slug],
+                    [obj.slug]:obj
+                }
             }
             //SET FILTERS
             if(obj.category?.slug) filters[obj.location] = {
