@@ -1,6 +1,6 @@
 const { validate, Joi } = require('express-validation');
 
-function validator(requestBody, isQuery = false, isParam = false,){
+function validator(requestBody, isQuery = false){
     const paramName = isQuery ? "query" :  "body";
     const req = {
         [paramName]:Joi.object({
