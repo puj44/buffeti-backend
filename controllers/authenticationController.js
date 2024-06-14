@@ -15,7 +15,7 @@ const signin =  async (req, res) => {
 
     try{
         const customer = await Customers.findOne({mobile_number}).then((d) => d);
-        if(!customer) return sendRes(res, 402, {message:"Mobile Number is not registered"})
+        if(!customer) return sendRes(res, 400, {message:"Mobile Number is not registered"})
         //CALL sendOtp function
         const response = await sendSMS(mobile_number);
         return sendRes(res,response?.status,
@@ -115,13 +115,20 @@ const checkstatus= async (req, res) => {
 }
 
 const signout = async (req, res) => {
-    res.clearCookie('token',{httpOnly:true, sameSite:'none',secure:true});
-    res.status(200).send({'links':[{title:'Home', path:'/'},{ title: `About us`, path: `/about` },{ title: `Product`, path: `/product/all/1` },{ title: `FAQ`, path: `/faq` },{ title: `Login`, path: `/login` }],userType:''});
+    res.clearCookie('accessToken',{httpOnly:true, sameSite:'none',secure:true});
+    return sendRes(
+        res, 
+        200, 
+        {
+            message:"Sign out successful!"
+        }
+    );
 }
 
 
 module.exports = {
     signin,
     verifyOtp,
-    checkstatus
+    checkstatus,
+    signout
 }

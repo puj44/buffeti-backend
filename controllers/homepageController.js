@@ -25,6 +25,26 @@ const getMenuOptions = async(req,res) =>{
     }
 }
 
+const getHomeData = async(req,res) =>{
+    try{
+        const locations = await get("locations",true);
+
+        return sendRes(
+            res,
+            200,
+            {
+                data:{
+                    locations
+                },
+                message:"Data fetched successfully!"
+            }
+        )
+    }catch(err){
+        console.log("Get Home Data Error:",err);
+        sendErr(res,err)
+    }
+}
+
 const getPackages = async(req,res) =>{
     try{
         const {location} = req.headers;
@@ -56,4 +76,4 @@ const getPackages = async(req,res) =>{
     }
 
 }
-module.exports = {getMenuOptions,getPackages}
+module.exports = {getMenuOptions,getPackages,getHomeData}

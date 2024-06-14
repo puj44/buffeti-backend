@@ -17,7 +17,7 @@ const insertCustomer = async (req,res) =>{
         const customer = await Customers.findOne({mobile_number}).then((d) => d);
 
         if(customer){
-            return sendRes(res, 402, {message:"Account already exists"});
+            return sendRes(res, 400, {message:"Account already exists"});
         }
 
         //Send OTP
