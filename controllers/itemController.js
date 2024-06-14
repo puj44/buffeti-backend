@@ -23,7 +23,9 @@ const getItems = async (req,res) => {
         const items = await get(`${location}_${menuOption}_items`,true);
         console.log("items: ",items);
         // items.map((i)=>{
-        //     if(i.category== category)
+        //     if(i.category== category){
+        //         //sendRes item obj
+        //     }
         // })
 
 
