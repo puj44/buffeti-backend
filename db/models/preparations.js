@@ -9,8 +9,6 @@ const preparationsSchema = new Schema({
     item_name: { type: String, required: true },
 
 
-    is_jain:{type:Boolean, default:false},
-
 },{timestamps:true});
 
 

@@ -1,8 +1,8 @@
 const Joi = require("../validator/schemas");
 const itemRequests = {
     getItems:{
-        category:Joi.string().empty(["",null]),
-        search:Joi.string().empty(["",null])
+        search:Joi.string().empty(["",null]),
+        is_jain:Joi.string().valid("true","false").empty(["",null])
     },
 }
 

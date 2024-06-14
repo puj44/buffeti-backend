@@ -95,6 +95,16 @@ async function c2cItems(sheet,location){
                                 });
                                 itemObj["extra_items"] = extraItemsArr;
                             }
+                            //ADD JAIN ITEMS PREPARATIONS IF EXISTS
+                            let jainItems = {};
+                            if(jain !== "" && jain?.toLowerCase() !== "y" && jain?.toLowerCase() !== "j"){
+                                jain?.split(",")?.map((eI)=>{
+                                    const slug = convertToSlug(eI);
+                                    jainItems[slug] = eI.toString().trim();
+                                });
+                                
+                            }
+                            
                             if(row[indexes.preparation] && row[indexes.preparation].toString().trim() !== ""){
                                 //COMMA SEPERATE INTO ARRAY
                                 let itemsString = row[indexes.preparation].toString().trim();
@@ -102,27 +112,13 @@ async function c2cItems(sheet,location){
                                 let extraItemsArr = {};
                                 strArr.map((eI)=>{
                                     const slug = convertToSlug(eI);
-                                    extraItemsArr[slug] = {"name":eI.toString().trim()};
+                                    extraItemsArr[slug] = {
+                                        "name":eI.toString().trim(),
+                                        "is_jain":jainItems[slug] ? true :false
+                                    };
                                 });
                                 itemObj["preparations"] = extraItemsArr;
                             }
-
-                             //ADD JAIN ITEMS PREPARATIONS IF EXISTS
-                            if(jain !== "" && jain?.toLowerCase() !== "y" && jain?.toLowerCase() !== "j"){
-                                let jainItems = {};
-                                jain?.split(",")?.map((eI)=>{
-                                    const slug = convertToSlug(eI);
-                                    jainItems[slug] = eI.toString().trim();
-                                    if(itemObj["preparations"][slug] && Object.keys(itemObj["preparations"][slug])?.length > 0){
-                                        itemObj["preparations"][slug].is_jain = true
-                                    }
-                                });
-                                itemObj["jain_preparations"] = jainItems;
-                                
-                            }
-
-
-                           
                             globalObj["items"].push(itemObj)
                         }
                         else{

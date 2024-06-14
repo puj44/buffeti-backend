@@ -68,10 +68,10 @@ async function initializeCache(){
         const menuData = await menuOptions.find({}).then((d) => d).catch((err) => ({ errorResponse: err }));
         let menuObj = {};
         if(!menuData?.errorResponse && menuData?.length){
-            menuData.map((md,idx)=>{
-            menuObj[md.slug.toString()] = md.name;
-            })
-                await set(keys.menuOptions,menuObj,true);
+            for(const md of menuData){
+                menuObj[md.slug.toString()] = md.name;
+            }
+            await set(keys.menuOptions,menuObj,true);
         
         }else{
             console.log("Err Menu Option: ",JSON.stringify(menuData))
@@ -80,89 +80,100 @@ async function initializeCache(){
         //SET CATEGORIES AND SUB CATEGORIES
         const categoriesData = await categories.find({}).then((d) => d).catch((err) => ({ errorResponse: err }));
         if(!categoriesData?.errorResponse && categoriesData?.length){
-            await categoriesData.forEach(async(c,idx)=>{
+            for(const c of categoriesData){
                 const obj = c.toObject({flattenMaps:true});
                 await set(`${obj.location}_${obj.menu_option}_${keys.categories}`, obj.categories,true);
-            })
+            }
         }else{
             console.log("Err Categories: ",JSON.stringify(categoriesData?.errorResponse))
             return;
         }
-        //SET ITEMS
-        const itemsData = await ItemsModel.find({}).then((d) => d).catch((err) => ({ errorResponse: err }));
-        let locationBasedObj = {};
-        if(!itemsData?.errorResponse && itemsData?.length){
-            await itemsData.map((data,idx)=>{
+      
+      //SET EXTRA ITEMS
+      const extraItemsData = await ExtraItems.find({}).then((d) => d).catch((err) => ({ errorResponse: err }));
+      let extraItemsObj = {};
+      if(!extraItemsData?.errorResponse && extraItemsData?.length){
+            for(const data of extraItemsData){
                 let item = data.toObject({flattenMaps:true});
                 delete item.createdAt;
                 delete item.updatedAt;
                 delete item.__v;
-                locationBasedObj[item.location] = {
-                    [item.menu_option]:{
-                        ...locationBasedObj[item.location]?.[item.menu_option],
-                        [item.category.slug]:{
-                            ...locationBasedObj[item.location]?.[item.category.slug] ?? {},
-                            [item.sub_category?.slug ?? item.category.slug]:{
-                                ...locationBasedObj[item.location]?.[item.category.slug]?.[item.sub_category?.slug ?? item.category.slug] ?? {},
-                                [item.slug]:item
-                            }
-                        }
-                    }
+                extraItemsObj[item.location] = {
+                    ...extraItemsObj[item.location],
+                    [item.slug]:item
                 }
-            
-            });
-            locationBasedObj && Object.keys(locationBasedObj).length > 0 &&
-            Object.keys(locationBasedObj).map(async(loc)=>{
-                Object.keys(locationBasedObj[loc]).map(async(menu)=>{
-                    await set(`${loc}_${menu}_${keys.items}`, locationBasedObj[loc][menu],true);
-                })
-            })
-        }else{
-            console.log("Err Items: ",JSON.stringify(itemsData))
-            return true;
-        }
-      //SET EXTRA ITEMS
-      const extraItemsData = await ExtraItems.find({}).then((d) => d).catch((err) => ({ errorResponse: err }));
-      locationBasedObj = {};
-      if(!extraItemsData?.errorResponse && extraItemsData?.length){
-           await extraItemsData.map((data,idx)=>{
-              let item = data.toObject({flattenMaps:true});
-              delete item.createdAt;
-              delete item.updatedAt;
-              delete item.__v;
-              locationBasedObj[item.location] = {
-                  ...locationBasedObj[item.location],
-                  [item.slug]:item
-              }
-            
-          });
-          locationBasedObj && Object.keys(locationBasedObj).length > 0 &&
-          Object.keys(locationBasedObj).map(async(loc)=>{
-              await set(`${loc}_click2cater_${keys.extra_items}`, locationBasedObj[loc],true);
-          })
+            }
+          if(extraItemsObj && Object.keys(extraItemsObj).length > 0){
+            for(const loc in extraItemsObj){
+                await set(`${loc}_click2cater_${keys.extra_items}`, extraItemsObj[loc],true);
+            }
+          }
       }else{
           console.log("Err Extra Items: ",JSON.stringify(extraItemsData))
           return true;
       }
 
-       //SET PREPARATIONS
-       const preparationsData = await Preparations.find({}).then((d) => d).catch((err) => ({ errorResponse: err }));
-       locationBasedObj = {};
-       if(!preparationsData?.errorResponse && preparationsData?.length){
-            await preparationsData.map((data,idx)=>{
-               let item = data.toObject({flattenMaps:true});
-               delete item.createdAt;
-               delete item.updatedAt;
-               delete item.__v;
-               locationBasedObj[item.location] = {
-                   ...locationBasedObj[item.location],
-                   [item.slug]:item
+       
+         //SET ITEMS
+         const itemsData = await ItemsModel.find({}).then((d) => d).catch((err) => ({ errorResponse: err }));
+        let locationBasedObj = {};
+         if(!itemsData?.errorResponse && itemsData?.length){
+            for(const data of itemsData){
+                let item = data.toObject({flattenMaps:true});
+                delete item.createdAt;
+                delete item.updatedAt;
+                delete item.__v;
+                //SET EXTRA ITEMS
+                if(item.extra_items && Object.keys(item.extra_items).length > 0){
+
+                   for(const extra in item.extra_items){
+                       if(extraItemsObj?.[item?.location]?.[extra])
+                           item.extra_items[extra] =extraItemsObj[item?.location][extra]
+                   }
                }
-             
-           });
-           if(locationBasedObj && Object.keys(locationBasedObj).length > 0)
-           for (const loc of Object.keys(locationBasedObj)) {
-            await set(`${loc}_click2cater_${keys.preparations}`, locationBasedObj[loc], true);
+                locationBasedObj[item.location] = {
+                    ...locationBasedObj[item.location],
+                    [item.menu_option]:{
+                        ...locationBasedObj[item.location]?.[item.menu_option],
+                        [item.category.slug]:{
+                            ...locationBasedObj[item.location]?.[item.category.slug] ?? {},
+                            [item.sub_category?.slug ?? item.category.slug]:{
+                                ...locationBasedObj[item.location]?.[item.menu_option]?.[item.category.slug]?.[item.sub_category?.slug ?? item.category.slug],
+                                [item.slug]:item
+                            }
+                        }
+                    }
+                }
+            }
+             if(locationBasedObj && Object.keys(locationBasedObj).length > 0 ){
+                for(const loc in locationBasedObj){
+                    for(const menu in locationBasedObj[loc]){
+                        await set(`${loc}_${menu}_${keys.items}`, locationBasedObj[loc][menu],true);
+                    }
+                }
+             }
+         }else{
+             console.log("Err Items: ",JSON.stringify(itemsData))
+             return true;
+         }
+
+         //SET PREPARATIONS
+       const preparationsData = await Preparations.find({}).then((d) => d).catch((err) => ({ errorResponse: err }));
+       let preparationsObj = {};
+       if(!preparationsData?.errorResponse && preparationsData?.length){
+            for(const data of preparationsData){
+                let item = data.toObject({flattenMaps:true});
+                delete item.createdAt;
+                delete item.updatedAt;
+                delete item.__v;
+                preparationsObj[item.location] = {
+                    ...preparationsObj[item.location],
+                    [item.slug]:item
+                }
+            }
+           if(preparationsObj && Object.keys(preparationsObj).length > 0)
+           for (const loc of Object.keys(preparationsObj)) {
+            await set(`${loc}_click2cater_${keys.preparations}`, preparationsObj[loc], true);
             }
        }else{
            console.log("Err Preparations Items: ",JSON.stringify(preparationsData))

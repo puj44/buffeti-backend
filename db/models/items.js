@@ -24,7 +24,6 @@ const itemsSchema = new Schema({
     preparations: { type: Object, default: null },
 
     is_jain:{type:Boolean, default:false},
-    jain_preparations: { type: Map, of: String, default: null },
 
     images: { type: [String], default: [] },
 },{timestamps:true});
