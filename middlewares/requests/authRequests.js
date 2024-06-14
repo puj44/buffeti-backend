@@ -5,7 +5,7 @@ const authRequests = {
     },
     verify:{
         mobile_number: Joi.numberString().len(10).required(),
-        otp:Joi.numberString().len(6).required()
+        otp:Joi.numberString().len(4).required()
     },
 }
 
