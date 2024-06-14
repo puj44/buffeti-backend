@@ -28,7 +28,7 @@ const getMenuOptions = async(req,res) =>{
 const getHomeData = async(req,res) =>{
     try{
         const locations = await get("locations",true);
-
+        
         return sendRes(
             res,
             200,

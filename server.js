@@ -15,7 +15,7 @@ mongoose.connect(process.env.MONGO_URL);
 app.use((req, res, next) => {
   res.append('Access-Control-Allow-Origin', ['*']);
   res.append('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-  res.append('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-Type');
+  res.append('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Authorization, Accept-Version, Content-Length, Content-Type');
   res.append('Access-Control-Allow-Credentials', true)
   next();
 });

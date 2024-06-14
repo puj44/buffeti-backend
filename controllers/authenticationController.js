@@ -83,7 +83,7 @@ const verifyOtp = async (req, res) =>{
 }
 
 const checkstatus= async (req, res) => {
-    const token = req.header.accessToken;
+    const token = req.headers.authorization?.split("Bearer ")?.[1];
     if(token === null || token === undefined){
 
         return sendRes(res,401,
@@ -95,6 +95,7 @@ const checkstatus= async (req, res) => {
     } 
 
     const payload = verifyJWT(token).payload;
+    
         if(payload === null){
             return sendRes(res,403,
                 {
