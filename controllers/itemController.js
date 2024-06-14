@@ -2,15 +2,17 @@ const { get } = require("../common/redisGetterSetter");
 const sendError = require("../common/sendError");
 const sendResponse = require("../common/sendResponse");
 const keys = require("../config/keys");
+const { listenerCount } = require("../db/models/categories");
+const itemsFilter = require("./filters/itemsFilter");
 
 
 const getItems = async (req,res) => {
     try{
         const {location} = req.headers;
         const {menuOption,category} = req.params;
-        const {search} = req.query;
+        const {search, is_jain} = req.query;
 
-        const categoriesData = await get(`${location}_${menuOption}_${keys.categories}`,true);
+        let categoriesData = await get(`${location}_${menuOption}_${keys.categories}`,true);
         //if category exists
         if(!categoriesData || Object.keys(categoriesData ?? {})?.length <= 0 || !categoriesData[category]){
             return sendResponse(
@@ -20,25 +22,21 @@ const getItems = async (req,res) => {
                 }
             )
         }
+        categoriesData = null;
         
-        let items = await get(`${location}_${menuOption}_${keys.items}`,true);
-        if(menuOption === "click2cater"){
-            let values = {}
-            // Object.entries(filteredData).forEach(([category, items]) => {
-            //     return Object.keys(items).forEach(item => {
-            //         values[item] = items[item];
-            //     });
-            // });
+        let data = await get(`${location}_${menuOption}_${keys.items}`,true);
+        let items = data[category];
+        if((search && search !== "") || is_jain === "true"){
+            items = await itemsFilter(items,{is_jain:is_jain === "true" ?true:false,search},menuOption);
         }
-        // items.map((i)=>{
-        //     if(i.category== category){
-        //         //sendRes item obj
-        //     }
-        // })
+        
         return sendResponse(
             res,
             200,
             {
+                data:{
+                    items
+                },
                 message:"Items fetched successfully!"
             }
         )

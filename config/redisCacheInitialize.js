@@ -136,7 +136,7 @@ async function initializeCache(){
                     [item.menu_option]:{
                         ...locationBasedObj[item.location]?.[item.menu_option],
                         [item.category.slug]:{
-                            ...locationBasedObj[item.location]?.[item.category.slug] ?? {},
+                            ...locationBasedObj[item.location]?.[item.menu_option]?.[item.category.slug] ?? {},
                             [item.sub_category?.slug ?? item.category.slug]:{
                                 ...locationBasedObj[item.location]?.[item.menu_option]?.[item.category.slug]?.[item.sub_category?.slug ?? item.category.slug],
                                 [item.slug]:item
