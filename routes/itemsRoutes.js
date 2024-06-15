@@ -7,6 +7,6 @@ const slugs = require('../middlewares/validator/slugs');
 const validateLocation = require('../middlewares/validateLocation');
 
 
-router.get(`/get-items/:menuOption(${slugs.menuOption})/:category`,validateLocation ,validator(itemRequests.getItems, true) ,getItems);
+router.get(`/get-items/:menuOption(${slugs.menuOption})/:category` ,validator(itemRequests.getItems, true) ,getItems);
 
 module.exports = router;
