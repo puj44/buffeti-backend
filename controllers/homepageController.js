@@ -76,4 +76,28 @@ const getPackages = async(req,res) =>{
     }
 
 }
-module.exports = {getMenuOptions,getPackages,getHomeData}
+
+const getFilters = async(req,res) =>{
+    try{
+        const {location} = req.headers;
+        const {menuOption} = req.params;
+
+        const filters = await get(`${location}_${menuOption}_filters`,true);
+
+        return sendRes(
+            res,
+            200,
+            {
+                data:{
+                    filters,
+                },
+                message:"Filters fetched successfully!"
+            }
+        )
+      }catch(err){
+        console.log("Get Filters Error:",err);
+        sendErr(res,err)
+    }
+}
+
+module.exports = {getMenuOptions,getPackages,getHomeData,getFilters}
