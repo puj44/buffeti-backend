@@ -23,7 +23,7 @@ router.use("/auth",authRoutes);
 router.use("/home",homeRoutes);
 router.use("/items",validateLocation, itemRoutes);
 router.use("/packages",validateLocation,packageRoutes);
-router.use("/cart",validateLocation, cartRoutes);
+router.use("/cart",validateLocation,authenticateUser, cartRoutes);
 
 router.use("/", (req,res) => {
     res.status(404).send("Route not defined!");

@@ -7,6 +7,7 @@ const verifyCustomer = require("../controllers/authenticationController");
 const { get } = require("../common/redisGetterSetter");
 const verifyUser = require("../common/verifyOtp");
 const sendSMS = require("./../common/sendOtp");
+const prefix = process.env.PREFIX_OTP;
 
 
 const insertCustomer = async (req,res) =>{

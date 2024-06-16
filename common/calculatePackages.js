@@ -1,7 +1,7 @@
 
 async function isValidPackage(selectedPackage,packages){
     let isValidPackage = true;
-    const values = {};
+    const values = {}; //This will have the 
     const categoriesMapings = packages.categoriesMapings;
     categoriesMapings.map((d)=>{
         if(!selectedPackage[d]){
@@ -13,4 +13,14 @@ async function isValidPackage(selectedPackage,packages){
             }
         }
     });
+    return values;
+
+    // if(isValidPackage === false){
+    //     //get item from selectedPackage
+    //     const itemData = selectedPackage[]
+
+    //     //get 
+    // }
 }
+
+module.exports = {isValidPackage}
