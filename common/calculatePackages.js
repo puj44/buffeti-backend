@@ -1,26 +1,37 @@
+const keys = require("../config/keys");
+const {get} = require("../common/redisGetterSetter");
 
-async function isValidPackage(selectedPackage,packages){
+async function isValidPackage(noOfPeople,selectedPackage,packages,menuOption,location){
     let isValidPackage = true;
-    const values = {}; //This will have the 
-    const categoriesMapings = packages.categoriesMapings;
+    const values = {}; //This will have the items from selectedPackage
+    const cachedData = {};
+    let items =  await get(`${location}_${menuOption}_${keys.items}`,true);
+    //const categoriesMapings = packages["categories_mapping"];
+    console.log("selected",selectedPackage);
+    console.log("mapings",packages);
+    selectedPackage.map((s)=>{
+        console.log();
+    });
+
     categoriesMapings.map((d)=>{
         if(!selectedPackage[d]){
             isValidPackage = false;
         }else{
-            values = selectedPackage[d];
+            values = selectedPackage[d];//
             if(selectedPackage[d] !== Object.keys(values).length){
                 isValidPackage = false;
             }
         }
     });
-    return values;
 
-    // if(isValidPackage === false){
-    //     //get item from selectedPackage
-    //     const itemData = selectedPackage[]
+    console.log("values",values);
 
-    //     //get 
-    // }
+    if(isValidPackage === false){
+        values.map((v)=>{
+            items[Object.keys(v)]
+            
+        });
+    }
 }
 
 module.exports = {isValidPackage}
