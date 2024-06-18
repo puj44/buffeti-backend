@@ -18,7 +18,7 @@ const addtocart = async (req,res)=>{
 
     if(menuOption !== "mini-meals" && packageData !== null && packages !== null){
         const packageToBeAdded = await isValidPackage(noOfPeople,JSON.parse(JSON.stringify(packageData)) /*user Selected Package */,JSON.parse(JSON.stringify(packages))/*cache Package */, menuOption,location);
-        console.log("values",packageToBeAdded);
+        //console.log("values",packageToBeAdded);
     }else{
 
     }
