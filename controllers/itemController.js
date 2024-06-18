@@ -6,6 +6,27 @@ const { listenerCount } = require("../db/models/categories");
 const itemsFilter = require("./filters/itemsFilter");
 
 
+const getCategories = async(req,res) =>{
+    try{
+        const {location} = req.headers;
+        const {menuOption} = req.params;
+        const categoriesData = await get(`${location}_${menuOption}_${keys.categories}`,true);
+        return sendResponse(
+            res,
+            200,
+            {
+                data:{
+                    categories:categoriesData ?? {}
+                },
+                message:"Categories fetched successfully!"
+            }
+        )
+    }catch(err){
+        console.log("GET CATEGORIES ERR:",err)
+        sendError(res,err)
+    }
+}
+
 const getItems = async (req,res) => {
     try{
         const {location} = req.headers;
@@ -48,4 +69,4 @@ const getItems = async (req,res) => {
     }
 }
 
-module.exports = {getItems}
+module.exports = {getItems,getCategories}
