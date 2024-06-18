@@ -208,12 +208,16 @@ async function initializeCache(){
                     },
                     pricing:[
                         {
-                            min:150,
-                            max:200
+                            min:350,
+                            max:475
                         },
                         {
-                            min:200
+                            min:475,
+                            max:675
                         },
+                        {
+                            min:675
+                        }
                     ]
                 }
             };
@@ -252,12 +256,16 @@ async function initializeCache(){
                 },
                 pricing:[
                     {
-                        min:150,
-                        max:200
+                        min:350,
+                        max:475
                     },
                     {
-                        min:200
+                        min:475,
+                        max:675
                     },
+                    {
+                        min:675
+                    }
                 ]
             };
         }

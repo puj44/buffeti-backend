@@ -1,5 +1,5 @@
 const Joi = require("../validator/schemas");
-const homeRequests = {
+const packageRequests = {
     getPackages:{
         min:Joi.number().min(0).empty(["",null]),
         max:Joi.number().greater(Joi.ref("min")).empty(["",null]),
@@ -8,4 +8,4 @@ const homeRequests = {
     },
 }
 
-module.exports = {homeRequests}
+module.exports = {packageRequests}
