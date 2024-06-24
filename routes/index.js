@@ -4,8 +4,10 @@ const adminRoutes = require("./adminRoutes");
 const homeRoutes = require("./homepageRoutes");
 const itemRoutes = require("./itemsRoutes");
 const packageRoutes = require("./packagesRoutes");
+const cartRoutes = require("./cartRoutes");
 const express = require('express');
 const validateLocation = require("../middlewares/validateLocation");
+const authenticateUser = require("../middlewares/authenticateUser");
 const router = express.Router();
 
 // Middleware to log requests
@@ -21,6 +23,7 @@ router.use("/auth",authRoutes);
 router.use("/home",homeRoutes);
 router.use("/items",validateLocation, itemRoutes);
 router.use("/packages",validateLocation,packageRoutes);
+router.use("/cart",validateLocation,cartRoutes);
 
 router.use("/", (req,res) => {
     res.status(404).send("Route not defined!");
