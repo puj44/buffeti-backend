@@ -1,27 +1,58 @@
-const {isValidPackage} = require("../common/calculatePackages"); 
-const keys = require("../config/keys");
-const {get} = require("../common/redisGetterSetter");
+const {validatePackage, calculateItems} = require("../common/calculateCart"); 
+const Items = require("../db/models/items");
+const MiniMeals = require("../db/models/miniMeals");
+const Packages = require("../db/models/packages");
+const sendError = require("../common/sendError");
+const { findItems } = require("../common/findItems");
 
 const addtocart = async (req,res)=>{
     const {location} = req.headers;
-    const {menuOption,noOfPeople,packageData} = req.body;
-    let packages;
-    let items;
+    const {menuOption,noOfPeople,items} = req.body;
+    const packageName = (menuOption === ("click2cater" || "mini-meals")) ? req.body.packageName : null;
+    let packagesData;
+    let itemsData;
+    let isValidPackage = true;
+    let totalPrice;
+    let categoriesMapings;
+    
 
-    if(menuOption === "click2cater"){
-        packages = await get(`${location}_${menuOption}_${keys.packages}`,true);
-    }else if(menuOption === "snack-boxes"){
-        packages = await get(`${location}_${menuOption}_${keys.categories}`,true);
-    }else{
-        packages = await get(`${location}_${menuOption}_${keys.mini_meals}`,true);
+    try{
+
+        switch (menuOption) {
+            case ("click2cater"):
+                if(packageName && items){
+                    packagesData = await Packages.findOne({slug:packageName}).then((d)=>d);
+                    isValidPackage = await validatePackage(items,packagesData);
+                }
+                itemsData = await findItems(items,menuOption,packagesData);
+                break;
+            case ("snack-boxes"):
+                itemsData = await findItems(items,menuOption);
+                break;
+            case ("mini-meals"):
+                itemsData = await findItems(items,menuOption,packageName);
+                break;
+        }
+
+        if(packageName && items){
+    
+            packagesData = await Packages.findOne({slug:packageName}).then((d)=>d);
+            isValidPackage = await validatePackage(items,packagesData);
+        }
+
+        
+
+        if(itemsData && !itemsData.error){
+            totalPrice = await calculateItems(itemsData,items,menuOption,noOfPeople,isValidPackage);
+        }else{
+            console.log("error");
+        }
+
+
+    }catch(err){
+        sendError(res,err);
     }
 
-    if(menuOption !== "mini-meals" && packageData !== null && packages !== null){
-        const packageToBeAdded = await isValidPackage(noOfPeople,JSON.parse(JSON.stringify(packageData)) /*user Selected Package */,JSON.parse(JSON.stringify(packages))/*cache Package */, menuOption,location);
-        //console.log("values",packageToBeAdded);
-    }else{
-
-    }
 
 }
 
