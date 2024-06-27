@@ -2,14 +2,16 @@ const { get } = require("../common/redisGetterSetter");
 const sendError = require("../common/sendError");
 const sendResponse = require("../common/sendResponse");
 const packageFilter = require("./filters/packageFilter");
-
+   
 const getPackages = async(req,res) =>{
     try{
         const {location} = req.headers;
         const {menuOption} = req.params;
         const {min,max,category} = req.query;
         const noOfPeople = req.query.no_of_people ? `_${req.query.no_of_people}_pax` :"_10_20_pax";
+    
 
+    
         let packages = await get(`${location}_${menuOption}_packages`,true);
         const filters = await get(`${location}_${menuOption}_filters`,true);
         

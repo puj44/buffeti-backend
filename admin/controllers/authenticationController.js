@@ -8,12 +8,15 @@ const bcrypt = require("bcrypt");
 const signin = async (req,res) =>{
     const {email, password} = req.body;
     try{
+        console.log("asd");
         const user = await users.findOne({email});
+        console.log(user);
         if(!user){
             return sendResponse(res, 401, {
                 message:"Invalid Email or Password"
             });
         }
+        console.log("asd2");
         let response =  await new Promise((resolve,reject) =>{
 
             bcrypt.compare(password,user.password,(err,hash_result)=>{
@@ -21,7 +24,7 @@ const signin = async (req,res) =>{
                 resolve(hash_result)
             })
         })
-        
+        console.log(response);
         if(!response) return sendResponse(res,401, {message:"Invalid Email or Password"});
 
         const accessToken = signJWT(

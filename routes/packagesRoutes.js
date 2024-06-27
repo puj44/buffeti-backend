@@ -6,8 +6,8 @@ const validateLocation = require('../middlewares/validateLocation');
 const { packageRequests } = require('../middlewares/requests/packageRequests');
 const { getPackages, getFilters } = require('../controllers/packagesControllers');
 
-router.get(`/get-packages/:menuOption(${slugs.menuOption})`,validateLocation ,validator(packageRequests.getPackages, true) ,getPackages);
-router.get(`/get-filters/:menuOption(${slugs.menuOption})`,validateLocation  ,getFilters);
+router.get(`/get-packages/:menuOption(${slugs.menuOption})`,validator(packageRequests.getPackages, true) ,getPackages);
+router.get(`/get-filters/:menuOption(${slugs.menuOption})`,getFilters);
 
 
 module.exports = router;

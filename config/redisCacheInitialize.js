@@ -185,7 +185,24 @@ async function initializeCache(){
        if(!packagesData?.errorResponse && packagesData?.length){
         let globalObj = {};
         let filters = {};
-        for (const obj of packagesData){
+        for (let obj of packagesData){
+            let newObj = JSON.parse(JSON.stringify(obj));
+            //SET PRE-SET ITEMS OF PACKAGES
+            if(newObj.items_mapping && newObj.items_mapping?.length){
+                newObj["items_mapping"] = {};
+                for(const item of obj.items_mapping){
+                    const itemData = await ItemsModel.findOne({slug:item}).then((d) => d).catch((err) => ({ errorResponse: err }));
+                    if(itemData && Object.keys(itemData) && !itemData.errorResponse){
+                        newObj["items_mapping"] = {
+                            ...newObj["items_mapping"],
+                            [itemData.category.slug]:{
+                                ...newObj["items_mapping"]?.[itemData.category.slug],
+                                [item]:itemData
+                            }
+                        };
+                    }
+                }
+            }
             //SET PACKAGES
             globalObj[obj.location] = {
                 ...globalObj[obj.location],
@@ -193,7 +210,7 @@ async function initializeCache(){
                     ...globalObj[obj.location]?.[obj.menu_option],
                     [obj.category?.slug]:{
                         ...globalObj[obj.location]?.[obj.menu_option]?.[obj.category?.slug],
-                        [obj.slug]:obj
+                        [obj.slug]:newObj
                     }
                 }
             }
