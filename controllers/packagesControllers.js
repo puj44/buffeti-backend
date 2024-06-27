@@ -3,6 +3,46 @@ const sendError = require("../common/sendError");
 const sendResponse = require("../common/sendResponse");
 const packageFilter = require("./filters/packageFilter");
    
+const getPackage = async(req,res) =>{
+    try{
+        const {location} = req.headers;
+        const {menuOption, packageSlug} = req.params; 
+
+        const packages = await get(`${location}_${menuOption}_packages`,true);
+        let values = Object.values(packages);
+        values.map((v,idx)=>{
+            if(v?.[packageSlug]){
+                const value = v[packageSlug]
+                return sendResponse(
+                    res,
+                    200,
+                    {
+                        data:{
+                            package:{
+                                slug:packageSlug,
+                                package_name:value.package_name,
+                                items_mapping:value.items_mapping,
+                                category:value.category,
+                            }
+                        },
+                        message:"Package fetched successfully!"
+                    }
+                )
+            }
+        })
+        return sendResponse(
+            res,
+            400,
+            {
+                message:"Package not found!"
+            }
+        )
+    }catch(err){
+        console.log("Get Package Error:",err);
+        sendError(res,err)
+    }
+}
+
 const getPackages = async(req,res) =>{
     try{
         const {location} = req.headers;
@@ -60,4 +100,4 @@ const getFilters = async(req,res) =>{
     }
 }
 
-module.exports = {getFilters,getPackages}
+module.exports = {getFilters,getPackages,getPackage}
