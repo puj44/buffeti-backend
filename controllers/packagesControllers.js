@@ -10,8 +10,10 @@ const getPackage = async(req,res) =>{
 
         const packages = await get(`${location}_${menuOption}_packages`,true);
         let values = Object.values(packages);
+        let isFound = false;
         values.map((v,idx)=>{
             if(v?.[packageSlug]){
+                isFound = true;
                 const value = v[packageSlug]
                 return sendResponse(
                     res,
@@ -30,13 +32,15 @@ const getPackage = async(req,res) =>{
                 )
             }
         })
-        return sendResponse(
-            res,
-            400,
-            {
-                message:"Package not found!"
-            }
-        )
+        if(!isFound){
+                return sendResponse(
+                    res,
+                    400,
+                    {
+                        message:"Package not found!"
+                    }
+                )
+        }
     }catch(err){
         console.log("Get Package Error:",err);
         sendError(res,err)
