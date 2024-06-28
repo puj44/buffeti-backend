@@ -131,19 +131,32 @@ async function initializeCache(){
                            item.extra_items[extra] =extraItemsObj[item?.location][extra]
                    }
                }
-                locationBasedObj[item.location] = {
-                    ...locationBasedObj[item.location],
-                    [item.menu_option]:{
-                        ...locationBasedObj[item.location]?.[item.menu_option],
-                        [item.category.slug]:{
-                            ...locationBasedObj[item.location]?.[item.menu_option]?.[item.category.slug] ?? {},
-                            [item.sub_category?.slug ?? item.category.slug]:{
-                                ...locationBasedObj[item.location]?.[item.menu_option]?.[item.category.slug]?.[item.sub_category?.slug ?? item.category.slug],
-                                [item.slug]:item
+               if(item.menu_option === "snack-boxes"){
+                    locationBasedObj[item.location] = {
+                        ...locationBasedObj[item.location],
+                        [item.menu_option]:{
+                            ...locationBasedObj[item.location]?.[item.menu_option],
+                            [item.category.slug]:{
+                                ...locationBasedObj[item.location]?.[item.menu_option]?.[item.category.slug] ?? {},
+                                    [item.slug]:item
                             }
                         }
                     }
-                }
+               }else{
+                   locationBasedObj[item.location] = {
+                       ...locationBasedObj[item.location],
+                       [item.menu_option]:{
+                           ...locationBasedObj[item.location]?.[item.menu_option],
+                           [item.category.slug]:{
+                               ...locationBasedObj[item.location]?.[item.menu_option]?.[item.category.slug] ?? {},
+                               [item.sub_category?.slug ?? item.category.slug]:{
+                                   ...locationBasedObj[item.location]?.[item.menu_option]?.[item.category.slug]?.[item.sub_category?.slug ?? item.category.slug],
+                                   [item.slug]:item
+                               }
+                           }
+                       }
+                   }
+               }
             }
              if(locationBasedObj && Object.keys(locationBasedObj).length > 0 ){
                 for(const loc in locationBasedObj){
