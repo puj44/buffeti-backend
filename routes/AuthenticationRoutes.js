@@ -8,7 +8,7 @@ const validator = require("../middlewares/validator/validator");
 router.post("/sign-in", validator(authRequests.signin),auth.signin);
 router.post("/verify",validator(authRequests.verify), auth.verifyOtp);
 router.get("/get-status",auth.checkstatus);
-router.get("/sign-out",auth.signout);
+router.post("/sign-out",auth.signout);
 
 module.exports = router;
 
