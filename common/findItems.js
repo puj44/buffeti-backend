@@ -2,20 +2,18 @@ const Items = require("../db/models/items");
 const MiniMeals = require("../db/models/miniMeals");
 
 
-async function findItems(items,menuOption,packages,packageName){
+async function findItems(items,menuOption,packageName){
     try{
         const promises = [];
 
-        if(menuOption === "click2cater"){
-            Object.keys(packages.categories_mapping).forEach((c)=>{
-                promises.push(Items.findOne({slug:Object.keys(items[c])}).then((d)=>d));
-            });
-        }else if(menuOption === "snack-boxes"){
-            Object.keys(items).forEach((c)=>{
-                promises.push(Items.findOne({slug:Object.keys(items[c])}).then((d)=>d));
-            });
-        }else{
+        if(menuOption === "mini-meals"){
             promises.push(MiniMeals.findOne({slug:packageName}).then((d)=>d));
+        }else{
+            Object.keys(items).forEach((c)=>{
+                Object.keys(items[c]).map((i)=>{
+                    promises.push(Items.findOne({slug:i}).then((d)=>d));
+                });
+            });
         }
         const results = await Promise.all(promises);
         return results;
