@@ -5,6 +5,7 @@ const homeRoutes = require("./homepageRoutes");
 const itemRoutes = require("./itemsRoutes");
 const packageRoutes = require("./packagesRoutes");
 const cartRoutes = require("./cartRoutes");
+const profileRoutes = require("./profileRoutes");
 const express = require("express");
 const validateLocation = require("../middlewares/validateLocation");
 const authenticateUser = require("../middlewares/authenticateUser");
@@ -24,6 +25,7 @@ router.use("/home", homeRoutes);
 router.use("/items", validateLocation, itemRoutes);
 router.use("/packages", validateLocation, packageRoutes);
 router.use("/cart", authenticateUser, cartRoutes);
+router.use("/profile", authenticateUser, profileRoutes);
 
 router.use("/", (req, res) => {
   res.status(404).send("Route not defined!");
