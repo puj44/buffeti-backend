@@ -98,8 +98,8 @@ const getCart = async (req, res) => {
     const { no_of_people, package_name, items } = cartItems;
 
     let packagesData,
-      miniMealsData,
       itemsData,
+      miniMealsData,
       isValidPackage = true,
       total_items_amount,
       total_amount,
@@ -107,7 +107,6 @@ const getCart = async (req, res) => {
       itemObj;
 
     const data = {
-      itemsData: itemsData,
       items: items,
       menu_option: menu_option,
       no_of_people: no_of_people,
@@ -117,64 +116,63 @@ const getCart = async (req, res) => {
 
     switch (menu_option) {
       case "click2cater":
-        {
-          if (package_name) {
-            packagesData = await Packages.findOne({ slug: package_name }).then(
-              (d) => d
-            );
-            isValidPackage = await validatePackage(
-              items,
-              isValidPackage,
-              packagesData
-            );
-          }
-          itemsData = await findItems(items, menu_option);
-
-          //calculation of total amount
-          if (itemsData && packagesData) {
-            itemObj = await calculateItems(data);
-
-            if (no_of_people >= 10 && no_of_people <= 20) {
-              packagePrice = packagesData._10_20_pax;
-            } else if (no_of_people >= 20 && no_of_people <= 30) {
-              packagePrice = packagesData._20_30_pax;
-            } else {
-              packagePrice = packagesData._30_plus_pax;
-            }
-
-            Object.keys(itemObj).forEach((i) => {
-              total_items_amount = total_items_amount + itemObj[i].total_price;
-            });
-          } else {
-            return sendRes(res, 500, {
-              message: "Couldn't find data",
-            });
-          }
-          if (isValidPackage) {
-            total_amount += total_items_amount + packagePrice;
-          }
-          return sendRes(res, 200, {
-            total_amount: total_amount,
-          });
-        }
-        break;
-      case "snack-boxes":
-        {
-          itemsData = await findItems(items, menu_option);
-          if (itemsData) {
-            itemObj = await calculateItems(data);
-          }
-        }
-        break;
-      case "mini-meals":
-        {
-          miniMealsData = await MiniMeals.findOne({ slug: package_name }).then(
+        if (package_name) {
+          packagesData = await Packages.findOne({ slug: package_name }).then(
             (d) => d
           );
-          itemsData = await findItems(items, menu_option, package_name);
+          isValidPackage = await validatePackage(
+            items,
+            isValidPackage,
+            packagesData
+          );
         }
+        itemsData = await findItems(items, menu_option);
+
+        //calculation of total amount
+        if (itemsData && packagesData) {
+          itemObj = await calculateItems(data);
+
+          if (no_of_people >= 10 && no_of_people <= 20) {
+            packagePrice = packagesData._10_20_pax;
+          } else if (no_of_people >= 20 && no_of_people <= 30) {
+            packagePrice = packagesData._20_30_pax;
+          } else {
+            packagePrice = packagesData._30_plus_pax;
+          }
+
+          Object.keys(itemObj).forEach((i) => {
+            total_items_amount = total_items_amount + itemObj[i].total_price;
+          });
+        } else {
+          return sendRes(res, 500, {
+            message: "Couldn't find data",
+          });
+        }
+        if (isValidPackage) {
+          total_amount += total_items_amount + packagePrice;
+        }
+
+        break;
+      case "snack-boxes":
+        itemsData = await findItems(items, menu_option, package_name);
+        if (itemsData) {
+          itemObj = await calculateItems(data, itemsData);
+          console.log(itemObj);
+        }
+
+        break;
+      case "mini-meals":
+        itemsData = await findItems(items, menu_option, package_name);
+        if (itemsData) {
+          itemObj = await calculateItems(data, itemsData);
+          console.log(itemObj);
+        }
+
         break;
     }
+    return sendRes(res, 200, {
+      itemObj,
+    });
   } catch (err) {
     sendError(res, err);
   }
