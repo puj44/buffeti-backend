@@ -10,8 +10,10 @@ const indexes ={
     "item":0,
     "category":1,
     "jain":2,
-    "price":3,
-    "description":4,
+    "buffeti_rate_per_serving":3,
+    "price":4,
+    "food_cost":5,
+    "description":6
 }
 
 async function miniMeals(sheet,location){
@@ -34,8 +36,9 @@ async function miniMeals(sheet,location){
                             "slug":itemSlug,
                             "item_name":row[indexes.item],
                             "category":{"slug":categorySlug,"name":category},
-
+                            "buffeti_rate_per_serving":Number(row[indexes.buffeti_rate_per_serving] ?? 0),
                             "price":Number(row[indexes.price] ?? 0),
+                            "food_cost":Number(row[indexes.food_cost] ?? 0),
                             "description":row[indexes.description],
 
                             "is_jain": jain && jain !== "" && jain === "y" ? true : false
@@ -43,7 +46,7 @@ async function miniMeals(sheet,location){
 
                         globalObj.push(itemObj);
                     }else{
-                        throw Error("Problem at row number: "+rowIndex+1)
+                        throw Error("MiniMeals - Problem at row number: "+rowIndex+1)
                     }
                 }
             });

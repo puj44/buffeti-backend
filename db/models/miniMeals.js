@@ -7,6 +7,8 @@ const miniMealsSchema = new Schema({
     item_name:{ type: String, required: true },
     category:{ type: Object, required: true },
     price:{ type: Number, required: true },
+    buffeti_rate_per_serving:{type: Number, required: true, default:null},
+    food_cost: {type: Number, required: true, default:null},
     description:{ type: String, required: true },
     is_jain:{ type: Boolean, default: false },
 },{timestamps:true});
