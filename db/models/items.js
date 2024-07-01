@@ -11,6 +11,7 @@ const itemsSchema = new Schema({
     serving_per_pax: { type: Number, required: true },
     unit: { type: String, required: true },
     rate_per_serving: { type: Number, required: true },
+    buffeti_rate_per_serving:{type: Number, required: false, default:null},
 
     category: { type: Object, default: {} },
     sub_category: { type: Object, default: null },
@@ -20,6 +21,7 @@ const itemsSchema = new Schema({
     additional_serving: { type: Number, required: false, default:null },
     additional_serving_unit: { type: String, required: false, default:null },
     additional_serving_rate: { type: Number, required: false, default:null },
+    food_cost:{type:Number, required: false, default:null},
     extra_items: { type: Map, of: String, default: null },
     preparations: { type: Object, default: null },
 

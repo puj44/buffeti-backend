@@ -2,7 +2,6 @@ const { get } = require("../common/redisGetterSetter");
 const sendError = require("../common/sendError");
 const sendResponse = require("../common/sendResponse");
 const keys = require("../config/keys");
-const { listenerCount } = require("../db/models/categories");
 const itemsFilter = require("./filters/itemsFilter");
 
 

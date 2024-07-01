@@ -16,9 +16,10 @@ const indexes ={
     "additional_serving":6,
     "additional_serving_unit":7,
     "additional_serving_rate":8,
-    "preparation":9,
-    "jain":10,
-    "extra_items":11
+    "food_cost":9,
+    "preparation":10,
+    "jain":11,
+    "extra_items":12
 }
 
 async function c2cItems(sheet,location){
@@ -57,11 +58,12 @@ async function c2cItems(sheet,location){
                             "unit":row[indexes.unit].toString().trim().toLowerCase(),
                             "category":{"slug":categorySlug,"name":category},
                             "sub_category":row[indexes.sub_category]?.toString()?.trim() ? {"slug":convertToSlug(row[indexes.sub_category]?.toString()?.trim()), "name":row[indexes.sub_category]?.toString()?.trim() }:{},
-                            "rate_per_serving":Number(row[indexes.rate_per_serving]),
+                            "rate_per_serving":Number(row[indexes.rate_per_serving] ?? 0),
                             "is_additonal_serving":row[indexes.additional_serving] ? true : false,
                             "additional_serving": row[indexes.additional_serving] ? Number(row[indexes.additional_serving]):null,
                             "additional_serving_unit":row[indexes.additional_serving_unit] ? row[indexes.additional_serving_unit].toString().trim().toLowerCase():null,
                             "additional_serving_rate":row[indexes.additional_serving_rate] ? Number(row[indexes.additional_serving_rate]):null,
+                            "food_cost":row[indexes.food_cost]?Number(row[indexes.food_cost]):null, 
                             "is_jain": jain !== "" && jain ? true :false,
                             "images":[]
                         };

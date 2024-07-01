@@ -11,7 +11,9 @@ const indexes ={
     "category":1,
     "serving_per_pax":2,
     "unit":3,
-    "rate_per_serving":4
+    "buffeti_rate_per_serving":4,
+    "rate_per_serving":5,
+    "food_cost":6
 }
 
 async function snackBoxes(sheet,location){
@@ -42,7 +44,8 @@ async function snackBoxes(sheet,location){
                             "serving_per_pax":Number(row[indexes.serving_per_pax] ?? 0),
                             "unit":row[indexes.unit].toString().trim().toLowerCase(),
                             "category":{"slug":categorySlug,"name":category},
-                            "rate_per_serving":Number(row[indexes.rate_per_serving] ?? 0)
+                            "rate_per_serving":Number(row[indexes.rate_per_serving] ?? 0),
+                            "buffeti_rate_per_serving":Number(row[indexes.buffeti_rate_per_serving] ?? 0),
                         }
                         //SAVE CATEGORY
                         if(category){
@@ -53,7 +56,7 @@ async function snackBoxes(sheet,location){
 
                         globalObj["items"].push(itemObj);
                     }else{
-                        throw Error("Problem at row number: "+rowIndex+1)
+                        throw Error("snackbox - Problem at row number: "+rowIndex+1)
                     }
                 }
             });

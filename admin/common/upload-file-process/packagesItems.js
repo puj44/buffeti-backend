@@ -7,13 +7,13 @@ const { convertToSlug } = require('../convertToSlug');
 // }
 
 const c2cIndexes ={
-    "package":1,
-    "categories":2,
-    "items":3,
-    "10_20":4,
-    "20_30":5,
-    "30_plus":6,
-    "category":7,
+    "category":1,
+    "package":2,
+    "categories":3,
+    "items":4,
+    "10_20":5,
+    "20_30":6,
+    "30_plus":7,
 }
 
 
@@ -73,7 +73,7 @@ async function typeOfPackages(sheet, location){
                             "_30_plus_pax": Number(row[c2cIndexes["30_plus"]]?.toString()?.trim()),
                         });
                     }else{
-                        throw Error("Problem at row number: "+rowIndex+1)
+                        throw Error("Packages - Problem at row number: "+rowIndex+1)
                     }
                 }
             });
