@@ -1,4 +1,4 @@
-const { validatePackage, calculateItems } = require("../common/calculateCart");
+const { validatePackage, calculateItems, calculatePricing } = require("../common/calculateCart");
 const Items = require("../db/models/items");
 const MiniMeals = require("../db/models/miniMeals");
 const Packages = require("../db/models/packages");
