@@ -156,13 +156,13 @@ async function calculateItems(data, itemsData) {
 //Calculates the pricing of whole Cart
 async function calculatePricing(id) {
   let cart, cartItems;
-
+  //GET CART DATA
   cart = await Cart.findOne({ customer_id: id }).then((d) => d);
 
   if (!cart) {
     return sendError(res, {message:"Oops! There is nothing here!"}, 404);
   }
-
+  //GET CART ITEMS
   cartItems = cart.menu_option === "mini-meals"? await CartItems.find({ cart_id: cart?._id }).then((d) => d): await CartItems.findOne({ cart_id: cart?._id }).then((d) => d);
 
   if (!cartItems) {
@@ -177,14 +177,14 @@ async function calculatePricing(id) {
     delivery_date,
     delivery_time,
     cooking_instruction,
+    delivery_charges
   } = cart;
 
   
 
   let packagesData,
     itemsData,
-    miniMealsData,
-    isValidPackage = true,
+    isValidPackage = false,
     total_items_amount = 0, //for click2cater
     total_amount = 0,
     gst = 5,
@@ -241,6 +241,7 @@ async function calculatePricing(id) {
       //calculation of total items amount
       if (itemsData) {
         itemObj = await calculateItems(data,itemsData);
+        //IF PACkAGE VALID, SUMMATION OF PACKAGE PRICE AND PUSH ONLY ONE TO ITEMS PRICING
         if(isValidPackage){
           if (no_of_people >= 10 && no_of_people <= 20) {
             packagePrice = packagesData._10_20_pax;
@@ -250,6 +251,7 @@ async function calculatePricing(id) {
             packagePrice = packagesData._30_plus_pax;
           }
           total_items_amount += Number(packagePrice);
+          //PUSH WHOLE PACKAGE 
           items_pricing.push({
             "item_name":packagesData?.package_name,
             "amount":Number(packagePrice),
@@ -262,10 +264,11 @@ async function calculatePricing(id) {
           total_items_amount += Number(item.total_price ?? 0);
           addOnCharges += Number(item.addon_charges ?? 0);
           addOnChargesQty += Number(item.additional_qty ?? 0);
+          //INVALID PACKAGE, PUSH EACH ITEM DATA WITH PRCIE
           if(!isValidPackage){
             items_pricing.push({
               "item_name":item.item_name,
-              "amount":Number(item.total_price) - Number(item.addon_charges ?? 0),
+              "amount":Number(item.total_price) - Number(item.addon_charges ?? 0), //REDUCE ADDON CHARGES FOR INDIVIDUAL ITEM TOTAL PRICE
               "qty":no_of_people,
             });
           }
@@ -283,7 +286,15 @@ async function calculatePricing(id) {
       
       break;
     }
+    //GET TOTAL ITEMS AMOUNT
     total_amount = total_items_amount;
+    //ADD DELIVERY CHARGES
+    total_amount += Number(delivery_charges ?? 0);
+    if(extra_services && extra_services?.length){
+      for(const service of extra_services){
+        //TODO: CREATE extra_services MODEL AND SEED(POPULATE DATA) & THEN SUMMATION IN total_amount
+      }
+    }
     total_billed_amount += total_amount + (total_amount * gst) / 100;
     globalObj = {
       cart_id: cart?._id,
