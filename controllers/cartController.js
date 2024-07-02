@@ -1,24 +1,24 @@
-const { validatePackage, calculateItems, calculatePricing } = require("../common/calculateCart");
-const Items = require("../db/models/items");
-const MiniMeals = require("../db/models/miniMeals");
-const Packages = require("../db/models/packages");
+const { calculateCart } = require("../common/calculateCart");
 const { Cart, CartItems } = require("../db/models/cart");
 const sendError = require("../common/sendError");
 const sendRes = require("../common/sendResponse");
-const { findItems } = require("../common/findItems");
+const { default: mongoose } = require("mongoose");
 
 //Add To Cart
 const addtocart = async (req, res) => {
-  const { id } = req.user ?? {};
-  const { location } = req.headers;
-  const { menu_option, no_of_people, items, extra_services } = req.body;
-  const package_name =
-    menu_option === ("click2cater" || "mini-meals")
-      ? req.body.package_name
-      : null;
-  let cartInsert, cartItemsInsert, itemsData;
-
+ 
+  const conn = mongoose.connection;
+  const session = await conn.startSession();
+  session.startTransaction();
   try {
+    const { id } = req.user ?? {};
+    const { location } = req.headers;
+    const { menu_option, no_of_people, items, extra_services } = req.body;
+    const package_name =
+      menu_option === ("click2cater" || "mini-meals")
+        ? req.body.package_name
+        : null;
+    let cartInsert;
     let values = {};
     Object.entries(items).forEach(([category, items]) => {
       return Object.keys(items).forEach((item) => {
@@ -39,40 +39,27 @@ const addtocart = async (req, res) => {
 
     cartInsert =
       cart_id ??
-      (await Cart.create({
+      await Cart.create({
         customer_id: id,
         menu_option: menu_option,
         location: location,
         extra_services: extra_services,
-      })
-        .then((data) => data)
-        .catch((err) => err));
+      },{session})
 
-    if (cartInsert) {
-      cartItemsInsert = await CartItems.create({
+      await CartItems.create({
         cart_id: cartInsert._id,
         no_of_people: no_of_people,
         package_name: package_name,
-        items: items,
-      })
-        .then((data) => data)
-        .catch((err) => err);
-
-      if (cartItemsInsert) {
-        return sendRes(res, 200, {
-          message: "Cart item inserted successfully",
-        });
-      } else {
-        sendRes(res, 500, {
-          message: "Couldn't inserted cart item",
-        });
-      }
-    } else {
-      sendRes(res, 500, {
-        message: "Couldn't inserted cart",
+        items: items ?? {},
+      },{session})
+      await session.commitTransaction();
+      return sendRes(res, 200, {
+        message: "Cart item inserted successfully",
       });
-    }
   } catch (err) {
+    //ROLLBACK
+    await session.abortTransaction();
+    console.log("ADD CART ERROR: ",err);
     sendError(res, err);
   }
 };
@@ -82,7 +69,13 @@ const getCart = async (req, res) => {
   try {
     const { id } = req.user ?? {};
 
-    const cartObject = calculatePricing(id);
+    const cartObject = calculateCart(id);
+    return sendRes(res, 200, {
+      data:{
+        cart:cartObject
+      },
+      message: "Cart fetched successfully",
+    });
   } catch (err) {
     sendError(res, err);
   }

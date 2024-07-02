@@ -154,7 +154,7 @@ async function calculateItems(data, itemsData) {
 }
 
 //Calculates the pricing of whole Cart
-async function calculatePricing(id) {
+async function calculateCart(id) {
   let cart, cartItems;
   //GET CART DATA
   cart = await Cart.findOne({ customer_id: id }).then((d) => d);
@@ -324,5 +324,5 @@ async function calculatePricing(id) {
 module.exports = {
   validatePackage,
   calculateItems,
-  calculatePricing,
+  calculateCart,
 };
