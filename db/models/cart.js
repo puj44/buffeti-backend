@@ -16,6 +16,7 @@ const cartSchema = new Schema({
   }, //ref to customer address
   delivery_date: { type: Date, required: false },
   delivery_time: { type: String, required: false },
+  cooking_instruction: { type: String, required: false },
   coupon_code: { type: String },
   delivery_charges: { type: Number, required: false, default: 0 },
   extra_services: { type: [String], default: null },

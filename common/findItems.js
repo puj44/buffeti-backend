@@ -13,11 +13,6 @@ async function findItems(items, menuOption, packageName) {
           promises.push(Items.findOne({ slug: key }).then((d) => d));
         });
       });
-      //   Object.keys(items).forEach((c) => {
-      //     Object.keys(items[c]).map((i) => {
-      //       //   console.log(items[c][i]);
-      //     });
-      //   });
     }
     const results = await Promise.all(promises);
     return results;
