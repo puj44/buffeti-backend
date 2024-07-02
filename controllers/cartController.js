@@ -35,6 +35,11 @@ const addtocart = async (req, res) => {
           is_invalid: true,
         });
       }
+      if(cart.menu_option === "snack-boxes" || cart.menu_option === "click2cater"){
+        return sendRes(res, 400, {
+          already_exists: true,
+        });
+      }
     }
 
     cartInsert =
