@@ -77,11 +77,12 @@ const getCart = async (req, res) => {
     const cartObject = calculateCart(id);
     return sendRes(res, 200, {
       data:{
-        cart:cartObject
+        cart:cartObject ?? {}
       },
       message: "Cart fetched successfully",
     });
   } catch (err) {
+    console.log("GET CART ERROR:",err)
     sendError(res, err);
   }
 };

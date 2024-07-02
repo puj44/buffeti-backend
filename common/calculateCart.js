@@ -160,13 +160,13 @@ async function calculateCart(id) {
   cart = await Cart.findOne({ customer_id: id }).then((d) => d);
 
   if (!cart) {
-    return sendError(res, {message:"Oops! There is nothing here!"}, 404);
+    return false
   }
   //GET CART ITEMS
   cartItems = cart.menu_option === "mini-meals"? await CartItems.find({ cart_id: cart?._id }).then((d) => d): await CartItems.findOne({ cart_id: cart?._id }).then((d) => d);
 
   if (!cartItems) {
-    return sendError(res, {message:"Oops! There is nothing here!"}, 404);
+    return false
   }
 
   const {
