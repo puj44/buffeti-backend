@@ -47,7 +47,7 @@ const addtocart = async (req, res) => {
       },{session})
 
       await CartItems.create({
-        cart_id: cartInsert._id,
+        cart_id:  cart_id ??cartInsert._id,
         no_of_people: no_of_people,
         package_name: package_name,
         items: items ?? {},
