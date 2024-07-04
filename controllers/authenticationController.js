@@ -8,6 +8,7 @@ const { remove} = require("../common/redisGetterSetter");
 const prefix = process.env.PREFIX_OTP;
 const Customers = require("../db/models/customers");
 const { signJWT, verifyJWT } = require("./utils/jwtUtils");
+const { Cart, CartItems } = require("../db/models/cart");
 
 const signin =  async (req, res) => {
 
@@ -69,7 +70,6 @@ const verifyOtp = async (req, res) =>{
             {
                 data: {
                     user:verifyJWT(accessToken).payload ?? {},
-                    accessToken:accessToken
                 },
                 message:response?.message
             }
@@ -96,23 +96,42 @@ const checkstatus= async (req, res) => {
 
     const payload = verifyJWT(token).payload;
     
-        if(payload === null){
-            return sendRes(res,403,
-                {
-                    message:"Access token is not valid"
-                }
-            );
-        }
-
-        return sendRes(
-            res, 
-            200, 
+    if(payload === null){
+        return sendRes(res,403,
             {
-                data: {
-                    user: payload ?? {},
-                }
+                message:"Access token is not valid"
             }
         );
+    }
+    let userDetails = payload;
+    const cart = await Cart.findOne({customer_id:payload.id});
+    if(cart && cart?._id){
+        const cartItems = await CartItems.find({cart_id:cart?._id});
+        if(cartItems?.length){
+            let items = {};
+            cartItems.forEach((ci)=>{
+                const key = ci.package_name ??
+                    cart.menu_option 
+                items[key] = {
+                    cart_item_id:ci._id,
+                    no_of_people:ci.no_of_people
+                }
+            })
+            userDetails["cart_details"] = {
+                menu_option:cart.menu_option,
+                items:items
+            }
+        };
+    }
+    return sendRes(
+        res, 
+        200, 
+        {
+            data: {
+                user: payload ?? {},
+            }
+        }
+    );
 }
 
 const signout = async (req, res) => {
