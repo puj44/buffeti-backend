@@ -96,7 +96,11 @@ const updateCartItems = async (req, res) => {
     const { id } = req.user ?? {};
     const { location } = req.headers;
     const { cart_id } = req.params;
-    const { no_of_people, items, package_name } = req.body;
+    const {
+      no_of_people = no_of_people != null ? Number(no_of_people) : null,
+      items = items.length === 0 ? Map(items) : null,
+      package_name = package_name != null ? String(package_name) : null,
+    } = req.body;
 
     const cart = await Cart.findOne({ _id: cart_id }).then((d) => d);
 
