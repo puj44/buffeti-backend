@@ -3,6 +3,7 @@ const { Cart, CartItems } = require("../db/models/cart");
 const sendError = require("../common/sendError");
 const sendRes = require("../common/sendResponse");
 const { default: mongoose } = require("mongoose");
+const { getCartDetails } = require("../common/commonHelper");
 
 //Add To Cart
 const addtocart = async (req, res) => {
@@ -97,7 +98,7 @@ const getCart = async (req, res) => {
   try {
     const { id } = req.user ?? {};
 
-    const cartObject = calculateCart(id);
+    const cartObject = await calculateCart(id);
     return sendRes(res, 200, {
       data: {
         cart: cartObject ?? {},
@@ -110,4 +111,22 @@ const getCart = async (req, res) => {
   }
 };
 
-module.exports = { addtocart, getCart };
+//Get Cart Information
+const getCartInformation = async (req, res) => {
+  try {
+    const { id } = req.user ?? {};
+
+    const cartDetails = await getCartDetails(id);
+    return sendRes(res, 200, {
+      data: {
+        cartDetails: cartDetails ?? {},
+      },
+      message: "Cart Info fetched successfully",
+    });
+  } catch (err) {
+    console.log("GET CART INFORMATION ERROR:", err);
+    sendError(res, err);
+  }
+};
+
+module.exports = { addtocart, getCart,getCartInformation };
