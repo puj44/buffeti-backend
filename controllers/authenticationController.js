@@ -54,7 +54,7 @@ const verifyOtp = async (req, res) =>{
                 "accessToken",
                 accessToken,
                 {
-                    maxAge:300000,
+                    maxAge:9.461e+7,
                     httpOnly:true,
                     sameSite:'none', 
                     secure: true
