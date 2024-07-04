@@ -1,26 +1,28 @@
 const Items = require("../db/models/items");
 const MiniMeals = require("../db/models/miniMeals");
 
-async function findItems(items, menuOption, packageName) {
+async function findItems(items, menuOption) {
   try {
-    const promises = [];
+    const promises = {};
 
     if (menuOption === "mini-meals") {
-      promises.push(MiniMeals.findOne({ slug: packageName }).then((d) => d));
+      await items.forEach(async (i) => {
+        promises[i.slug] = {
+          ...((await MiniMeals.findOne({ slug: i.slug }).then((d) => d)) ?? {}),
+          ...(i ?? {}),
+        };
+      });
     } else {
-      items.forEach((values, keys) => {
-        values.forEach((value, key) => {
-          promises.push(Items.findOne({ slug: key }).then((d) => d));
+      await items.forEach(async (values, keys) => {
+        await values.forEach(async (value, key) => {
+          promises[key] = {
+            ...((await Items.findOne({ slug: key }).then((d) => d)) ?? {}),
+            ...(items[i] ?? {}),
+          };
         });
       });
-      //   Object.keys(items).forEach((c) => {
-      //     Object.keys(items[c]).map((i) => {
-      //       //   console.log(items[c][i]);
-      //     });
-      //   });
     }
-    const results = await Promise.all(promises);
-    return results;
+    return promises;
   } catch (err) {
     return err;
   }

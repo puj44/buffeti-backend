@@ -1,14 +1,14 @@
 const { verifyJWT } = require("../controllers/utils/jwtUtils");
 
 function deserializedUser(req,res, next){
-    const {authorization} = req.headers;
+    const {accessToken} = req.cookies;
     try{
 
-        if(!authorization){
+        if(!accessToken){
             return next()
         }
 
-        const {payload,expired} = verifyJWT(authorization.split("Bearer ")[1]);
+        const {payload,expired} = verifyJWT(accessToken);
         if(payload){
             req.user = payload;
             return next()

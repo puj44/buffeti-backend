@@ -3,10 +3,10 @@ const sendResponse = require("../common/sendResponse");
 const { verifyJWT } = require("../controllers/utils/jwtUtils");
 
 function authenticateUser(req,res, next){
-    const {authorization} = req.headers;
+    const {accessToken} = req.cookies;
     try{
 
-        if(!authorization){
+        if(!accessToken){
             return sendResponse(
                 res,
                 403,
@@ -16,7 +16,7 @@ function authenticateUser(req,res, next){
             )
         }
 
-        const {payload,expired} = verifyJWT(authorization.split("Bearer ")[1]);
+        const {payload,expired} = verifyJWT(accessToken);
         if(!payload){
             return sendResponse(
                 res,
