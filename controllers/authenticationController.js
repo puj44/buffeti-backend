@@ -56,7 +56,7 @@ const verifyOtp = async (req, res) =>{
                     maxAge:300000,
                     httpOnly:true,
                     sameSite:'none', 
-                    secure:true
+                    secure: true
                 }
             )
             await remove(phoneCacheKey);
@@ -83,7 +83,7 @@ const verifyOtp = async (req, res) =>{
 }
 
 const checkstatus= async (req, res) => {
-    const token = req.headers.authorization?.split("Bearer ")?.[1];
+    const token = req.cookies?.accessToken;
     if(token === null || token === undefined){
 
         return sendRes(res,401,
