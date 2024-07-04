@@ -6,18 +6,18 @@ async function findItems(items, menuOption) {
     const promises = {};
 
     if (menuOption === "mini-meals") {
-      await items.forEach(async(i)=>{
+      await items.forEach(async (i) => {
         promises[i.slug] = {
-          ...await MiniMeals.findOne({ slug: i.slug }).then((d) => d) ?? {},
-          ...i ?? {},
-        }
-      })
+          ...((await MiniMeals.findOne({ slug: i.slug }).then((d) => d)) ?? {}),
+          ...(i ?? {}),
+        };
+      });
     } else {
-      await items.forEach(async(values, keys) => {
-        await values.forEach(async(value, key) => {
+      await items.forEach(async (values, keys) => {
+        await values.forEach(async (value, key) => {
           promises[key] = {
-            ...await Items.findOne({ slug: key }).then((d) => d) ?? {},
-            ...items[i] ?? {}
+            ...((await Items.findOne({ slug: key }).then((d) => d)) ?? {}),
+            ...(items[i] ?? {}),
           };
         });
       });
