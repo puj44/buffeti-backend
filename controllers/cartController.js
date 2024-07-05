@@ -5,6 +5,7 @@ const sendError = require("../common/sendError");
 const sendRes = require("../common/sendResponse");
 const { default: mongoose } = require("mongoose");
 const { getCartDetails } = require("../common/commonHelper");
+const { ExtraServices } = require("../db/models/extraServices");
 
 //Add To Cart
 const addtocart = async (req, res) => {
@@ -284,10 +285,28 @@ const updateCartItems = async (req, res) => {
   }
 };
 
+//Get Extra Services
+const getExtraServices = async (req, res) => {
+  try {
+
+    const extraServices = await ExtraServices.find({});
+    return sendRes(res, 200, {
+      data: {
+        extraServices: extraServices ?? {},
+      },
+      message: "Extra Services fetched successfully",
+    });
+  } catch (err) {
+    console.log("GET EXTRA SERVICES ERROR:", err);
+    sendError(res, err);
+  }
+};
+
 module.exports = {
   addtocart,
   getCart,
   getCartInformation,
   updateCart,
   updateCartItems,
+  getExtraServices
 };
