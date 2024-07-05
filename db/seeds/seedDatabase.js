@@ -4,6 +4,7 @@ const menuOptions = require('../models/menuOptions');
 const mongoose = require('mongoose');
 const users = require('../models/users');
 const Locations = require('../models/locations');
+const { ExtraServices } = require('../models/extraServices');
 require('dotenv').config()
 
 
@@ -61,6 +62,24 @@ const locations = [
     }
 ]
 
+const extraServicesData = [
+    {
+        slug:"waiters-and-servers",
+        name:"Waiters and Servers",
+        price:1000
+    },
+    {
+        slug:"post-party-cleanup",
+        name:"Post party cleanup",
+        price:1000
+    },
+    {
+        slug:"add-disposables-cutlery",
+        name:"Add Disposables & Cutlery",
+        price:1000
+    },
+]
+
 async function SeedDatabase() {
     try{
         await mongoose.connect(process.env.MONGO_URL);
@@ -81,6 +100,9 @@ async function SeedDatabase() {
             name:"Super Admin",
             is_super_admin:true
         }).then((d)=>d).catch((err)=> console.log("Admin Users: ",err));
+
+        await ExtraServices.deleteMany({});
+        await ExtraServices.insertMany(extraServicesData).then((d)=>d).catch((err)=> console.log("Delivery Fees: ",err));
 
         process.exit(0);
 
