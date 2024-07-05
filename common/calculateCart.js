@@ -26,7 +26,7 @@ async function calculateCart(id) {
           .lean() //If mini-meals then find all items from cart_id
       : await CartItems.findOne({ cart_id: cart?._id })
           .lean() //If not mini-meals then find one item from cart_id
-
+  
   if (!cartItems) {
     return null;
   }
@@ -60,7 +60,7 @@ async function calculateCart(id) {
 
   switch (menu_option) {
     case "mini-meals":
-      const packagesInfo = await findItems(cartItems, menu_option);
+      const packagesInfo = await findItems(cartItems, menu_option,location);
       if (packagesInfo) {
         for (const pack in packagesInfo) {
           const packageInfo = packagesInfo[pack];
@@ -79,7 +79,7 @@ async function calculateCart(id) {
       break;
     default:
       const { no_of_people, package_name, items } = cartItems;
-      itemsData = await findItems(items, menu_option);
+      itemsData = await findItems(items, menu_option, location);
 
       if (package_name) {
         packagesData = await Packages.findOne({ slug: package_name }).lean();
