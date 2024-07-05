@@ -6,22 +6,29 @@ async function findItems(items, menuOption) {
     const promises = {};
 
     if (menuOption === "mini-meals") {
-      await items.forEach(async (i) => {
-        promises[i.slug] = {
-          ...((await MiniMeals.findOne({ slug: i.slug }).then((d) => d)) ?? {}),
+      for (const i of items) {
+        const data = await MiniMeals.findOne({ slug: i.package_name }).lean();
+        let val = data;
+        delete val._id;
+        // console.log("HERE", i, val);
+        promises[i.package_name] = {
+          ...val,
           ...(i ?? {}),
         };
-      });
+      }
     } else {
-      await items.forEach(async (values, keys) => {
-        await values.forEach(async (value, key) => {
-          promises[key] = {
-            ...((await Items.findOne({ slug: key }).then((d) => d)) ?? {}),
-            ...(items[i] ?? {}),
-          };
-        });
-      });
+      for (const i in items) {
+        const data = await Items.findOne({ slug: i }).lean();
+        let val = data;
+        delete val._id;
+        // console.log("HERE", i, val);
+        promises[i] = {
+          ...val,
+          ...(items[i] ?? {}),
+        };
+      }
     }
+
     return promises;
   } catch (err) {
     return err;

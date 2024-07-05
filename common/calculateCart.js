@@ -1,21 +1,40 @@
 const { get } = require("./redisGetterSetter");
 const { Cart, CartItems } = require("../db/models/cart");
+
 const sendError = require("./sendError");
+const sendRes = require("./sendResponse");
 const { findItems } = require("./findItems");
+const Packages = require("../db/models/packages");
 
 //Validate Package, in case of click2cater
 async function validatePackage(items, isValidPackage, packages) {
   let categoriesMapings = packages.categories_mapping;
-
-  Object.keys(categoriesMapings).forEach((c) => {
-    if (!items[c]) {
-      isValidPackage = false;
-    } else {
-      if (Number(categoriesMapings[c]) !== Object.keys(items[c]).length) {
-        isValidPackage = false;
-      }
+  let categorisedItems = {};
+  for (const it in items) {
+    // console.log("HERE", it, items[it]);
+    if (items[it].category.slug) {
+      categorisedItems[items[it].category.slug] =
+        Number(categorisedItems[items[it].category.slug] ?? 0) + 1;
     }
-  });
+  }
+  // console.log(
+  //   JSON.stringify(categoriesMapings),
+  //   "OBJECTS CAT",
+  //   JSON.stringify(categorisedItems)
+  // );
+  if (JSON.stringify(categoriesMapings) === JSON.stringify(categorisedItems)) {
+    isValidPackage = true;
+  }
+
+  // Object.keys(categoriesMapings).forEach((c) => {
+  //   if (!items[c]) {
+  //     isValidPackage = false;
+  //   } else {
+  //     if (Number(categoriesMapings[c]) !== Object.keys(items[c]).length) {
+  //       isValidPackage = false;
+  //     }
+  //   }
+  // });
 
   return isValidPackage;
 }
@@ -31,9 +50,9 @@ async function calculateItems(data, itemsData) {
     item_name,
     itemObj = {};
 
-  console.log(data.menu_option);
+  console.log("itemsData:", itemsData);
   if (
-    data.items &&
+    itemsData &&
     data.location &&
     data.menu_option &&
     itemsData &&
@@ -41,59 +60,53 @@ async function calculateItems(data, itemsData) {
   ) {
     switch (data.menu_option) {
       case "click2cater":
-        data.items.forEach((values, keys) => {
-          values.forEach(async (value, key) => {
-            additional_qty = value?.additional_qty;
-            extra_items = value?.added_extra_items;
-            preparation = value?.selected_preparation;
-            extra_items_cache =
-              extra_items !== null
-                ? await get(
-                    `${data.location}_${data.menu_option}_${keys.extra_items}`,
-                    true
-                  )
-                : null;
+        itemsData.forEach(async (values, keys) => {
+          additional_qty = values?.additional_qty;
+          extra_items = values?.added_extra_items;
+          preparation = values?.selected_preparation;
+          extra_items_cache =
+            extra_items !== null
+              ? await get(
+                  `${data.location}_${data.menu_option}_${keys.extra_items}`,
+                  true
+                )
+              : null;
 
-            Object.keys(itemsData).forEach((i) => {
-              if (itemsData[i].slug === key) {
-                if (additional_qty) {
-                  items_id = itemsData[i]._id;
-                  item_name = itemsData[i].item_name;
+          if (additional_qty) {
+            items_id = itemsData[i]._id;
+            item_name = itemsData[i].item_name;
+            addon_charges =
+              addon_charges +
+              itemsData[i].additional_serving_rate * additional_qty;
+          }
+
+          if (extra_items) {
+            Object.keys(extra_items_cache).forEach((ec) => {
+              Object.keys(extra_items).forEach((e) => {
+                if (extra_items_cache[ec].slug === e) {
                   addon_charges =
                     addon_charges +
-                    itemsData[i].additional_serving_rate * additional_qty;
+                    extra_items_cache[ec].rate_per_serving * extra_items[e];
                 }
-              }
-            });
-
-            if (extra_items) {
-              Object.keys(extra_items_cache).forEach((ec) => {
-                Object.keys(extra_items).forEach((e) => {
-                  if (extra_items_cache[ec].slug === e) {
-                    addon_charges =
-                      addon_charges +
-                      extra_items_cache[ec].rate_per_serving * extra_items[e];
-                  }
-                });
               });
-            }
+            });
+          }
 
-            if (data.isValidPackage === false) {
-              total_price = itemsData[i].rate_per_serving * data.no_of_people;
-            }
+          if (data.isValidPackage === false) {
+            total_price = itemsData[i].rate_per_serving * data.no_of_people;
+          }
 
-            total_price += addon_charges;
+          total_price += addon_charges;
 
-            itemObj[key] = {
-              ...itemsData[i],
-              item_id: items_id,
-              additional_qty: additional_qty,
-              added_extra_items: extra_items,
-              selected_preparation: preparation,
-              addon_charges: addon_charges,
-              total_price: total_price,
-            };
-          });
+          itemObj[key] = {
+            ...itemsData[i],
+            item_id: items_id,
+            additional_qty: additional_qty,
+            added_extra_items: extra_items,
+            selected_preparation: preparation,
+            addon_charges: addon_charges,
+            total_price: total_price,
+          };
         });
 
         break;
@@ -147,9 +160,7 @@ async function calculateItems(data, itemsData) {
     }
     return itemObj;
   } else {
-    return sendRes(res, 500, {
-      message: "Couldn't find data",
-    });
+    return false;
   }
 }
 
@@ -158,15 +169,18 @@ async function calculateCart(id) {
   let cart, cartItems;
   //GET CART DATA
   cart = await Cart.findOne({ customer_id: id }).then((d) => d);
-
   if (!cart) {
     return false;
   }
   //GET CART ITEMS
   cartItems =
     cart.menu_option === "mini-meals"
-      ? await CartItems.find({ cart_id: cart?._id }).then((d) => d)
-      : await CartItems.findOne({ cart_id: cart?._id }).then((d) => d);
+      ? await CartItems.find({ cart_id: cart?._id })
+          .lean()
+          .then((d) => d) //If mini-meals then find all items from cart_id
+      : await CartItems.findOne({ cart_id: cart?._id })
+          .lean()
+          .then((d) => d); //If not mini-meals then find one item from cart_id
 
   if (!cartItems) {
     return false;
@@ -174,12 +188,14 @@ async function calculateCart(id) {
 
   const {
     menu_option,
+    no_of_people,
     location,
     extra_services,
     delivery_address_id,
     delivery_date,
     delivery_time,
     cooking_instruction,
+    coupon_code,
     delivery_charges,
   } = cart;
 
@@ -194,7 +210,9 @@ async function calculateCart(id) {
     addOnCharges = 0,
     addOnChargesQty = 0,
     cartData,
-    itemObj;
+    itemObj,
+    items_pricing = [],
+    globalObj = {};
 
   const data = {
     items: cartItems?.items ?? {},
@@ -204,11 +222,10 @@ async function calculateCart(id) {
     location: location,
   };
 
-  const globalObj = {};
-
   switch (menu_option) {
     case "mini-meals":
       const packagesInfo = await findItems(cartItems, menu_option);
+      console.log("packagesInfo:", packagesInfo);
       if (packagesInfo) {
         for (const pack in packagesInfo) {
           const packageInfo = packagesInfo[pack];
@@ -226,18 +243,16 @@ async function calculateCart(id) {
       break;
     default:
       const { no_of_people, package_name, items } = cartItems;
-      let items_pricing = [];
+      itemsData = await findItems(items, menu_option);
+
       if (package_name) {
-        packagesData = await Packages.findOne({ slug: package_name }).then(
-          (d) => d
-        );
+        packagesData = await Packages.findOne({ slug: package_name }).lean();
         isValidPackage = await validatePackage(
-          items,
+          itemsData,
           isValidPackage,
           packagesData
         );
       }
-      itemsData = await findItems(items, menu_option);
 
       //calculation of total items amount
       if (itemsData) {

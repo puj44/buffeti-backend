@@ -44,7 +44,7 @@ const cartItemsSchema = new Schema({
   cart_id: { type: Schema.Types.ObjectId, ref: "cart", required: true },
   no_of_people: { type: Number, required: true },
   package_name: { type: String, required: false, default: null },
-  items: { type: Map, of: { type: Map, of: itemSchema } },
+  items: { type: Map, of: itemSchema },
 });
 
 const Cart = mongoose.model("cart", cartSchema);
