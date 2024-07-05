@@ -27,10 +27,19 @@ const addAddress = async(req,res) =>{
             customer: customerId,
             ...req.body
         }
+        const addresses = await CustomerAddresses.find({customer:req.user.id});
+        if(addresses?.length  === 5){
+            return sendResponse(
+                res,
+                400,
+                {
+                    message:"Maximum limit exceeded"
+                }
+            )
+        }
         await CustomerAddresses.create({
             ...data
         });
-        const addresses = await CustomerAddresses.find({customer:req.user.id});
         return sendResponse(
             res,
             200,
