@@ -9,7 +9,7 @@ const cors=require('cors');
 const { ValidationError } = require('express-validation');
 const mongoose = require('mongoose');
 const deserializedUser = require('./middlewares/deserializedUser');
-mongoose.connect(process.env.MONGO_URL);
+
 
 
 app.use((req, res, next) => {
@@ -31,7 +31,7 @@ app.use(cors({
 }));
 app.use(cookieParser());
 
-
+mongoose.connect(process.env.MONGO_URL);
 app.use(deserializedUser);
 routes(app);
 
