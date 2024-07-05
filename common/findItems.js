@@ -8,7 +8,8 @@ async function findItems(items, menuOption) {
     if (menuOption === "mini-meals") {
       for (const i of items) {
         const data = await MiniMeals.findOne({ slug: i.package_name }).lean();
-        let val = data;
+        let val = JSON.parse(JSON.stringify(data));
+        val.cart_item_id = i._id;
         delete val._id;
         promises[i.package_name] = {
           ...val,
