@@ -1,5 +1,65 @@
 const { Cart, CartItems } = require("../db/models/cart");
+const keys = require("../config/keys");
+const { get } = require("./redisGetterSetter");
+//Calculates the pricing of Cart items
+async function calculateItems(data, itemsData) {
+    let itemObject = {};
+    const {location, menu_option, no_of_people, isValidPackage} = data ?? {};
+    
+    if (
+      location &&
+      menu_option &&
+      itemsData &&
+      no_of_people
+    ) {
+        for(const item in itemsData){
+            const itemData = itemsData[item];
+            const additionalQty = Number(itemData?.additional_qty ?? 0);
+            const extraItems = itemData?.added_extra_items;
+            let totalPrice = 0, addonCharges = 0, extraChargesArray = [], extraCharges = 0;
+            //ADDONCHARGE + ADDITIONAL QUANTITY
+            addonCharges += itemData.additional_serving_rate * additionalQty; // ADDITIONAL RATE * ADDITIONAL QTY
 
+            //EXTRACHARGESAMOUNT + EXTRA ITEMS ADDED
+            if(extraItems && Object.keys(extraItems).length){
+                const extraItemsCacheData = await get(`${data.location}_${data.menu_option}_${keys.extra_items}`,true);
+                
+                for(const extraItm in extraItems){
+                    
+                    const extraItem = extraItemsCacheData[extraItm]; //DATA FROM EXTRA ITEMS CACHE
+                    if(extraItem){
+                        const price = Number(extraItem.rate_per_serving) * Number(extraItems[extraItm] ?? 0); // CALCULATE EXTRA ITEM PRICE RATE * QTY
+                        extraCharges += price;
+                        extraChargesArray.push({
+                            item_name:extraItem.item_name,
+                            qty: Number(extraItems[extraItm]),
+                            amount:price
+                        })
+                    }else{
+                        return false;
+                    }
+                }
+            }
+            // IN CASE OF CREATE CLICK2CATER OR SNACKBOX
+            if(!isValidPackage){
+                totalPrice = itemData.rate_per_serving * data.no_of_people;
+            }
+            //SUMMATION OF ADDONCHARGES AND EXTRA ITEMS CHARGES
+            totalPrice += (addonCharges + extraCharges);
+            itemObject[item] = {
+                ...itemData,
+                addon_charges: addonCharges,
+                extra_charges: extraCharges,
+                extra_charges_data: extraChargesArray,
+                total_price: totalPrice,
+              };
+        }
+        
+      return {...itemObject};
+    } else {
+      return false;
+    }
+  }
 async function getCartDetails(customerId){
     const cart = await Cart.findOne({customer_id:customerId});
     if(cart && cart?._id){
@@ -23,4 +83,22 @@ async function getCartDetails(customerId){
     return {};
 }
 
-module.exports = {getCartDetails}
+
+//Validate Package, in case of click2cater
+async function validatePackage(items, isValidPackage, packages) {
+    let categoriesMapings = packages.categories_mapping;
+    let categorisedItems = {};
+    for (const it in items) {
+      if (items[it].category.slug) {
+        categorisedItems[items[it].category.slug] =
+          Number(categorisedItems[items[it].category.slug] ?? 0) + 1;
+      }
+    }
+    if (JSON.stringify(categoriesMapings) === JSON.stringify(categorisedItems)) {
+      isValidPackage = true;
+    }
+  
+    return isValidPackage;
+  }
+
+module.exports = {getCartDetails,calculateItems,validatePackage}

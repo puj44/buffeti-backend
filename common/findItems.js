@@ -10,7 +10,6 @@ async function findItems(items, menuOption) {
         const data = await MiniMeals.findOne({ slug: i.package_name }).lean();
         let val = data;
         delete val._id;
-        // console.log("HERE", i, val);
         promises[i.package_name] = {
           ...val,
           ...(i ?? {}),
@@ -21,7 +20,6 @@ async function findItems(items, menuOption) {
         const data = await Items.findOne({ slug: i }).lean();
         let val = data;
         delete val._id;
-        // console.log("HERE", i, val);
         promises[i] = {
           ...val,
           ...(items[i] ?? {}),

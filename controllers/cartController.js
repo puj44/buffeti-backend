@@ -23,48 +23,40 @@ const addtocart = async (req, res) => {
       replace, //if ture dalete Cart and cart_items
     } = req.body;
     let cartInsert;
-    let values = {};
-
-    if (items) {
-      Object.entries(items).forEach(([category, items]) => {
-        return Object.keys(items).forEach((item) => {
-          values[item] = items[item];
-        });
-      });
-    }
-    console.log(values);
+  
 
     const cart = await Cart.findOne({ customer_id: id })
       .lean()
-      .then((d) => d);
-    console.log(cart);
-    const cart_id = cart?._id;
 
-    if (cart) {
-      if (cart.menu_option !== menu_option) {
-        console.log(
-          "existing menu option:",
-          cart.menu_option,
-          ", trying to add:",
-          menu_option
-        );
-        return sendRes(res, 400, {
-          is_invalid: true,
-        });
-      }
-      if (
-        cart.menu_option === "snack-boxes" ||
-        cart.menu_option === "click2cater"
-      ) {
-        return sendRes(res, 400, {
-          already_exists: true,
-        });
+    let cart_id = cart?._id;
+    if(replace){
+      await CartItems.deleteMany({cart_id:cart_id},{session});
+      await Cart.deleteOne({_id:cart_id},{session});
+      cart_id = null;
+    }else{
+
+      if (cart) {
+        if (cart.menu_option !== menu_option) {
+          return sendRes(res, 400, {
+            is_invalid: true,
+            "message":"Cart already exists!"
+          });
+        }
+        if (
+          cart.menu_option === "snack-boxes" ||
+          cart.menu_option === "click2cater"
+        ) {
+          return sendRes(res, 400, {
+            already_exists: true,
+            message:"Items already exists!"
+          });
+        }
       }
     }
 
     cartInsert =
       cart_id ??
-      (await Cart.create(
+      await Cart.create(
         [
           {
             customer_id: id,
@@ -75,9 +67,15 @@ const addtocart = async (req, res) => {
         ],
         { session }
       )
-        .then(async (d) => d)
-        .catch((err) => err));
+      let values = {};
 
+      if (items) {
+        Object.entries(items).forEach(([category, items]) => {
+          return Object.keys(items).forEach((item) => {
+            values[item] = items[item];
+          });
+        });
+      }
     await CartItems.create(
       [
         {
@@ -89,8 +87,6 @@ const addtocart = async (req, res) => {
       ],
       { session }
     )
-      .then((d) => d)
-      .catch((err) => err);
 
     await session.commitTransaction();
     return sendRes(res, 200, {
@@ -110,7 +106,6 @@ const getCart = async (req, res) => {
     const { id } = req.user ?? {};
 
     const cartObject = await calculateCart(id);
-    console.log(cartObject);
     return sendRes(res, 200, {
       data: {
         cart: cartObject ?? {},
