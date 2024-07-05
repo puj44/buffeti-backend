@@ -1,10 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const { addtocart, getCart, getCartInformation } = require("../controllers/cartController");
 const {
+  addtocart,
+  getCart,
+  getCartInformation,
   updateCart,
   updateCartItems,
-} = require("../controllers/cartUpdateController");
+} = require("../controllers/cartController");
 const validateLocation = require("../middlewares/validateLocation");
 
 router.post("/add-to-cart", validateLocation, addtocart);

@@ -20,7 +20,8 @@ const cartSchema = new Schema({
   coupon_code: { type: String },
   delivery_charges: { type: Number, required: false, default: 0 },
   extra_services: { type: [String], default: null },
-});
+  
+},{timestamps:true});
 
 const itemSchema = new Schema(
   {
@@ -41,13 +42,13 @@ const itemSchema = new Schema(
 );
 
 const cartItemsSchema = new Schema({
-  cart_id: { type: Schema.Types.ObjectId, ref: "cart", required: true },
+  cart_id: { type: Schema.Types.ObjectId, ref: "carts", required: true },
   no_of_people: { type: Number, required: true },
   package_name: { type: String, required: false, default: null },
-  items: { type: Map, of: { type: Map, of: itemSchema } },
-});
+  items: { type: Map, of: itemSchema },
+},{timestamps:true});
 
-const Cart = mongoose.model("cart", cartSchema);
+const Cart = mongoose.model("carts", cartSchema);
 const CartItems = mongoose.model("cart_items", cartItemsSchema);
 
 module.exports = { Cart, CartItems };
