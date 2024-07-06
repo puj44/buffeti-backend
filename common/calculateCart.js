@@ -6,10 +6,7 @@ const sendRes = require("./sendResponse");
 const { findItems } = require("./findItems");
 const Packages = require("../db/models/packages");
 const { calculateItems, validatePackage } = require("./commonHelper");
-
-
-
-
+const { ExtraServices } = require("../db/models/extraServices");
 
 //Calculates the pricing of whole Cart
 async function calculateCart(id) {
@@ -22,11 +19,9 @@ async function calculateCart(id) {
   //GET CART ITEMS
   cartItems =
     cart.menu_option === "mini-meals"
-      ? await CartItems.find({ cart_id: cart?._id })
-          .lean() //If mini-meals then find all items from cart_id
-      : await CartItems.findOne({ cart_id: cart?._id })
-          .lean() //If not mini-meals then find one item from cart_id
-  
+      ? await CartItems.find({ cart_id: cart?._id }).lean() //If mini-meals then find all items from cart_id
+      : await CartItems.findOne({ cart_id: cart?._id }).lean(); //If not mini-meals then find one item from cart_id
+
   if (!cartItems) {
     return null;
   }
@@ -54,17 +49,19 @@ async function calculateCart(id) {
     itemObj,
     items_pricing = [],
     extra_charges = [],
+    extra_services_charges = [],
     addOnCharges = 0,
     addOnChargesQty = 0,
     globalObj = {};
 
   switch (menu_option) {
     case "mini-meals":
-      const packagesInfo = await findItems(cartItems, menu_option,location);
+      const packagesInfo = await findItems(cartItems, menu_option, location);
       if (packagesInfo) {
         for (const pack in packagesInfo) {
           const packageInfo = packagesInfo[pack];
-          const totalPrice = Number(packageInfo.price) * Number(packageInfo.no_of_people)
+          const totalPrice =
+            Number(packageInfo.price) * Number(packageInfo.no_of_people);
           total_items_amount += totalPrice;
           items_pricing.push({
             item_name: packageInfo?.item_name,
@@ -93,16 +90,16 @@ async function calculateCart(id) {
       if (itemsData) {
         const calculcatedItems = await calculateItems(
           {
-            menu_option:menu_option,
-            location:location,
-            no_of_people:no_of_people,  
-            isValidPackage:isValidPackage
-          }, 
+            menu_option: menu_option,
+            location: location,
+            no_of_people: no_of_people,
+            isValidPackage: isValidPackage,
+          },
           itemsData
         );
         //IF PACkAGE VALID, SUMMATION OF PACKAGE PRICE AND PUSH ONLY ONE TO ITEMS PRICING
         if (isValidPackage) {
-          let packagePrice = 0
+          let packagePrice = 0;
           if (no_of_people >= 10 && no_of_people <= 20) {
             packagePrice = packagesData._10_20_pax;
           } else if (no_of_people >= 20 && no_of_people <= 30) {
@@ -118,18 +115,23 @@ async function calculateCart(id) {
             qty: no_of_people,
           });
         }
-        for(const i in calculcatedItems){
+        for (const i in calculcatedItems) {
           const item = calculcatedItems[i];
           total_items_amount += Number(item.total_price ?? 0);
           addOnCharges += Number(item.addon_charges ?? 0);
           addOnChargesQty += Number(item.additional_qty ?? 0);
-          extra_charges = [...extra_charges, ...item.extra_charges_data ?? []] ;
+          extra_charges = [
+            ...extra_charges,
+            ...(item.extra_charges_data ?? []),
+          ];
           //INVALID PACKAGE, PUSH EACH ITEM DATA WITH PRICE
           if (!isValidPackage) {
             items_pricing.push({
               item_name: item.item_name,
               amount:
-                Number(item.total_price) - Number(item.addon_charges ?? 0) - Number(item.extra_charges ?? 0), //REDUCE ADDON CHARGES FOR INDIVIDUAL ITEM TOTAL PRICE
+                Number(item.total_price) -
+                Number(item.addon_charges ?? 0) -
+                Number(item.extra_charges ?? 0), //REDUCE ADDON CHARGES FOR INDIVIDUAL ITEM TOTAL PRICE
               qty: no_of_people,
             });
           }
@@ -143,7 +145,6 @@ async function calculateCart(id) {
       } else {
         return null;
       }
-      
 
       break;
   }
@@ -151,11 +152,18 @@ async function calculateCart(id) {
   total_amount = total_items_amount;
   //ADD DELIVERY CHARGES
   total_amount += Number(delivery_charges ?? 0);
-  // if (extra_services && extra_services?.length) {
-  //   for (const service of extra_services) {
-  //     //TODO: CREATE extra_services MODEL AND SEED(POPULATE DATA) & THEN SUMMATION IN total_amount
-  //   }
-  // }
+
+  if (extra_services && extra_services?.length) {
+    for (const service of extra_services) {
+      const extraService = await ExtraServices.findOne({ slug: service });
+      extra_services_charges.push({
+        name: extraService.name,
+        price: extraService.price,
+      });
+      total_amount += Number(extraService.price);
+    }
+  }
+  //TODO: coupon_code and delivery_charges caluction...
   total_billed_amount += total_amount + (total_amount * gst) / 100;
   globalObj = {
     cart_id: cart?._id,
@@ -168,12 +176,13 @@ async function calculateCart(id) {
     extra_services: extra_services,
     coupon_code: coupon_code,
     billing_details: {
+      extra_services_charges: extra_services_charges,
       item_pricing: items_pricing,
       addon_charges: {
         addOnCharges,
         addOnChargesQty,
       },
-      extra_charges:extra_charges,
+      extra_charges: extra_charges,
       total_amount: total_amount,
       total_billed_amount: total_billed_amount,
     },

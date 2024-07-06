@@ -1,10 +1,12 @@
 const { ObjectId } = require("mongodb");
+const moment = require("moment");
 const { calculateCart } = require("../common/calculateCart");
 const { Cart, CartItems } = require("../db/models/cart");
+const { CustomersAddresses } = require("../db/models/customerAddresses");
 const sendError = require("../common/sendError");
 const sendRes = require("../common/sendResponse");
 const { default: mongoose } = require("mongoose");
-const { getCartDetails } = require("../common/commonHelper");
+const { getCartDetails, validateDelivery } = require("../common/commonHelper");
 const { ExtraServices } = require("../db/models/extraServices");
 
 //Add To Cart
@@ -24,23 +26,20 @@ const addtocart = async (req, res) => {
       replace, //if ture dalete Cart and cart_items
     } = req.body;
     let cartInsert;
-  
 
-    const cart = await Cart.findOne({ customer_id: id })
-      .lean()
+    const cart = await Cart.findOne({ customer_id: id }).lean();
 
     let cart_id = cart?._id;
-    if(replace){
-      await CartItems.deleteMany({cart_id:cart_id},{session});
-      await Cart.deleteOne({_id:cart_id},{session});
+    if (replace) {
+      await CartItems.deleteMany({ cart_id: cart_id }, { session });
+      await Cart.deleteOne({ _id: cart_id }, { session });
       cart_id = null;
-    }else{
-
+    } else {
       if (cart) {
         if (cart.menu_option !== menu_option) {
           return sendRes(res, 400, {
             is_invalid: true,
-            "message":"Cart already exists!"
+            message: "Cart already exists!",
           });
         }
         if (
@@ -49,7 +48,7 @@ const addtocart = async (req, res) => {
         ) {
           return sendRes(res, 400, {
             already_exists: true,
-            message:"Items already exists!"
+            message: "Items already exists!",
           });
         }
       }
@@ -57,7 +56,7 @@ const addtocart = async (req, res) => {
 
     cartInsert =
       cart_id ??
-      await Cart.create(
+      (await Cart.create(
         [
           {
             customer_id: id,
@@ -67,16 +66,16 @@ const addtocart = async (req, res) => {
           },
         ],
         { session }
-      )
-      let values = {};
+      ));
+    let values = {};
 
-      if (items) {
-        Object.entries(items).forEach(([category, items]) => {
-          return Object.keys(items).forEach((item) => {
-            values[item] = items[item];
-          });
+    if (items) {
+      Object.entries(items).forEach(([category, items]) => {
+        return Object.keys(items).forEach((item) => {
+          values[item] = items[item];
         });
-      }
+      });
+    }
     await CartItems.create(
       [
         {
@@ -87,7 +86,7 @@ const addtocart = async (req, res) => {
         },
       ],
       { session }
-    )
+    );
 
     await session.commitTransaction();
     return sendRes(res, 200, {
@@ -142,86 +141,56 @@ const updateCart = async (req, res) => {
   try {
     const cart_id = req.params.id;
     const {
-      delivery_address_id = delivery_address_id != null
-        ? ObjectId(delivery_address_id)
-        : null,
-      delivery_date = delivery_date != null ? Date(delivery_address_id) : null,
-      delivery_time = delivery_time != null ? String(delivery_time) : null,
-      cooking_instruction = cooking_instruction != null
-        ? String(delivery_instruction)
-        : null,
-      coupon_code = coupon_code != null ? String(coupon_code) : null,
-      extra_services = extra_services.length <= 0
-        ? String[extra_services]
-        : null,
+      delivery_address_id,
+      delivery_date,
+      delivery_time,
+      cooking_instruction,
+      coupon_code,
+      extra_services,
     } = req.body;
     const delivery_charges = 0; // TODO: get the distance between the outlet and customer address
-
-    if (
-      delivery_address_id &&
-      delivery_date &&
-      delivery_time &&
-      cooking_instruction &&
-      coupon_code &&
-      extra_services &&
-      cart_id
-    ) {
-      const cart = await Cart.findOne({ _id: cart_id }).then((d) => d);
-
-      if (!cart) {
-        return sendRes(res, 404, {
-          message: "Cart not found",
-        });
-      }
-
-      const deliveryAddressData = await customersAddresses
-        .findOne({ _id: delivery_address_id })
-        .then((d) => d)
-        .catch((err) => err);
-
-      if (
-        ValidateDelivery(delivery_date, delivery_time) &&
-        deliveryAddressData
-      ) {
-        const updatedCart = await Cart.findOneAndUpdate(
-          {
-            _id: cart_id,
-          },
-          {
-            delivery_address_id: delivery_address_id,
-            delivery_date: delivery_date,
-            delivery_time: delivery_time,
-            cooking_instruction: cooking_instruction,
-            coupon_code: coupon_code,
-            delivery_charges: delivery_charges,
-            extra_services: extra_services,
-          }
-        )
-          .then((d) => console.log(d))
-          .catch((err) => console.log(err));
-
-        if (updatedCart) {
-          return sendRes(res, 200, {
-            message: "Cart updated successfully",
-          });
-        }
-      } else {
-        return sendRes(res, 400, {
-          message: "Delivery date should be on next day.",
-        });
-      }
-
-      function ValidateDelivery(delivery_date, delivery_time) {
-        const now = moment();
-        const deliveryDateTime = moment(
-          `${delivery_date} ${delivery_time}`,
-          "YYYY-MM-DD HH:mm"
-        );
-        const isTomorrow = deliveryDateTime.isSame(now.add(1, "days"), "day");
-        const isAfterNow = deliveryDateTime.isAfter(moment());
-        return isTomorrow && isAfterNow;
-      }
+    //TODO: delivery charges to be calculated
+    if (!cart_id) {
+      return sendRes(res, 404, {
+        message: "Cart id not found",
+      });
     }
+
+    const cart = await Cart.findOne({ _id: cart_id }).lean();
+
+    if (!cart) {
+      return sendRes(res, 404, {
+        message: "Cart not found",
+      });
+    }
+
+    const deliveryAddressData = await CustomersAddresses.findOne({
+      _id: delivery_address_id,
+    });
+
+    const validation = validateDelivery(delivery_date, delivery_time);
+
+    if (validation.isValid !== true) {
+      return sendRes(res, 400, {
+        message: validation.message,
+      });
+    }
+    await Cart.findOneAndUpdate(
+      {
+        _id: cart_id,
+      },
+      {
+        delivery_address_id: delivery_address_id ?? null,
+        delivery_date: delivery_date ?? null,
+        delivery_time: delivery_time ?? null,
+        cooking_instruction: cooking_instruction ?? null,
+        delivery_charges: delivery_charges ?? 0,
+        extra_services: extra_services ?? null,
+      }
+    );
+    return sendRes(res, 200, {
+      message: "Cart updated successfully!",
+    });
   } catch (err) {
     console.log("UPDATE CART ERROR:", err);
     sendError(res, err);
@@ -233,50 +202,43 @@ const updateCartItems = async (req, res) => {
   try {
     const { id } = req.user ?? {};
     const { location } = req.headers;
-    const { cart_id } = req.params;
-    const {
-      no_of_people = no_of_people != null ? Number(no_of_people) : null,
-      items = items.length === 0 ? Map(items) : null,
-      package_name = package_name != null ? String(package_name) : null,
-    } = req.body;
+    const cart_item_id = req.params.id;
+    const { no_of_people, items } = req.body;
+    let updateData;
 
-    const cart = await Cart.findOne({ _id: cart_id }).then((d) => d);
+    if (!cart_item_id) {
+      return sendRes(res, 404, {
+        message: "Cart item id not found",
+      });
+    }
+    const cartItem = await CartItems.findOne({ _id: cart_item_id });
+    const cart = await Cart.findOne({ _id: cartItem.cart_id });
 
     if (!cart) {
       return sendRes(res, 404, {
         message: "Cart not found",
       });
     }
-    if (!no_of_people || items.length === 0) {
-      return sendRes(res, 400, {
-        message: "Invalid data! please try again",
-      });
+    if (no_of_people) {
+      updateData = { no_of_people: no_of_people };
     }
-    let updateData = { no_of_people: no_of_people };
 
-    switch (cart.menu_option) {
-      case "click2cater":
-      case "snack-boxes":
+    if (
+      cart.menu_option === "click2cater" ||
+      cart.menu_option === "snack-boxes"
+    ) {
+      if (items) {
         updateData.items = items;
-        break;
-
-      case "mini-meals":
-        updateData.package_name = package_name;
-        break;
+      }
     }
 
-    const updatedCart = await CartItems.findOneAndUpdate(
-      { cart_id: cart_id },
-      updateData
-    );
+    await CartItems.findOneAndUpdate({ _id: cart_item_id }, updateData);
+    const cartObject = await calculateCart(id);
 
-    if (!updatedCart) {
-      return sendRes(res, 400, {
-        message: "Error updating cart",
-      });
-    }
-
-    res.sendRes(res, 200, {
+    return sendRes(res, 200, {
+      data: {
+        cart: cartObject ?? {},
+      },
       message: "Cart updated successfully",
     });
   } catch (err) {
@@ -285,10 +247,83 @@ const updateCartItems = async (req, res) => {
   }
 };
 
+//Delete Cart
+const deleteCart = async (req, res) => {
+  try {
+    const { id } = req.user ?? {};
+    const cart_id = req.params.id;
+
+    if (!cart_id) {
+      return sendRes(res, 404, {
+        message: "Cart id not found",
+      });
+    }
+    const cart = await Cart.findOne({ _id: cart_id });
+    if (!cart) {
+      return sendRes(res, 404, {
+        message: "Cart not found",
+      });
+    }
+
+    await CartItems.deleteMany({ cart_id: cart_id });
+    await Cart.deleteOne({ _id: cart_id });
+
+    return sendRes(res, 200, {
+      message: "Cart deleted successfully",
+    });
+  } catch (err) {
+    console.log("DELETE CART ERROR:", err);
+    sendError(res, err);
+  }
+};
+
+//Delete Cart Items
+const deleteCartItems = async (req, res) => {
+  const cart_item_id = req.params.id;
+
+  if (!cart_item_id) {
+    return sendRes(res, 404, {
+      message: "Cart item ID not found",
+    });
+  }
+
+  try {
+    const cartItem = await CartItems.findOne({ _id: cart_item_id });
+
+    if (!cartItem) {
+      return sendRes(res, 404, {
+        message: "Cart item not found",
+      });
+    }
+
+    const cart = await Cart.findOne({ _id: cartItem.cart_id });
+
+    if (!cart) {
+      return sendRes(res, 404, {
+        message: "Cart not found",
+      });
+    }
+
+    const cartItemCount = await CartItems.countDocuments({ cart_id: cart._id });
+
+    await CartItems.deleteOne({ _id: cart_item_id });
+
+    if (cartItemCount === 1) {
+      await Cart.deleteOne({ _id: cart._id });
+    }
+
+    return sendRes(res, 200, {
+      message: "Cart item deleted successfully",
+    });
+  } catch (err) {
+    console.log("DELETE CART ERROR:", err);
+    sendError(res, err);
+  }
+};
+
 //Get Extra Services
 const getExtraServices = async (req, res) => {
   try {
-
     const extraServices = await ExtraServices.find({});
     return sendRes(res, 200, {
       data: {
@@ -302,11 +337,27 @@ const getExtraServices = async (req, res) => {
   }
 };
 
+//Add Coupon
+const addCoupon = async (req, res) => {
+  try {
+  } catch (err) {
+    console.log("ADD COUPON ERROR:", err);
+    sendError(res, err);
+  }
+};
+
+//Remove Coupon
+const removeCoupon = async (req, res) => {};
+
 module.exports = {
   addtocart,
   getCart,
   getCartInformation,
   updateCart,
   updateCartItems,
-  getExtraServices
+  deleteCart,
+  deleteCartItems,
+  getExtraServices,
+  addCoupon,
+  removeCoupon,
 };
