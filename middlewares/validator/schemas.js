@@ -4,7 +4,7 @@ const customJoi = Joi.extend((joi) => ({
     type: 'numberString',
     base: joi.string(),
     messages: {
-      'numberString.len': 'The number must be exactly {{#length}} digits.',
+      'numberString.len': 'The {{#label}} must be exactly {{#length}} digits.',
       'numberString.base': 'The value must be a string of digits.',
     },
     rules: {
@@ -23,7 +23,8 @@ const customJoi = Joi.extend((joi) => ({
         }
       }
     }
-  }));
+  }),
+);
   
 
   module.exports = customJoi
