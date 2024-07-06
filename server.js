@@ -7,32 +7,32 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const cors=require('cors');
 const { ValidationError } = require('express-validation');
-const mongoose = require('mongoose');
-const deserializedUser = require('./middlewares/deserializedUser');
+// const corsOptions = {
+//   origin: [
+//     "*"
+//   ],
+
+//   credentials: true
+// }
 
 
 
 app.use((req, res, next) => {
   res.append('Access-Control-Allow-Origin', ['*']);
   res.append('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-  res.append('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Authorization, Accept-Version, Content-Length, Content-Type');
+  res.append('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-Type');
   res.append('Access-Control-Allow-Credentials', true)
   next();
 });
 
 //access config consts
 app.use(express.json());
-app.use('/statics',express.static("public"));
+// app.use('/static',express.static(join(process.cwd(),"public")));
 app.use(bodyParser.json());
 app.use(express.urlencoded({extended:false}));
-app.use(cors({
-  credentials:true,
-  origin:true
-}));
-app.use(cookieParser());
+app.use(cors());
 
-mongoose.connect(process.env.MONGO_URL);
-app.use(deserializedUser);
+app.use(cookieParser());
 routes(app);
 
 app.use(function(err, req, res, next) {
@@ -44,7 +44,7 @@ app.use(function(err, req, res, next) {
 })
 
 app.use("*", (req,res) => {
-  res.status(500).send("Something went wrong!");
+  res.status(502).send("Something went wrong!");
 })
 
 app.listen(PORT, (err) => { if(err) console.log(err); console.log("Server started on PORT:",PORT)});

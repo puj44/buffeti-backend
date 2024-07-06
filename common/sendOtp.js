@@ -1,27 +1,27 @@
-const {serviceSID, client} = require('../config/twilio');
+
+
+const {serviceSID} = require('../config/twilio');
 const moment = require('moment');
-const { get, set, remove } = require('./redisGetterSetter');
-const otpGenerator = require('otp-generator');
+const { get, set } = require('./redisGetterSetter');
+
 const prefix = process.env.PREFIX_OTP;
 
 async function sendOtp(mobile_number){
     const phoneCacheKey = prefix+mobile_number;
 
     let loginData = await get(phoneCacheKey,true);
-    
+    const OTP = "123456";
 
-    const OTP = process.env.ENV === "DEV"? "1234" : otpGenerator.generate(4, { digits:true, upperCaseAlphabets:false, lowerCaseAlphabets:false, specialChars:false });
     if (loginData != null){
 
         let obj = loginData;
-        
-        
+        obj.otp = OTP;
+    
         if (loginData.attempts == 0){
             let timeUntilNextAttempt = moment(new Date()).diff(moment(obj.lastRequest),"seconds");
-            if (timeUntilNextAttempt >= 600){
+            if (timeUntilNextAttempt <= 600){
                 await OtpRequest(); 
                 //set attempt back to 5
-                obj.otp = OTP;
                 obj.attempts = 5;
                 obj.lastRequest = moment(new Date());
                 await set(phoneCacheKey, obj, true);
@@ -40,16 +40,17 @@ async function sendOtp(mobile_number){
                     message:"Maximum Attempt reached! Please try again after "+secondsLeft+" seconds",
                     data:{
                         "secondsLeft":secondsLeft, //convert in seconds
-                        "attempts":obj.attempts
+                        "attempts-":obj.attempts
                     }
                 } 
             }
         } 
         else {
             let secondsDifference = moment(new Date()).diff(moment(obj.lastRequest),"seconds");
+            console.log(moment(new Date()),moment(obj.lastRequest), "HERE", secondsDifference);
             let secondsLeft = 0;
             if(secondsDifference > 30){
-                obj.otp = OTP;
+                
                 obj.attempts =  obj.attempts - 1;
                 obj.lastRequest = moment(new Date());
                 await set(phoneCacheKey, obj, true);
@@ -71,6 +72,7 @@ async function sendOtp(mobile_number){
         const obj = {
             "otp":OTP,
             "lastRequest":moment(new Date()),
+            "previousRequest":moment(new Date()),
             'attempts': 4, 
         }
         await set(phoneCacheKey,obj,true);
@@ -83,33 +85,17 @@ async function sendOtp(mobile_number){
     async function OtpRequest(){
         try{
             // SEND OTP
-            if(process.env.ENV === "DEV"){
-                // let res =await client.verify
-                //             .v2
-                //             .services(serviceSID)
-                //             .verifications.create({
-                //                 to: `+91${mobile_number}`,
-                //                 channel: 'sms',
-                //                 message:"Your Buffeti verification code is: "+OTP
-                //         })
-                //         .then(verifications => verifications);
-
-                client.messages
-                    .create({
-                        body: `Your Buffeti verification code is:${OTP}. This code will expire in 10 minutes.`,
-                        from: `+91${mobile_number}`,
-                        to: '+18777804236'
+            let res =await client.verify
+                        .v2
+                        .services(serviceSID)
+                        .verifications.create({
+                            to: `+91${mobile_number}`,
+                            channel: 'sms',
                     })
-                    .then(message => console.log(message.sid));
-                return true;
-            }else{
-                return true;
-                //client sms API
-            }
+                    .then(verifications => verifications);
 
         }catch(err){
-            console.log("ASd",err);
-            return false;
+            sendError(res,err);
         }
     }
 }

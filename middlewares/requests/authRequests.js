@@ -1,11 +1,13 @@
-const Joi = require("../validator/schemas");
+
+// const { Joi  } = require('express-validation')
+const Joi = require("../schemas");
 const authRequests = {
     signin:{
         mobile_number: Joi.numberString().len(10).required(),
     },
     verify:{
         mobile_number: Joi.numberString().len(10).required(),
-        otp:Joi.numberString().len(4).required()
+        otp:Joi.numberString().len(6).required()
     },
 }
 

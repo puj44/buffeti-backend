@@ -1,48 +1,35 @@
 const client = require('../config/redisClient');
-const prefix = process.env.ENV === "PRODUCTION" ? "prod_" : "dev_";
 
 async function get(key, parseData = false) {
-    if(!client.isOpen){
-        await client.connect()
-    }
-    let data = await client.get((prefix+key));
+
+    await client.connect();
+
+    let data = await client.get(key);
+
     if(parseData && data){
         data = await JSON.parse(data);
     }
-    
+    await client.disconnect();
     return data;
 
 }
 
 async function set (key,data, stringify = false){
-    try{
+    await client.connect();
+    const value = stringify ? JSON.stringify(data) : data;
+    await client.set(key,value);
 
-        if(!client.isOpen){
-            await client.connect()
-        }
-        const value = stringify ? JSON.stringify(data) : data;
-        await client.set((prefix+key)?.toString(),value);
-        return true;
-    }catch(err){
-        console.log(key,"Error Cache SET: ",err);
-        return true;
-    }
-    
+    await client.disconnect();
+    return;
 }
 
 async function remove(key){
-    try{
+    await client.connect();
 
-        if(!client.isOpen){
-            await client.connect()
-        }
-        await client.del((prefix+key));
-        return true;
-    }catch(err){
-        console.log(key,"Error Cache REMOVE: ",err);
-        return true;
-    }
-    
+    await client.del(key);
+
+    await client.disconnect();
+    return;
 }
 
 module.exports.get = get;

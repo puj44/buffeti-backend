@@ -1,21 +1,26 @@
 
 //Models
+const mongoClient = require('../config/MongoClient');
 const sendSMS = require("./../common/sendOtp");
-const verifyUser = require("./../common/verifyOtp");
-const sendRes = require("../common/sendResponse");
-const sendError = require("../common/sendError");
-const { remove} = require("../common/redisGetterSetter");
+const sendRes = require("../controllers/sendResponse");
+const sendError = require("../controllers/sendError");
+
+const {get, set, remove} = require("../common/redisGetterSetter");
+
+const jwt = require('jsonwebtoken');
+
 const prefix = process.env.PREFIX_OTP;
-const Customers = require("../db/models/customers");
-const { signJWT, verifyJWT } = require("./utils/jwtUtils");
+
+const key = process.env.JWT_KEY;
 
 const signin =  async (req, res) => {
 
-    const {mobile_number} = req.body;
+    const mobile_number = req.body?.mobile_number;
+    if(!mobile_number){
+        return sendRes(res, 400, { message:"Mobile Number is not valid"})
+    }
 
     try{
-        const customer = await Customers.findOne({mobile_number}).then((d) => d);
-        if(!customer) return sendRes(res, 400, {message:"Mobile Number is not registered"})
         //CALL sendOtp function
         const response = await sendSMS(mobile_number);
         return sendRes(res,response?.status,
@@ -32,103 +37,42 @@ const signin =  async (req, res) => {
 const verifyOtp = async (req, res) =>{
 
     try{
-        const {mobile_number,otp} = req.body;
+        const mobile_number = req.body?.mobile_number;
+        const otp = req.body?.otp;
         const phoneCacheKey = prefix+mobile_number;
-        let accessToken;
-        
-        const response = await verifyUser(mobile_number,otp);
+        const value = await get(phoneCacheKey,true);
 
-        const customer = await Customers.findOne({mobile_number: mobile_number}).then((d)=> d)
-        if(response.status === 200 && customer){
-            accessToken = signJWT(
-                {
-                    "id":customer._id,
-                    "name":customer.name,
-                    "mobile_number":customer.mobile_number
-                },
-                '72h'
-            )
-            
-            res.cookie(
-                "accessToken",
-                accessToken,
-                {
-                    maxAge:9.461e+7,
-                    httpOnly:true,
-                    sameSite:'none', 
-                    secure: true
-                }
-            )
-            await remove(phoneCacheKey);
+        if(!value || !value?.otp){
+            return sendRes(res, 402, {message:"There's a problem verifying the OTP, try again"});
+        }
+
+        if(value.otp.toString() !== otp.toString()){
+            return sendRes(res, 400, {message:"OTP is invalid."});
         }
         
-        
+        let token = jwt.sign({_id: phoneCacheKey,'mobile_number':mobile_number}, key,{expiresIn: '72h'}); // TODO: After MONGODB registration, store ID of user instead of phoneCacheKey
+
+        await remove(phoneCacheKey);
+
         return sendRes(
-            res, 
-            response?.status, 
-            {
-                data: {
-                    user:verifyJWT(accessToken).payload ?? {},
-                },
-                message:response?.message
-            }
+            res.cookie(
+                "token",
+                token,
+                {expires: new Date(Date.now() + 72 * 3600000),httpOnly:true,sameSite:'none', secure:true}
+            ), 
+            200, 
+            {message:"OTP verified successfully!"}
         );
         
 
     }catch(error){
-        console.log("VERIFY OTP: ",error);
+        console.log("here",error);
         sendError(res,error);
     }
-}
-
-const checkstatus= async (req, res) => {
-    const token = req.cookies?.accessToken;
-    if(token === null || token === undefined){
-
-        return sendRes(res,401,
-            {
-                message:"Access token is missing or invalid"
-            }
-        );
-        
-    } 
-
-    const payload = verifyJWT(token).payload;
-    
-    if(payload === null){
-        return sendRes(res,403,
-            {
-                message:"Access token is not valid"
-            }
-        );
-    }
- 
-    return sendRes(
-        res, 
-        200, 
-        {
-            data: {
-                user: payload ?? {},
-            }
-        }
-    );
-}
-
-const signout = async (req, res) => {
-    res.clearCookie('accessToken',{httpOnly:true, sameSite:'none',secure:true});
-    return sendRes(
-        res, 
-        200, 
-        {
-            message:"Sign out successful!"
-        }
-    );
 }
 
 
 module.exports = {
     signin,
     verifyOtp,
-    checkstatus,
-    signout
 }
