@@ -22,7 +22,7 @@ router.put("/cart-items-update/:id", updateCartItems);
 router.delete("/cart-delete/:id", deleteCart);
 router.delete("/cart-items-delete/:id", deleteCartItems);
 router.get("/get-extra-services", getExtraServices);
-router.get("/add-coupon/:id", addCoupon);
-router.get("/remove-coupon/:id", removeCoupon);
+router.put("/coupon/add/:id", addCoupon);
+router.delete("/coupon/remove/:id", removeCoupon);
 
 module.exports = router;

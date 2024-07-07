@@ -7,6 +7,7 @@ const { findItems } = require("./findItems");
 const Packages = require("../db/models/packages");
 const { calculateItems, validatePackage } = require("./commonHelper");
 const { ExtraServices } = require("../db/models/extraServices");
+const { CouponCode } = require("../db/models/couponCode");
 
 //Calculates the pricing of whole Cart
 async function calculateCart(id) {
@@ -50,6 +51,7 @@ async function calculateCart(id) {
     items_pricing = [],
     extra_charges = [],
     extra_services_charges = [],
+    coupon_code_discount = [],
     addOnCharges = 0,
     addOnChargesQty = 0,
     globalObj = {};
@@ -163,6 +165,23 @@ async function calculateCart(id) {
       total_amount += Number(extraService.price);
     }
   }
+
+  if (coupon_code) {
+    const couponCodeData = await CouponCode.findOne({
+      coupon_code: coupon_code,
+    });
+    coupon_code_discount.push({
+      coupon_code: couponCodeData.coupon_code,
+      description: couponCodeData.description,
+      discount_type: couponCodeData.discount_type,
+      discount_value: couponCodeData.discount_value,
+    });
+    if (couponCodeData.discount_type === "percentage") {
+      total_amount -= (total_amount * couponCodeData.discount_value) / 100;
+    } else {
+      total_amount -= couponCodeData.discount_value;
+    }
+  }
   //TODO: coupon_code and delivery_charges caluction...
   total_billed_amount += total_amount + (total_amount * gst) / 100;
   globalObj = {
@@ -177,6 +196,7 @@ async function calculateCart(id) {
     coupon_code: coupon_code,
     billing_details: {
       extra_services_charges: extra_services_charges,
+      coupon_code: coupon_code_discount,
       item_pricing: items_pricing,
       addon_charges: {
         addOnCharges,

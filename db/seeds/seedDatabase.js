@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const users = require("../models/users");
 const Locations = require("../models/locations");
 const { ExtraServices } = require("../models/extraServices");
+const { CouponCode } = require("../models/couponCode");
 require("dotenv").config();
 
 const menuOptionsData = [
@@ -78,13 +79,52 @@ const extraServicesData = [
   },
 ];
 
-const couponCode = [
+const couponCodes = [
   {
-    coupon_code: "GET5",
-    discount_value: 5,
-    discount_type: null,
-    description: "Get 5% off",
-    is_active: true,
+    coupon_code: "WELCOME10",
+    discount_type: "percentage",
+    discount_value: 10,
+    description: "10% off for new customers",
+    expiration_date: new Date("2024-12-31"),
+    usage_limit: 100,
+    status: "active",
+  },
+  {
+    coupon_code: "SUMMER20",
+    discount_type: "amount",
+    discount_value: 20,
+    description: "Flat $20 off on summer collection",
+    expiration_date: new Date("2024-08-31"),
+    usage_limit: 50,
+    status: "active",
+  },
+  {
+    coupon_code: "BLACKFRIDAY",
+    discount_type: "percentage",
+    discount_value: 50,
+    description: "50% off on Black Friday",
+    expiration_date: new Date("2024-11-30"),
+    usage_limit: 500,
+    status: "active",
+  },
+  {
+    coupon_code: "EXPIRED50",
+    discount_type: "percentage",
+    discount_value: 50,
+    description: "50% off expired coupon",
+    expiration_date: new Date("2023-01-01"),
+    usage_limit: 100,
+    status: "expired",
+  },
+  {
+    coupon_code: "USED10",
+    discount_type: "amount",
+    discount_value: 10,
+    description: "Flat 10Rs off used coupon",
+    expiration_date: new Date("2024-12-31"),
+    usage_limit: 1,
+    usage_count: 1,
+    status: "used",
   },
 ];
 
@@ -122,7 +162,12 @@ async function SeedDatabase() {
     await ExtraServices.deleteMany({});
     await ExtraServices.insertMany(extraServicesData)
       .then((d) => d)
-      .catch((err) => console.log("Delivery Fees: ", err));
+      .catch((err) => console.log("Extra Services: ", err));
+
+    await CouponCode.deleteMany({});
+    await CouponCode.insertMany(couponCodes)
+      .then((d) => d)
+      .catch((err) => console.log("Coupon Code: ", err));
 
     process.exit(0);
   } catch (err) {

@@ -8,6 +8,7 @@ const sendRes = require("../common/sendResponse");
 const { default: mongoose } = require("mongoose");
 const { getCartDetails, validateDelivery } = require("../common/commonHelper");
 const { ExtraServices } = require("../db/models/extraServices");
+const { CouponCode } = require("../db/models/couponCode");
 
 //Add To Cart
 const addtocart = async (req, res) => {
@@ -339,7 +340,48 @@ const getExtraServices = async (req, res) => {
 
 //Add Coupon
 const addCoupon = async (req, res) => {
+  const cart_id = req.params.id;
+  const { coupon_code } = req.body;
+  if (!cart_id || !coupon_code) {
+    return sendRes(res, 404, {
+      message: "Cart ID and coupon code are required",
+    });
+  }
+
   try {
+    const coupon = await CouponCode.findOne({ coupon_code: coupon_code });
+
+    if (!coupon) {
+      return sendRes(res, 404, {
+        message: "Coupon code not found",
+      });
+    }
+
+    if (coupon.status !== "active") {
+      return sendRes(res, 404, {
+        message: "Coupon code is not active",
+      });
+    }
+
+    const cart = await Cart.findOne({ _id: cart_id }).lean();
+
+    if (!cart) {
+      return sendRes(res, 404, {
+        message: "Cart not found",
+      });
+    }
+
+    cart.coupon_code = coupon_code;
+    await cart.save();
+
+    const cartObject = await calculateCart(id);
+
+    return sendRes(res, 200, {
+      data: {
+        cart: cartObject ?? {},
+      },
+      message: "Coupon code added to cart successfully",
+    });
   } catch (err) {
     console.log("ADD COUPON ERROR:", err);
     sendError(res, err);
@@ -347,7 +389,13 @@ const addCoupon = async (req, res) => {
 };
 
 //Remove Coupon
-const removeCoupon = async (req, res) => {};
+const removeCoupon = async (req, res) => {
+  try {
+  } catch (err) {
+    console.log("REMOVE COUPON ERROR:", err);
+    sendError(res, err);
+  }
+};
 
 module.exports = {
   addtocart,
@@ -360,4 +408,70 @@ module.exports = {
   getExtraServices,
   addCoupon,
   removeCoupon,
+};
+
+const addCouponCodeToCart = async (req, res) => {
+  const { cart_id } = req.params;
+  const { coupon_code } = req.body;
+
+  if (!cart_id || !coupon_code) {
+    return res
+      .status(400)
+      .json({ message: "Cart ID and coupon code are required" });
+  }
+
+  try {
+    const coupon = await CouponCode.findOne({ code: coupon_code });
+
+    if (!coupon) {
+      return res.status(404).json({ message: "Coupon code not found" });
+    }
+
+    if (coupon.status !== "active") {
+      return res.status(400).json({ message: "Coupon code is not active" });
+    }
+
+    const cart = await Cart.findById(cart_id);
+
+    if (!cart) {
+      return res.status(404).json({ message: "Cart not found" });
+    }
+
+    cart.coupon_code = coupon_code;
+    await cart.save();
+
+    return res
+      .status(200)
+      .json({ message: "Coupon code added to cart successfully", cart });
+  } catch (error) {
+    console.error("Error adding coupon code to cart:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// Remove Coupon Code from Cart
+const removeCouponCodeFromCart = async (req, res) => {
+  const { cart_id } = req.params;
+
+  if (!cart_id) {
+    return res.status(400).json({ message: "Cart ID is required" });
+  }
+
+  try {
+    const cart = await Cart.findById(cart_id);
+
+    if (!cart) {
+      return res.status(404).json({ message: "Cart not found" });
+    }
+
+    cart.coupon_code = null;
+    await cart.save();
+
+    return res
+      .status(200)
+      .json({ message: "Coupon code removed from cart successfully", cart });
+  } catch (error) {
+    console.error("Error removing coupon code from cart:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
 };
