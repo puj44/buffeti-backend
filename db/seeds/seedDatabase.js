@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const users = require("../models/users");
 const Locations = require("../models/locations");
 const { ExtraServices } = require("../models/extraServices");
+const CouponCodeServices = require("../models/couponCode");
 require("dotenv").config();
 
 const menuOptionsData = [
@@ -82,7 +83,7 @@ const couponCode = [
   {
     coupon_code: "GET5",
     discount_value: 5,
-    discount_type: null,
+    discount_type: "PCT",
     description: "Get 5% off",
     is_active: true,
   },
@@ -124,6 +125,8 @@ async function SeedDatabase() {
       .then((d) => d)
       .catch((err) => console.log("Delivery Fees: ", err));
 
+    await CouponCodeServices.deleteMany({});
+    await CouponCodeServices.insertMany(couponCode).then((d)=>d).catch((err) => console.log("Coupon Error:",err))
     process.exit(0);
   } catch (err) {
     console.log("Seed error:", err);

@@ -1,5 +1,6 @@
 const express = require('express');
-require('dotenv').config()
+require('dotenv').config();
+const mongoURL = process.env.MONGO_URL
 const PORT = process.env.PORT || 3001;
 const app = express();
 const routes = require('./routes')
@@ -31,7 +32,7 @@ app.use(cors({
 }));
 app.use(cookieParser());
 
-mongoose.connect(process.env.MONGO_URL);
+mongoose.connect(mongoURL);
 app.use(deserializedUser);
 routes(app);
 

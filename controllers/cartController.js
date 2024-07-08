@@ -8,6 +8,7 @@ const sendRes = require("../common/sendResponse");
 const { default: mongoose } = require("mongoose");
 const { getCartDetails, validateDelivery } = require("../common/commonHelper");
 const { ExtraServices } = require("../db/models/extraServices");
+const CouponCodes = require("../db/models/couponCode");
 
 //Add To Cart
 const addtocart = async (req, res) => {
@@ -141,6 +142,7 @@ const getCartInformation = async (req, res) => {
 //Update Cart Information
 const updateCart = async (req, res) => {
   try {
+    const { id } = req.user ?? {};
     const cart_id = req.params.id;
     const {
       delivery_address_id,
@@ -159,7 +161,7 @@ const updateCart = async (req, res) => {
       });
     }
 
-    const cart = await Cart.findOne({ _id: cart_id }).lean();
+    const cart = await Cart.findOne({ _id: cart_id });
 
     if (!cart) {
       return sendRes(res, 404, {
@@ -192,8 +194,13 @@ const updateCart = async (req, res) => {
         extra_services: extra_services ?? null,
       }
     );
+    const cartObject = await calculateCart(id);
+    
     return sendRes(res, 200, {
-      message: "Cart updated successfully!",
+      data: {
+        cart: cartObject ?? {},
+      },
+      message: "Cart updated successfully",
     });
   } catch (err) {
     console.log("UPDATE CART ERROR:", err);
@@ -259,11 +266,12 @@ const updateCartItems = async (req, res) => {
         }
       }
     const cartObject = await calculateCart(id);
-
+    const cartDetails = await getCartDetails(id);
     return sendRes(res, 200, {
       redirect:redirect,
       data: {
         cart: cartObject ?? {},
+        cartDetails:cartDetails ?? {}
       },
       message: "Cart updated successfully",
     });
@@ -306,7 +314,7 @@ const deleteCart = async (req, res) => {
 //Delete Cart Items
 const deleteCartItems = async (req, res) => {
   const cart_item_id = req.params.id;
-
+  const { id } = req.user ?? {};
   if (!cart_item_id) {
     return sendRes(res, 404, {
       message: "Cart item ID not found",
@@ -337,9 +345,14 @@ const deleteCartItems = async (req, res) => {
     if (cartItemCount === 1) {
       await Cart.deleteOne({ _id: cart._id });
     }
-
+    const cartObject = await calculateCart(id);
+    const cartDetails = await getCartDetails(id);
     return sendRes(res, 200, {
       redirect:cartItemCount === 1,
+      data: {
+        cart: cartObject ?? {},
+        cartDetails:cartDetails ?? {}
+      },
       message: "Cart item deleted successfully",
     });
   } catch (err) {
@@ -367,6 +380,34 @@ const getExtraServices = async (req, res) => {
 //Add Coupon
 const addCoupon = async (req, res) => {
   try {
+    const cart_id = req.params.id;
+    const { id } = req.user ?? {};
+    const {code} = req.body;
+    const cart = await Cart.findOne({ _id: cart_id });
+    if (!cart) {
+      return sendRes(res, 404, {
+        message: "Cart not found",
+      });
+    }
+    const couponData = await CouponCodes.findOne({coupon_code:code,is_active:true});
+    if(!couponData){
+      return sendRes(res, 400, {
+        message: "Coupon code is invalid",
+      });
+    }
+
+    await Cart.findOneAndUpdate({_id:cart_id},{
+      coupon_code:code
+    });
+    const cartObject = await calculateCart(id);
+    return sendRes(res, 200,
+      {
+        data:{
+          cart:cartObject,
+        },
+        message:"Coupon applied successfully!"
+      }
+    )
   } catch (err) {
     console.log("ADD COUPON ERROR:", err);
     sendError(res, err);
@@ -374,7 +415,28 @@ const addCoupon = async (req, res) => {
 };
 
 //Remove Coupon
-const removeCoupon = async (req, res) => {};
+const removeCoupon = async (req, res) => {
+  try {
+    const cart_id = req.params.cartId;
+    const { id } = req.user ?? {};
+    await Cart.findOneAndUpdate({ _id: cart_id},{
+      coupon_code:null
+    });
+
+    const cartObject = await calculateCart(id);
+    return sendRes(res, 200,
+      {
+        data:{
+          cart:cartObject,
+        },
+        message:"Coupon removed successfully!"
+      }
+    )
+  } catch (err) {
+    console.log("REMOVE COUPON ERROR:", err);
+    sendError(res, err);
+  }
+};
 
 module.exports = {
   addtocart,

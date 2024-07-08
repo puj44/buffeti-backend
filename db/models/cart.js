@@ -17,7 +17,7 @@ const cartSchema = new Schema({
   delivery_date: { type: Date, required: false, default:null },
   delivery_time: { type: String, required: false, default:null },
   cooking_instruction: { type: String, required: false, default:null },
-  coupon_code: { type: String },
+  coupon_code: { type: String ,required:false, default:null},
   delivery_charges: { type: Number, required: false, default: 0 },
   extra_services: { type: [String], default: null },
 });

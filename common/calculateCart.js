@@ -7,12 +7,13 @@ const { findItems } = require("./findItems");
 const Packages = require("../db/models/packages");
 const { calculateItems, validatePackage } = require("./commonHelper");
 const { ExtraServices } = require("../db/models/extraServices");
+const CouponCodes = require("../db/models/couponCode");
 
 //Calculates the pricing of whole Cart
 async function calculateCart(id) {
   let cart, cartItems;
   //GET CART DATA
-  cart = await Cart.findOne({ customer_id: id }).lean();
+  cart = await Cart.findOne({ customer_id: id });
   if (!cart) {
     return null;
   }
@@ -21,7 +22,7 @@ async function calculateCart(id) {
     cart.menu_option === "mini-meals"
       ? await CartItems.find({ cart_id: cart?._id }).lean() //If mini-meals then find all items from cart_id
       : await CartItems.findOne({ cart_id: cart?._id }).lean(); //If not mini-meals then find one item from cart_id
-
+  
   if (!cartItems) {
     return null;
   }
@@ -35,7 +36,7 @@ async function calculateCart(id) {
     delivery_time,
     cooking_instruction,
     coupon_code,
-    delivery_charges,
+    delivery_charges
   } = cart;
 
   let packagesData,
@@ -163,7 +164,22 @@ async function calculateCart(id) {
       total_amount += Number(extraService.price);
     }
   }
-  //TODO: coupon_code and delivery_charges caluction...
+  let coupon_type = null;
+  let coupon_discount = null;
+  let coupon_discount_value = null;
+  if(coupon_code && coupon_code !== null){
+    const couponData = await CouponCodes.findOne({coupon_code:coupon_code,is_active:true});
+    coupon_type = couponData.discount_type;
+    coupon_discount = couponData.discount_value
+      let couponVal = 0;
+      if(couponData.discount_type === "PCT"){
+        couponVal =  (total_amount * couponData.discount_value)/ 100;
+      }else{
+        couponVal = couponData.discount_value;
+      }
+      coupon_discount_value= couponVal;
+      total_amount = Number(total_amount - couponVal);
+  }
   total_billed_amount += total_amount + (total_amount * gst) / 100;
   globalObj = {
     cart_id: cart?._id,
@@ -175,6 +191,8 @@ async function calculateCart(id) {
     cooking_instruction: cooking_instruction,
     extra_services: extra_services,
     coupon_code: coupon_code,
+    coupon_type:coupon_type,
+    coupon_discount:coupon_discount,
     billing_details: {
       extra_services_charges: extra_services_charges,
       item_pricing: items_pricing,
@@ -183,6 +201,8 @@ async function calculateCart(id) {
         addOnChargesQty,
       },
       extra_charges: extra_charges,
+      
+      coupon_discount_value:coupon_discount_value,
       total_amount: total_amount,
       total_billed_amount: total_billed_amount,
     },
