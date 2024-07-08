@@ -108,7 +108,7 @@ async function sendOtp(mobile_number){
             }
 
         }catch(err){
-            console.log("ASd",err);
+            console.log("OTP",err);
             return false;
         }
     }

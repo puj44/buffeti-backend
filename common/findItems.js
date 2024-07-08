@@ -23,11 +23,11 @@ async function findItems(items, menuOption, location) {
       for (const i in items) {
         const data = await Items.findOne({ slug: i }).lean();
         let val = data;
-        let selected_preparation = val.selected_preparation;
+        let selected_preparation = items[i].selected_preparation;
         if(val.extra_items && Object.keys(val.extra_items).length > 0){
           val.extra_items = cacheData[val.category.slug]?.[val.sub_category.slug]?.[i]?.extra_items ?? cacheData[val.category.slug][i]?.extra_items;
         }
-        if(val.preparations && Object.keys(val.preparations).length && !val.selected_preparation){
+        if(val.preparations && Object.keys(val.preparations).length && !selected_preparation){
           selected_preparation = Object.keys(val.preparations)[0];
         }
         delete val._id;

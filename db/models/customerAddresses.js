@@ -25,4 +25,4 @@ const CustomersAddresses = mongoose.model(
   customersAddressesSchema
 );
 
-module.exports = { CustomersAddresses };
+module.exports =  CustomersAddresses ;

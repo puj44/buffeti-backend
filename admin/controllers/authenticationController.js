@@ -9,7 +9,6 @@ const signin = async (req,res) =>{
     const {email, password} = req.body;
     try{
         const user = await users.findOne({email});
-        console.log(user.password);
         if(!user){
             return sendResponse(res, 401, {
                 message:"Invalid Email or Password"
@@ -19,12 +18,10 @@ const signin = async (req,res) =>{
         let response =  await new Promise((resolve,reject) =>{
             bcrypt.compare(password,user.password,(err,hash_result)=>{
                 if(err) reject(false);
-                console.log(hash_result);
                 resolve(hash_result);
             });
         });
 
-        console.log("response:",response);
 
         if(!response) return sendResponse(res,401, {message:"Invalid Email or Password"});
 
