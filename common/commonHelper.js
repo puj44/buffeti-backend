@@ -90,19 +90,21 @@ async function getCartDetails(customerId) {
 
 //Validate Package, in case of click2cater
 async function validatePackage(items, isValidPackage, packages) {
+  let isValid = false
   let categoriesMapings = packages.categories_mapping;
   let categorisedItems = {};
+ 
   for (const it in items) {
     if (items[it].category.slug) {
       categorisedItems[items[it].category.slug] =
         Number(categorisedItems[items[it].category.slug] ?? 0) + 1;
     }
   }
-  if (JSON.stringify(categoriesMapings) === JSON.stringify(categorisedItems)) {
-    isValidPackage = true;
+  if (JSON.stringify(categoriesMapings) == JSON.stringify(categorisedItems)) {
+    isValid = true;
   }
 
-  return isValidPackage;
+  return isValid;
 }
 
 //Validate Delivery logic here

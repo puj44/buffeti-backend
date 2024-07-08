@@ -11,4 +11,4 @@ const couponCodeSchema = new Schema({
 
 const CouponCodeServices = mongoose.model("coupon_code", couponCodeSchema);
 
-module.exports = { CouponCodeServices };
+module.exports = {CouponCodeServices} ;

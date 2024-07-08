@@ -2,7 +2,7 @@ const { ObjectId } = require("mongodb");
 const moment = require("moment");
 const { calculateCart } = require("../common/calculateCart");
 const { Cart, CartItems } = require("../db/models/cart");
-const { CustomersAddresses } = require("../db/models/customerAddresses");
+const  CustomersAddresses  = require("../db/models/customerAddresses");
 const sendError = require("../common/sendError");
 const sendRes = require("../common/sendResponse");
 const { default: mongoose } = require("mongoose");
@@ -106,9 +106,11 @@ const getCart = async (req, res) => {
     const { id } = req.user ?? {};
 
     const cartObject = await calculateCart(id);
+    const cartDetails = await getCartDetails(id);
     return sendRes(res, 200, {
       data: {
         cart: cartObject ?? {},
+        cartDetails: cartDetails ?? {},
       },
       message: "Cart fetched successfully",
     });
@@ -148,6 +150,7 @@ const updateCart = async (req, res) => {
       coupon_code,
       extra_services,
     } = req.body;
+  
     const delivery_charges = 0; // TODO: get the distance between the outlet and customer address
     //TODO: delivery charges to be calculated
     if (!cart_id) {
@@ -167,13 +170,14 @@ const updateCart = async (req, res) => {
     const deliveryAddressData = await CustomersAddresses.findOne({
       _id: delivery_address_id,
     });
-
-    const validation = validateDelivery(delivery_date, delivery_time);
-
-    if (validation.isValid !== true) {
-      return sendRes(res, 400, {
-        message: validation.message,
-      });
+    if(delivery_date && delivery_time){
+      const validation = validateDelivery(delivery_date, delivery_time);
+  
+      if (validation.isValid !== true) {
+        return sendRes(res, 400, {
+          message: validation.message,
+        });
+      }
     }
     await Cart.findOneAndUpdate(
       {
@@ -183,7 +187,7 @@ const updateCart = async (req, res) => {
         delivery_address_id: delivery_address_id ?? null,
         delivery_date: delivery_date ?? null,
         delivery_time: delivery_time ?? null,
-        cooking_instruction: cooking_instruction ?? null,
+        cooking_instruction: cooking_instruction ? cooking_instruction?.toString()?.trim() :null,
         delivery_charges: delivery_charges ?? 0,
         extra_services: extra_services ?? null,
       }
@@ -211,7 +215,7 @@ const updateCartItems = async (req, res) => {
         message: "Cart item id not found",
       });
     }
-    const cartItem = await CartItems.findOne({ _id: cart_item_id });
+    const cartItem = await CartItems.findOne({ _id: cart_item_id }).lean();
     const cart = await Cart.findOne({ _id: cartItem.cart_id });
 
     if (!cart) {
@@ -228,14 +232,36 @@ const updateCartItems = async (req, res) => {
       cart.menu_option === "snack-boxes"
     ) {
       if (items) {
-        updateData.items = items;
+        for(const it in items){
+          let item = JSON.parse(JSON.stringify(items[it]));
+          item = {
+            additional_qty:item.additional_qty ?? null,
+            added_extra_items:item.added_extra_items ?? null,
+            selected_preparation:item.selected_preparation ?? null
+
+          }
+          updateData.items = {
+            ...updateData.items,
+            [it]:item
+          };
+        }
       }
     }
-
-    await CartItems.findOneAndUpdate({ _id: cart_item_id }, updateData);
+    
+    await CartItems.findOneAndUpdate({ _id: cart_item_id }, {...updateData});
+    let redirect = false;
+    if(cart.menu_option === "click2cater" ||
+      cart.menu_option === "snack-boxes"){
+        if(Object.keys(updateData.items ?? {}).length <= 0){
+          redirect = true;
+          await CartItems.deleteMany({cart_id:cartItem.cart_id});
+          await Cart.deleteOne({_id:cartItem.cart_id});
+        }
+      }
     const cartObject = await calculateCart(id);
 
     return sendRes(res, 200, {
+      redirect:redirect,
       data: {
         cart: cartObject ?? {},
       },
@@ -313,6 +339,7 @@ const deleteCartItems = async (req, res) => {
     }
 
     return sendRes(res, 200, {
+      redirect:cartItemCount === 1,
       message: "Cart item deleted successfully",
     });
   } catch (err) {
