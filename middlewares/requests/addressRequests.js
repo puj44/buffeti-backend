@@ -6,7 +6,7 @@ const addressRequests = {
         address: Joi.string().min(3).max(100).required().label("Address Line"),
         area:Joi.string().min(1).max(70).required().label("Area"),
         city:Joi.string().max(50).required().label("City"),
-        pincode:Joi.string().min(6).max(6).required().label("pincode"),
+        pincode:Joi.string().min(6).max(6).required().label("Pincode"),
         lat:Joi.string().label("Lattitude"),
         long:Joi.string().label("Longitude"),
     },
