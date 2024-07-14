@@ -1,6 +1,6 @@
-const { ObjectId } = require("mongodb");
+
 const moment = require("moment");
-const { calculateCart } = require("../common/calculateCart");
+const { calculateCart, addCartToCache, addToCurrentCartCache, updateCartCache, updateCartItemsCache } = require("../common/calculateCart");
 const { Cart, CartItems } = require("../db/models/cart");
 const  CustomersAddresses  = require("../db/models/customerAddresses");
 const sendError = require("../common/sendError");
@@ -9,6 +9,8 @@ const { default: mongoose } = require("mongoose");
 const { getCartDetails, validateDelivery } = require("../common/commonHelper");
 const { ExtraServices } = require("../db/models/extraServices");
 const CouponCodes = require("../db/models/couponCode");
+const { get, set, remove } = require("../common/redisGetterSetter");
+const ObjectId = require("mongodb").ObjectId;
 
 //Add To Cart
 const addtocart = async (req, res) => {
@@ -24,9 +26,8 @@ const addtocart = async (req, res) => {
       extra_services,
       items,
       package_name,
-      replace, //if ture dalete Cart and cart_items
+      replace, //if true delete Cart and cart_items
     } = req.body;
-    let cartInsert;
 
     const cart = await Cart.findOne({ customer_id: id }).lean();
 
@@ -55,7 +56,7 @@ const addtocart = async (req, res) => {
       }
     }
 
-    cartInsert =
+    const cartInsert =
       cart_id ??
       (await Cart.create(
         [
@@ -69,7 +70,7 @@ const addtocart = async (req, res) => {
         { session }
       ));
     let values = {};
-
+   
     if (items) {
       Object.entries(items).forEach(([category, items]) => {
         return Object.keys(items).forEach((item) => {
@@ -77,7 +78,7 @@ const addtocart = async (req, res) => {
         });
       });
     }
-    await CartItems.create(
+    const cartItem = await CartItems.create(
       [
         {
           cart_id: cart_id ?? cartInsert[0]._id,
@@ -88,10 +89,39 @@ const addtocart = async (req, res) => {
       ],
       { session }
     );
-
     await session.commitTransaction();
+    const cartItems = await CartItems.find({_id:new ObjectId(cartItem[0]._id)}).lean();
+    
+    let response = false;
+    if(!cart_id){
+      response = await addCartToCache({
+        cart_id:cart_id ?? cartInsert[0]._id.toString(),
+        cart_item_id:cartItem[0]._id.toString(),
+        location:location,
+        menu_option:menu_option,
+        no_of_people:no_of_people,
+        items:menu_option !== "mini-meals" ?cartItems[0].items :cartItems,
+        package_name:package_name
+      },id)
+     
+    }else{
+      response = await addToCurrentCartCache({
+        cart_id:cart_id.toString(),
+        cart_item_id:cartItem[0]._id?.toString(),
+        no_of_people:no_of_people,
+        package_name:package_name
+      },id)
+    }
+    // if(!response){
+    //   throw Error("Data not found");
+    // }
+   
+    const cartDetails = await getCartDetails(id);
     return sendRes(res, 200, {
       message: "Cart item inserted successfully",
+      data: {
+        cartDetails: cartDetails ?? {},
+      },
     });
   } catch (err) {
     //ROLLBACK
@@ -106,7 +136,7 @@ const getCart = async (req, res) => {
   try {
     const { id } = req.user ?? {};
 
-    const cartObject = await calculateCart(id);
+    const cartObject = await get(`cart-${id}`,true);
     const cartDetails = await getCartDetails(id);
     return sendRes(res, 200, {
       data: {
@@ -160,7 +190,7 @@ const updateCart = async (req, res) => {
         message: "Cart id not found",
       });
     }
-
+    // const cartData = await
     const cart = await Cart.findOne({ _id: cart_id });
 
     if (!cart) {
@@ -181,27 +211,33 @@ const updateCart = async (req, res) => {
         });
       }
     }
-    await Cart.findOneAndUpdate(
-      {
-        _id: cart_id,
-      },
-      {
+    const newCartData = {
         delivery_address_id: delivery_address_id ?? null,
         delivery_date: delivery_date ?? null,
         delivery_time: delivery_time ?? null,
         cooking_instruction: cooking_instruction ? cooking_instruction?.toString()?.trim() :null,
         delivery_charges: delivery_charges ?? 0,
         extra_services: extra_services ?? null,
-      }
-    );
-    const cartObject = await calculateCart(id);
+    }
+  
+    // const cartObject = await calculateCart(id);
+    const cartObject = await updateCartCache(id, newCartData);
     
-    return sendRes(res, 200, {
+     sendRes(res, 200, {
       data: {
         cart: cartObject ?? {},
       },
       message: "Cart updated successfully",
     });
+     await set(`cart-${customerId}`,cartObject,true);
+     return   await Cart.findOneAndUpdate(
+      {
+        _id: cart_id,
+      },
+      {
+        ...newCartData
+      }
+    );
   } catch (err) {
     console.log("UPDATE CART ERROR:", err);
     sendError(res, err);
@@ -223,7 +259,7 @@ const updateCartItems = async (req, res) => {
       });
     }
     const cartItem = await CartItems.findOne({ _id: cart_item_id }).lean();
-    const cart = await Cart.findOne({ _id: cartItem.cart_id });
+    const cart = await Cart.findOne({ _id: cartItem?.cart_id, customer_id:id });
 
     if (!cart) {
       return sendRes(res, 404, {
@@ -233,12 +269,13 @@ const updateCartItems = async (req, res) => {
     if (no_of_people) {
       updateData = { no_of_people: no_of_people };
     }
-
+    const cachedCart = await  get(`cart-${id}`,true);
     if (
       cart.menu_option === "click2cater" ||
       cart.menu_option === "snack-boxes"
     ) {
       if (items) {
+       
         for(const it in items){
           let item = JSON.parse(JSON.stringify(items[it]));
           item = {
@@ -249,7 +286,10 @@ const updateCartItems = async (req, res) => {
           }
           updateData.items = {
             ...updateData.items,
-            [it]:item
+            [it]:{
+              ...cachedCart?.cart_data?.items?.[it] ?? {},
+              ...item
+            }
           };
         }
       }
@@ -265,12 +305,18 @@ const updateCartItems = async (req, res) => {
           await Cart.deleteOne({_id:cartItem.cart_id});
         }
       }
-    const cartObject = await calculateCart(id);
+    // const cartObject = await calculateCart(id);
+
+    const updateItemsObj = await updateCartItemsCache(id, updateData, cachedCart);
+    const calculateAndUpdate = await updateCartCache(id,{},updateItemsObj);
+
+    await set(`cart-${id}`,calculateAndUpdate,true);
+
     const cartDetails = await getCartDetails(id);
     return sendRes(res, 200, {
       redirect:redirect,
       data: {
-        cart: cartObject ?? {},
+        cart: calculateAndUpdate ?? {},
         cartDetails:cartDetails ?? {}
       },
       message: "Cart updated successfully",
@@ -301,7 +347,7 @@ const deleteCart = async (req, res) => {
 
     await CartItems.deleteMany({ cart_id: cart_id });
     await Cart.deleteOne({ _id: cart_id });
-
+    await remove(`cart-${id}`);
     return sendRes(res, 200, {
       message: "Cart deleted successfully",
     });
