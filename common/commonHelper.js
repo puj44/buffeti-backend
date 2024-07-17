@@ -124,11 +124,11 @@ async function calculateItems(data, itemsData, packagesData) {
 }
 
 //Get Cart Details
-async function getCartDetails(customerId) {
+async function getCartDetails(customerId, data = null) {
   // const cart = await Cart.findOne({ customer_id: customerId });
   try{
 
-    const currentCartData = await get(`cart-${customerId}`,true);
+    const currentCartData =  data ?? await get(`cart-${customerId}`,true);
     if (currentCartData) {
       if (currentCartData?.cart_data && Object.keys(currentCartData?.cart_data)?.length) {
         let items = {};

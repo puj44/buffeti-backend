@@ -1,6 +1,6 @@
 
 const moment = require("moment");
-const { calculateCart, addCartToCache, addToCurrentCartCache, updateCartCache, updateCartItemsCache } = require("../common/calculateCart");
+const {  addCartToCache, addToCurrentCartCache, updateCartCache, updateCartItemsCache, deleteCartItemCache, addCouponCodeCache, removeCouponCodeCache } = require("../common/calculateCart");
 const { Cart, CartItems } = require("../db/models/cart");
 const  CustomersAddresses  = require("../db/models/customerAddresses");
 const sendError = require("../common/sendError");
@@ -229,8 +229,8 @@ const updateCart = async (req, res) => {
       },
       message: "Cart updated successfully",
     });
-     await set(`cart-${customerId}`,cartObject,true);
-     return   await Cart.findOneAndUpdate(
+     await set(`cart-${id}`,cartObject,true);
+      await Cart.findOneAndUpdate(
       {
         _id: cart_id,
       },
@@ -238,9 +238,10 @@ const updateCart = async (req, res) => {
         ...newCartData
       }
     );
+    
   } catch (err) {
     console.log("UPDATE CART ERROR:", err);
-    sendError(res, err);
+    return sendError(res, err);
   }
 };
 
@@ -295,25 +296,34 @@ const updateCartItems = async (req, res) => {
       }
     }
     
-    await CartItems.findOneAndUpdate({ _id: cart_item_id }, {...updateData});
+    
     let redirect = false;
     if(cart.menu_option === "click2cater" ||
       cart.menu_option === "snack-boxes"){
         if(Object.keys(updateData.items ?? {}).length <= 0){
           redirect = true;
-          await CartItems.deleteMany({cart_id:cartItem.cart_id});
-          await Cart.deleteOne({_id:cartItem.cart_id});
+          
         }
       }
-    // const cartObject = await calculateCart(id);
-
-    const updateItemsObj = await updateCartItemsCache(id, updateData, cachedCart);
+    
+    if(redirect){
+      await remove(`cart-${id}`);
+       sendRes(res, 200, {
+        redirect:redirect,
+        data: {
+          cartDetails:cartDetails ?? {}
+        },
+        message: "Cart updated successfully",
+      });
+    }
+    const updateItemsObj = await updateCartItemsCache(id, {...updateData, package_name:cartItem?.package_name}, cachedCart);
     const calculateAndUpdate = await updateCartCache(id,{},updateItemsObj);
+    
 
-    await set(`cart-${id}`,calculateAndUpdate,true);
+    const cartDetails = await getCartDetails(id, calculateAndUpdate);
 
-    const cartDetails = await getCartDetails(id);
-    return sendRes(res, 200, {
+    
+     sendRes(res, 200, {
       redirect:redirect,
       data: {
         cart: calculateAndUpdate ?? {},
@@ -321,9 +331,16 @@ const updateCartItems = async (req, res) => {
       },
       message: "Cart updated successfully",
     });
+    await set(`cart-${id}`,calculateAndUpdate,true);
+    if(!redirect){
+      return await CartItems.findOneAndUpdate({ _id: cart_item_id }, {...updateData});
+    }else{
+      await CartItems.deleteMany({cart_id:cartItem.cart_id});
+      return await Cart.deleteOne({_id:cartItem.cart_id});
+    }
   } catch (err) {
     console.log("UPDATE CART ITEMS ERROR:", err);
-    sendError(res, err);
+    return sendError(res, err);
   }
 };
 
@@ -353,7 +370,7 @@ const deleteCart = async (req, res) => {
     });
   } catch (err) {
     console.log("DELETE CART ERROR:", err);
-    sendError(res, err);
+    return sendError(res, err);
   }
 };
 
@@ -386,14 +403,10 @@ const deleteCartItems = async (req, res) => {
 
     const cartItemCount = await CartItems.countDocuments({ cart_id: cart._id });
 
-    await CartItems.deleteOne({ _id: cart_item_id });
-
-    if (cartItemCount === 1) {
-      await Cart.deleteOne({ _id: cart._id });
-    }
-    const cartObject = await calculateCart(id);
-    const cartDetails = await getCartDetails(id);
-    return sendRes(res, 200, {
+    
+    const cartObject = await deleteCartItemCache(id,cartItem.package_name);
+    const cartDetails = await getCartDetails(id, cartObject);
+    sendRes(res, 200, {
       redirect:cartItemCount === 1,
       data: {
         cart: cartObject ?? {},
@@ -401,9 +414,16 @@ const deleteCartItems = async (req, res) => {
       },
       message: "Cart item deleted successfully",
     });
+    await CartItems.deleteOne({ _id: cart_item_id });
+
+    if (cartItemCount === 1) {
+      await remove(`cart-${id}`);
+      return await Cart.deleteOne({ _id: cart._id });
+    }
+    return ;
   } catch (err) {
     console.log("DELETE CART ERROR:", err);
-    sendError(res, err);
+    return sendError(res, err);
   }
 };
 
@@ -442,11 +462,9 @@ const addCoupon = async (req, res) => {
       });
     }
 
-    await Cart.findOneAndUpdate({_id:cart_id},{
-      coupon_code:code
-    });
-    const cartObject = await calculateCart(id);
-    return sendRes(res, 200,
+    
+    const cartObject = await addCouponCodeCache(id,code);
+     sendRes(res, 200,
       {
         data:{
           cart:cartObject,
@@ -454,9 +472,12 @@ const addCoupon = async (req, res) => {
         message:"Coupon applied successfully!"
       }
     )
+    return await Cart.findOneAndUpdate({_id:cart_id},{
+      coupon_code:code
+    });
   } catch (err) {
     console.log("ADD COUPON ERROR:", err);
-    sendError(res, err);
+    return sendError(res, err);
   }
 };
 
@@ -465,22 +486,23 @@ const removeCoupon = async (req, res) => {
   try {
     const cart_id = req.params.cartId;
     const { id } = req.user ?? {};
-    await Cart.findOneAndUpdate({ _id: cart_id},{
-      coupon_code:null
-    });
+   
 
-    const cartObject = await calculateCart(id);
-    return sendRes(res, 200,
+    const cartObject = await removeCouponCodeCache(id);
+     sendRes(res, 200,
       {
         data:{
           cart:cartObject,
         },
         message:"Coupon removed successfully!"
       }
-    )
+    );
+    return  await Cart.findOneAndUpdate({ _id: cart_id},{
+      coupon_code:null
+    });
   } catch (err) {
     console.log("REMOVE COUPON ERROR:", err);
-    sendError(res, err);
+    return sendError(res, err);
   }
 };
 
