@@ -2,7 +2,31 @@ const keys = require("../config/keys");
 const Items = require("../db/models/items");
 const MiniMeals = require("../db/models/miniMeals");
 const { get } = require("./redisGetterSetter");
-
+async function findMiniMeals(items) {
+  try{
+    let promises = {};
+    for (const i of items) {
+      const data = await MiniMeals.findOne({ slug: i.package_name }).lean();
+      if(!data){
+        return false;
+      }
+      let val = JSON.parse(JSON.stringify(data));
+      val.cart_item_id = i._id;
+      delete val._id;
+      delete val.createdAt;
+      delete val.updatedAt;
+      delete val.__v;
+      promises[i.package_name] = {
+        ...val,
+        ...(i ?? {}),
+      };
+    }
+    return promises;
+  }catch(err){
+    console.log("Find Mini Meals Error:",err);
+    return false;
+  }
+}
 async function findItems(items, menuOption, location) {
   try {
     const promises = {};
@@ -45,4 +69,4 @@ async function findItems(items, menuOption, location) {
   }
 }
 
-module.exports = { findItems };
+module.exports = { findItems, findMiniMeals };
