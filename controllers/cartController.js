@@ -349,7 +349,7 @@ const deleteCart = async (req, res) => {
   try {
     const { id } = req.user ?? {};
     const cart_id = req.params.id;
-
+    await remove(`cart-${id}`);
     if (!cart_id) {
       return sendRes(res, 404, {
         message: "Cart id not found",
@@ -362,9 +362,9 @@ const deleteCart = async (req, res) => {
       });
     }
 
+   
     await CartItems.deleteMany({ cart_id: cart_id });
     await Cart.deleteOne({ _id: cart_id });
-    await remove(`cart-${id}`);
     return sendRes(res, 200, {
       message: "Cart deleted successfully",
     });
