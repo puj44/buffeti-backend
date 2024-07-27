@@ -238,6 +238,7 @@ const addCartToCache = async(data, customerId) =>{
           if(Object.keys(dbItem ?? {}).length < 0){
             return false;
           }
+          
           delete dbItem._id;
           delete dbItem.__v;
           delete dbItem.createdAt;
@@ -246,7 +247,11 @@ const addCartToCache = async(data, customerId) =>{
             ...dbItem,
             additional_qty:currentItemValues.additional_qty ?? 0,
             added_extra_items:currentItemValues.added_extra_items ?? {},
-            selected_preparation:currentItemValues.selected_preparation ?? null,
+            selected_preparation:
+              currentItemValues.selected_preparation ?
+                currentItemValues.selected_preparation
+                : Object.keys(dbItem.preparations ?? {}).length > 0 ?
+                Object.keys(dbItem.preparations)[0] : null,
           }
         }
       const packagesData = await Packages.findOne({ slug: package_name, menu_option:menu_option }).lean();
