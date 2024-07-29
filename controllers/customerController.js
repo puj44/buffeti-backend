@@ -51,10 +51,40 @@ const insertCustomer = async (req,res) =>{
             );
         }
     }catch(err){
-        sendErr(res,err)
+        console.log("SIGNUP CUSTOMER ERROR:",err);
+        return sendErr(res,err)
+    }
+}
+
+const getCustomerDetails = async(req,res) =>{
+    try{
+        if(!req.user?.id){
+            throw Error("User not found");
+        }
+        const customer = await Customers.findOne({_id:req.user?.id}).then((d) => d);
+        const details = {
+            name:customer.name,
+            mobile_number:customer.mobile_number,
+            email:customer.email,
+            is_email_verified:customer.is_email_verified,
+        }
+        return sendRes(
+            res,
+            200,
+            {
+                data:{
+                    profile:details
+                },
+                message:"Customer details fetched successfully"
+            }
+        )
+    }catch(err){
+        console.log("GET CUSTOMER DETAILS ERROR:",err);
+        return sendErr(res,err)
     }
 }
 
 module.exports = {
-    insertCustomer
+    insertCustomer,
+    getCustomerDetails
 }

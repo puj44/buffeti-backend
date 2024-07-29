@@ -1,6 +1,6 @@
 const express = require('express');
 require('dotenv').config();
-const mongoURL = process.env.MONGO_URL
+
 const PORT = process.env.PORT || 3001;
 const app = express();
 const routes = require('./routes')
@@ -11,8 +11,8 @@ const { ValidationError } = require('express-validation');
 const mongoose = require('mongoose');
 const deserializedUser = require('./middlewares/deserializedUser');
 
-
-
+const mongoURL = process.env.MONGO_URL
+mongoose.connect(mongoURL);
 app.use((req, res, next) => {
   res.append('Access-Control-Allow-Origin', ['*']);
   res.append('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
@@ -32,7 +32,7 @@ app.use(cors({
 }));
 app.use(cookieParser());
 
-mongoose.connect(mongoURL);
+
 app.use(deserializedUser);
 routes(app);
 
