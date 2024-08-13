@@ -1,8 +1,15 @@
-
 const moment = require("moment");
-const {  addCartToCache, addToCurrentCartCache, updateCartCache, updateCartItemsCache, deleteCartItemCache, addCouponCodeCache, removeCouponCodeCache } = require("../common/calculateCart");
+const {
+  addCartToCache,
+  addToCurrentCartCache,
+  updateCartCache,
+  updateCartItemsCache,
+  deleteCartItemCache,
+  addCouponCodeCache,
+  removeCouponCodeCache,
+} = require("../common/calculateCart");
 const { Cart, CartItems } = require("../db/models/cart");
-const  CustomersAddresses  = require("../db/models/customerAddresses");
+const CustomersAddresses = require("../db/models/customerAddresses");
 const sendError = require("../common/sendError");
 const sendRes = require("../common/sendResponse");
 const { default: mongoose } = require("mongoose");
@@ -70,7 +77,7 @@ const addtocart = async (req, res) => {
         { session }
       ));
     let values = {};
-   
+
     if (items) {
       Object.entries(items).forEach(([category, items]) => {
         return Object.keys(items).forEach((item) => {
@@ -90,32 +97,39 @@ const addtocart = async (req, res) => {
       { session }
     );
     await session.commitTransaction();
-    const cartItems = await CartItems.find({_id:new ObjectId(cartItem[0]._id)}).lean();
-    
+    const cartItems = await CartItems.find({
+      _id: new ObjectId(cartItem[0]._id),
+    }).lean();
+
     let response = false;
-    if(!cart_id){
-      response = await addCartToCache({
-        cart_id:cart_id ?? cartInsert[0]._id.toString(),
-        cart_item_id:cartItem[0]._id.toString(),
-        location:location,
-        menu_option:menu_option,
-        no_of_people:no_of_people,
-        items:menu_option !== "mini-meals" ?cartItems[0].items :cartItems,
-        package_name:package_name
-      },id)
-     
-    }else{
-      response = await addToCurrentCartCache({
-        cart_id:cart_id.toString(),
-        cart_item_id:cartItem[0]._id?.toString(),
-        no_of_people:no_of_people,
-        package_name:package_name
-      },id)
+    if (!cart_id) {
+      response = await addCartToCache(
+        {
+          cart_id: cart_id ?? cartInsert[0]._id.toString(),
+          cart_item_id: cartItem[0]._id.toString(),
+          location: location,
+          menu_option: menu_option,
+          no_of_people: no_of_people,
+          items: menu_option !== "mini-meals" ? cartItems[0].items : cartItems,
+          package_name: package_name,
+        },
+        id
+      );
+    } else {
+      response = await addToCurrentCartCache(
+        {
+          cart_id: cart_id.toString(),
+          cart_item_id: cartItem[0]._id?.toString(),
+          no_of_people: no_of_people,
+          package_name: package_name,
+        },
+        id
+      );
     }
     // if(!response){
     //   throw Error("Data not found");
     // }
-   
+
     const cartDetails = await getCartDetails(id);
     return sendRes(res, 200, {
       message: "Cart item inserted successfully",
@@ -136,7 +150,7 @@ const getCart = async (req, res) => {
   try {
     const { id } = req.user ?? {};
 
-    const cartObject = await get(`cart-${id}`,true);
+    const cartObject = await get(`cart-${id}`, true);
     const cartDetails = await getCartDetails(id);
     return sendRes(res, 200, {
       data: {
@@ -182,7 +196,7 @@ const updateCart = async (req, res) => {
       coupon_code,
       extra_services,
     } = req.body;
-  
+
     const delivery_charges = 0; // TODO: get the distance between the outlet and customer address
     //TODO: delivery charges to be calculated
     if (!cart_id) {
@@ -202,9 +216,9 @@ const updateCart = async (req, res) => {
     const deliveryAddressData = await CustomersAddresses.findOne({
       _id: delivery_address_id,
     });
-    if(delivery_date && delivery_time){
+    if (delivery_date && delivery_time) {
       const validation = validateDelivery(delivery_date, delivery_time);
-  
+
       if (validation.isValid !== true) {
         return sendRes(res, 400, {
           message: validation.message,
@@ -212,33 +226,35 @@ const updateCart = async (req, res) => {
       }
     }
     const newCartData = {
-        delivery_address_id: delivery_address_id ?? null,
-        delivery_date: delivery_date ?? null,
-        delivery_time: delivery_time ?? null,
-        cooking_instruction: cooking_instruction ? cooking_instruction?.toString()?.trim() :null,
-        delivery_charges: delivery_charges ?? 0,
-        extra_services: extra_services ?? null,
-    }
-  
+      delivery_address_id: delivery_address_id ?? null,
+      delivery_date: delivery_date ?? null,
+      delivery_time: delivery_time ?? null,
+      cooking_instruction: cooking_instruction
+        ? cooking_instruction?.toString()?.trim()
+        : null,
+      delivery_charges: delivery_charges ?? 0,
+      extra_services: extra_services ?? null,
+      coupon_code: coupon_code ?? null,
+    };
+
     // const cartObject = await calculateCart(id);
     const cartObject = await updateCartCache(id, newCartData);
-    
-     sendRes(res, 200, {
+
+    sendRes(res, 200, {
       data: {
         cart: cartObject ?? {},
       },
       message: "Cart updated successfully",
     });
-     await set(`cart-${id}`,cartObject,true);
-      await Cart.findOneAndUpdate(
+    await set(`cart-${id}`, cartObject, true);
+    await Cart.findOneAndUpdate(
       {
         _id: cart_id,
       },
       {
-        ...newCartData
+        ...newCartData,
       }
     );
-    
   } catch (err) {
     console.log("UPDATE CART ERROR:", err);
     return sendError(res, err);
@@ -260,7 +276,10 @@ const updateCartItems = async (req, res) => {
       });
     }
     const cartItem = await CartItems.findOne({ _id: cart_item_id }).lean();
-    const cart = await Cart.findOne({ _id: cartItem?.cart_id, customer_id:id });
+    const cart = await Cart.findOne({
+      _id: cartItem?.cart_id,
+      customer_id: id,
+    });
 
     if (!cart) {
       return sendRes(res, 404, {
@@ -270,73 +289,76 @@ const updateCartItems = async (req, res) => {
     if (no_of_people) {
       updateData = { no_of_people: no_of_people };
     }
-    const cachedCart = await  get(`cart-${id}`,true);
+    const cachedCart = await get(`cart-${id}`, true);
     if (
       cart.menu_option === "click2cater" ||
       cart.menu_option === "snack-boxes"
     ) {
       if (items) {
-       
-        for(const it in items){
+        for (const it in items) {
           let item = JSON.parse(JSON.stringify(items[it]));
           item = {
-            additional_qty:item.additional_qty ?? null,
-            added_extra_items:item.added_extra_items ?? null,
-            selected_preparation:item.selected_preparation ?? null
-
-          }
+            additional_qty: item.additional_qty ?? null,
+            added_extra_items: item.added_extra_items ?? null,
+            selected_preparation: item.selected_preparation ?? null,
+          };
           updateData.items = {
             ...updateData.items,
-            [it]:{
-              ...cachedCart?.cart_data?.items?.[it] ?? {},
-              ...item
-            }
+            [it]: {
+              ...(cachedCart?.cart_data?.items?.[it] ?? {}),
+              ...item,
+            },
           };
         }
       }
     }
-    
-    
+
     let redirect = false;
-    if(cart.menu_option === "click2cater" ||
-      cart.menu_option === "snack-boxes"){
-        if(Object.keys(updateData.items ?? {}).length <= 0){
-          redirect = true;
-          
-        }
+    if (
+      cart.menu_option === "click2cater" ||
+      cart.menu_option === "snack-boxes"
+    ) {
+      if (Object.keys(updateData.items ?? {}).length <= 0) {
+        redirect = true;
       }
-    
-    if(redirect){
+    }
+
+    if (redirect) {
       await remove(`cart-${id}`);
-       sendRes(res, 200, {
-        redirect:redirect,
+      sendRes(res, 200, {
+        redirect: redirect,
         data: {
-          cartDetails:cartDetails ?? {}
+          cartDetails: cartDetails ?? {},
         },
         message: "Cart updated successfully",
       });
     }
-    const updateItemsObj = await updateCartItemsCache(id, {...updateData, package_name:cartItem?.package_name}, cachedCart);
-    const calculateAndUpdate = await updateCartCache(id,{},updateItemsObj);
-    
+    const updateItemsObj = await updateCartItemsCache(
+      id,
+      { ...updateData, package_name: cartItem?.package_name },
+      cachedCart
+    );
+    const calculateAndUpdate = await updateCartCache(id, {}, updateItemsObj);
 
     const cartDetails = await getCartDetails(id, calculateAndUpdate);
 
-    
-     sendRes(res, 200, {
-      redirect:redirect,
+    sendRes(res, 200, {
+      redirect: redirect,
       data: {
         cart: calculateAndUpdate ?? {},
-        cartDetails:cartDetails ?? {}
+        cartDetails: cartDetails ?? {},
       },
       message: "Cart updated successfully",
     });
-    await set(`cart-${id}`,calculateAndUpdate,true);
-    if(!redirect){
-      return await CartItems.findOneAndUpdate({ _id: cart_item_id }, {...updateData});
-    }else{
-      await CartItems.deleteMany({cart_id:cartItem.cart_id});
-      return await Cart.deleteOne({_id:cartItem.cart_id});
+    await set(`cart-${id}`, calculateAndUpdate, true);
+    if (!redirect) {
+      return await CartItems.findOneAndUpdate(
+        { _id: cart_item_id },
+        { ...updateData }
+      );
+    } else {
+      await CartItems.deleteMany({ cart_id: cartItem.cart_id });
+      return await Cart.deleteOne({ _id: cartItem.cart_id });
     }
   } catch (err) {
     console.log("UPDATE CART ITEMS ERROR:", err);
@@ -362,7 +384,6 @@ const deleteCart = async (req, res) => {
       });
     }
 
-   
     await CartItems.deleteMany({ cart_id: cart_id });
     await Cart.deleteOne({ _id: cart_id });
     return sendRes(res, 200, {
@@ -403,14 +424,13 @@ const deleteCartItems = async (req, res) => {
 
     const cartItemCount = await CartItems.countDocuments({ cart_id: cart._id });
 
-    
-    const cartObject = await deleteCartItemCache(id,cartItem.package_name);
+    const cartObject = await deleteCartItemCache(id, cartItem.package_name);
     const cartDetails = await getCartDetails(id, cartObject);
     sendRes(res, 200, {
-      redirect:cartItemCount === 1,
+      redirect: cartItemCount === 1,
       data: {
         cart: cartObject ?? {},
-        cartDetails:cartDetails ?? {}
+        cartDetails: cartDetails ?? {},
       },
       message: "Cart item deleted successfully",
     });
@@ -420,7 +440,7 @@ const deleteCartItems = async (req, res) => {
       await remove(`cart-${id}`);
       return await Cart.deleteOne({ _id: cart._id });
     }
-    return ;
+    return;
   } catch (err) {
     console.log("DELETE CART ERROR:", err);
     return sendError(res, err);
@@ -448,33 +468,36 @@ const addCoupon = async (req, res) => {
   try {
     const cart_id = req.params.id;
     const { id } = req.user ?? {};
-    const {code} = req.body;
+    const { code } = req.body;
     const cart = await Cart.findOne({ _id: cart_id });
     if (!cart) {
       return sendRes(res, 404, {
         message: "Cart not found",
       });
     }
-    const couponData = await CouponCodes.findOne({coupon_code:code,is_active:true});
-    if(!couponData){
+    const couponData = await CouponCodes.findOne({
+      coupon_code: code,
+      is_active: true,
+    });
+    if (!couponData) {
       return sendRes(res, 400, {
         message: "Coupon code is invalid",
       });
     }
 
-    
-    const cartObject = await addCouponCodeCache(id,code);
-     sendRes(res, 200,
-      {
-        data:{
-          cart:cartObject,
-        },
-        message:"Coupon applied successfully!"
-      }
-    )
-    return await Cart.findOneAndUpdate({_id:cart_id},{
-      coupon_code:code
+    const cartObject = await addCouponCodeCache(id, code);
+    sendRes(res, 200, {
+      data: {
+        cart: cartObject,
+      },
+      message: "Coupon applied successfully!",
     });
+    return await Cart.findOneAndUpdate(
+      { _id: cart_id },
+      {
+        coupon_code: code,
+      }
+    );
   } catch (err) {
     console.log("ADD COUPON ERROR:", err);
     return sendError(res, err);
@@ -486,20 +509,20 @@ const removeCoupon = async (req, res) => {
   try {
     const cart_id = req.params.cartId;
     const { id } = req.user ?? {};
-   
 
     const cartObject = await removeCouponCodeCache(id);
-     sendRes(res, 200,
+    sendRes(res, 200, {
+      data: {
+        cart: cartObject,
+      },
+      message: "Coupon removed successfully!",
+    });
+    return await Cart.findOneAndUpdate(
+      { _id: cart_id },
       {
-        data:{
-          cart:cartObject,
-        },
-        message:"Coupon removed successfully!"
+        coupon_code: null,
       }
     );
-    return  await Cart.findOneAndUpdate({ _id: cart_id},{
-      coupon_code:null
-    });
   } catch (err) {
     console.log("REMOVE COUPON ERROR:", err);
     return sendError(res, err);

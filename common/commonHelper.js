@@ -3,14 +3,13 @@ const keys = require("../config/keys");
 const { get } = require("./redisGetterSetter");
 const moment = require("moment");
 async function calculatePackages(itemsData) {
-  try{
+  try {
     let itemsPricing = [],
-    totalItemsAmount = 0;
+      totalItemsAmount = 0;
     for (const pack in itemsData) {
       const packageInfo = itemsData[pack];
-      const totalPrice =
-        Number(packageInfo.price * packageInfo.no_of_people);
-        totalItemsAmount += totalPrice;
+      const totalPrice = Number(packageInfo.price * packageInfo.no_of_people);
+      totalItemsAmount += totalPrice;
       itemsPricing.push({
         item_name: packageInfo?.item_name,
         amount: totalPrice,
@@ -18,8 +17,8 @@ async function calculatePackages(itemsData) {
       });
     }
     return { itemsPricing, totalItemsAmount };
-  }catch(err){
-    console.log("CALCULATE PACKAGES ERROR:",err)
+  } catch (err) {
+    console.log("CALCULATE PACKAGES ERROR:", err);
   }
 }
 //Calculates the pricing of Cart items
@@ -27,15 +26,15 @@ async function calculateItems(data, itemsData, packagesData) {
   let itemObject = {};
 
   let itemsPricing = [],
-  extraChargesArray = [],
-  addOnChargesSum = 0,
-  addOnChargesQty = 0,
-  totalItemsAmount = 0;
-  try{
+    extraChargesArray = [],
+    addOnChargesSum = 0,
+    addOnChargesQty = 0,
+    totalItemsAmount = 0;
+  try {
     const { location, menu_option, no_of_people, isPackageValid } = data ?? {};
-  
+
     if (location && menu_option && itemsData && no_of_people) {
-      if(isPackageValid){
+      if (isPackageValid) {
         let packagePrice = 0;
         if (no_of_people >= 10 && no_of_people <= 20) {
           packagePrice = packagesData._10_20_pax;
@@ -57,10 +56,12 @@ async function calculateItems(data, itemsData, packagesData) {
         const extraItems = itemData?.added_extra_items;
         let totalPrice = 0,
           addonCharges = 0,
-          extraCharges = 0
-   
+          extraCharges = 0;
+
         //ADDONCHARGE + ADDITIONAL QUANTITY
-        addonCharges += Number(itemData.additional_serving_rate * additionalQty); // ADDITIONAL RATE * ADDITIONAL QTY
+        addonCharges += Number(
+          itemData.additional_serving_rate * additionalQty
+        ); // ADDITIONAL RATE * ADDITIONAL QTY
         addOnChargesQty += additionalQty;
         //EXTRACHARGESAMOUNT + EXTRA ITEMS ADDED
         if (extraItems && Object.keys(extraItems).length) {
@@ -68,13 +69,13 @@ async function calculateItems(data, itemsData, packagesData) {
             `${data.location}_${data.menu_option}_${keys.extra_items}`,
             true
           );
-  
+
           for (const extraItm in extraItems) {
             const extraItem = extraItemsCacheData[extraItm]; //DATA FROM EXTRA ITEMS CACHE
             if (extraItem) {
-              const price =
-                Number(extraItem.rate_per_serving *
-                (extraItems[extraItm] ?? 0)); // CALCULATE EXTRA ITEM PRICE RATE * QTY
+              const price = Number(
+                extraItem.rate_per_serving * (extraItems[extraItm] ?? 0)
+              ); // CALCULATE EXTRA ITEM PRICE RATE * QTY
               extraCharges += price;
               extraChargesArray.push({
                 item_name: extraItem.item_name,
@@ -82,7 +83,7 @@ async function calculateItems(data, itemsData, packagesData) {
                 amount: price,
               });
             } else {
-              return {error:true};
+              return { error: true };
             }
           }
           extraItemsCacheData = {};
@@ -98,9 +99,9 @@ async function calculateItems(data, itemsData, packagesData) {
         }
         //SUMMATION OF ADDONCHARGES AND EXTRA ITEMS CHARGES
         totalPrice += addonCharges + extraCharges;
-  
+
         addOnChargesSum += addonCharges;
-        totalItemsAmount += totalPrice
+        totalItemsAmount += totalPrice;
         itemObject[item] = {
           ...itemData,
           addon_charges: addonCharges,
@@ -108,37 +109,41 @@ async function calculateItems(data, itemsData, packagesData) {
           total_price: totalPrice,
         };
       }
-      
-      return { itemsPricing,
+
+      return {
+        itemsPricing,
         extraChargesArray,
         addOnChargesSum,
         addOnChargesQty,
-        totalItemsAmount, calculatedItems:itemObject };
+        totalItemsAmount,
+        calculatedItems: itemObject,
+      };
     } else {
-      return {error:true};
+      return { error: true };
     }
-  }catch(err){
-    console.log("CALCULATE ITEMS ERROR:",err)
-    return {error:true}
+  } catch (err) {
+    console.log("CALCULATE ITEMS ERROR:", err);
+    return { error: true };
   }
 }
 
 //Get Cart Details
 async function getCartDetails(customerId, data = null) {
   // const cart = await Cart.findOne({ customer_id: customerId });
-  try{
-
-    const currentCartData =  data ?? await get(`cart-${customerId}`,true);
+  try {
+    const currentCartData = data ?? (await get(`cart-${customerId}`, true));
     if (currentCartData) {
-      if (currentCartData?.cart_data && Object.keys(currentCartData?.cart_data)?.length) {
+      if (
+        currentCartData?.cart_data &&
+        Object.keys(currentCartData?.cart_data)?.length
+      ) {
         let items = {};
-        if(currentCartData?.menu_option !== "mini-meals"){
+        if (currentCartData?.menu_option !== "mini-meals") {
           items[currentCartData?.cart_data?.package_name] = {
-            cart_item_id:currentCartData?.cart_data?.cart_item_id,
-            no_of_people:currentCartData?.cart_data?.no_of_people,
-          }
-        }else{
-          
+            cart_item_id: currentCartData?.cart_data?.cart_item_id,
+            no_of_people: currentCartData?.cart_data?.no_of_people,
+          };
+        } else {
           Object.keys(currentCartData?.cart_data).forEach((ci) => {
             items[ci] = {
               cart_item_id: currentCartData?.cart_data[ci]?.cart_item_id,
@@ -152,18 +157,18 @@ async function getCartDetails(customerId, data = null) {
         };
       }
     }
-  }catch(err){
-    console.log("GET CART DETAILS:",err)
+  } catch (err) {
+    console.log("GET CART DETAILS:", err);
   }
   return {};
 }
 
 //Validate Package, in case of click2cater
 async function validatePackage(items, packages) {
-  let isValid = false
+  let isValid = false;
   let categoriesMapings = packages.categories_mapping;
   let categorisedItems = {};
- 
+
   for (const it in items) {
     if (items[it].category.slug) {
       categorisedItems[items[it].category.slug] =
@@ -210,10 +215,27 @@ function validateDelivery(delivery_date, delivery_time) {
     isValid: true,
   };
 }
+
+const generateOrderNumber = (menuOption, currentOrderCount) => {
+  let orderNumber =
+    menuOption === "snack-boxes"
+      ? "SB"
+      : menuOption === "mini-meals"
+      ? "MM"
+      : "C2C";
+  const number =
+    currentOrderCount + 1 < 10
+      ? `0${currentOrderCount + 1}`
+      : currentOrderCount + 1;
+  orderNumber = orderNumber.concat(number);
+  return orderNumber;
+};
+
 module.exports = {
   getCartDetails,
   calculateItems,
   validatePackage,
   validateDelivery,
-  calculatePackages
+  calculatePackages,
+  generateOrderNumber,
 };
