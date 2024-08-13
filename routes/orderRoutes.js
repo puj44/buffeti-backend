@@ -9,6 +9,6 @@ const validateLocation = require("../middlewares/validateLocation");
 
 router.post("/place-order", placeOrder);
 router.get("/get-order", getOrder);
-router.get("/get-order-info", getOrderInfo);
+router.get("/get-order-info/:id", getOrderInfo);
 
 module.exports = router;

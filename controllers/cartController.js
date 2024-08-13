@@ -234,6 +234,7 @@ const updateCart = async (req, res) => {
         : null,
       delivery_charges: delivery_charges ?? 0,
       extra_services: extra_services ?? null,
+      coupon_code: coupon_code ?? null,
     };
 
     // const cartObject = await calculateCart(id);
