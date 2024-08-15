@@ -20,26 +20,14 @@ const placeOrder = async (req, res) => {
         message: "Customer id not found",
       });
     }
-
-    const existingOrder = await Order.findOne({ customer_id: id });
-
-    if (existingOrder) {
-      return sendRes(res, 400, {
-        message: "You have already placed an order!",
-      });
-    }
-
     let cartCacheData = await get(`cart-${id}`, true);
 
-    console.log(JSON.stringify(cartCacheData));
-    // const dbCartData = await Cart.findOne({ customer_id: id }).lean();
 
     if (!cartCacheData || !cartCacheData.cart_data) {
       return sendRes(res, 400, {
         message: "Cart data not found!",
       });
     }
-
     const {
       cart_id,
       location,
@@ -53,6 +41,19 @@ const placeOrder = async (req, res) => {
       delivery_charges,
       extra_services,
     } = cartCacheData;
+    const ordersCount = await Order.countDocuments({ customer_id: id });
+    const order_number = generateOrderNumber(menu_option, ordersCount);
+    const existingOrder = await Order.findOne({ customer_id: id,order_number:order_number });
+
+    if (existingOrder) {
+      return sendRes(res, 400, {
+        message: "You have already placed an order!",
+      });
+    }
+
+   
+
+    
     const { items, no_of_people, package_name } = cart_data;
     const {
       item_pricing,
@@ -74,8 +75,7 @@ const placeOrder = async (req, res) => {
       });
     }
 
-    const ordersCount = await Order.countDocuments({ customer_id: id });
-    const order_number = generateOrderNumber(menu_option, ordersCount);
+    
 
     const orderInsert = await Order.create(
       [
@@ -150,7 +150,7 @@ const getOrder = async (req, res) => {
         message: "Customer id not found",
       });
     }
-    const orderDetails = await Order.findOne({ customer_id: id }).lean();
+    const orderDetails = await Order.find({ customer_id: id }).lean();
     if (!orderDetails) {
       return sendRes(res, 404, {
         message: "Order not found",
