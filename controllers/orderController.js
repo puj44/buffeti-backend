@@ -40,7 +40,7 @@ const placeOrder = async (req, res) => {
       delivery_charges,
       extra_services,
     } = cartCacheData;
-    const ordersCount = await Order.countDocuments({ customer_id: id });
+    const ordersCount = await Order.countDocuments({ customer_id: id, menu_option: menu_option});
     const order_number = generateOrderNumber(menu_option, ordersCount);
     const existingOrder = await Order.findOne({
       customer_id: id,
