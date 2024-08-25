@@ -11,7 +11,7 @@ const crypto = require("crypto");
 const createPayment = async (req, res) => {
   const { id } = req.user ?? {};
   const order_id = req.params.id;
-  const { payment_mode} = req.body;
+  const { payment_mode } = req.body;
   const conn = mongoose.connection;
   const session = await conn.startSession();
   session.startTransaction();
@@ -23,7 +23,8 @@ const createPayment = async (req, res) => {
     }
 
     const orderDetails = await Order.findOne({ _id: order_id }).lean();
-    const { order_number, total_billed_amount, amount_due, payment_status } = orderDetails;
+    const { order_number, total_billed_amount, amount_due, payment_status } =
+      orderDetails;
 
     if (!orderDetails) {
       return sendRes(res, 404, {
@@ -42,7 +43,7 @@ const createPayment = async (req, res) => {
 
     if (payment_status === "pending") {
       if (payment_mode === "advance") {
-        amount_to_be_paid = total_billed_amount - total_billed_amount * 0.2; // 20% discount for advance payment.
+        amount_to_be_paid = Math.ceil(total_billed_amount * 0.2); // 20% discount for advance payment.
       }
     } else {
       amount_to_be_paid = amount_due;
