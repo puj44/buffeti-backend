@@ -5,8 +5,9 @@ const {
   verifyPayment,
 } = require("../controllers/PaymentController");
 const validateLocation = require("../middlewares/validateLocation");
+const authenticateUser = require("../middlewares/authenticateUser");
 
-router.post("/create-payment/:id", createPayment);
+router.post("/create-payment/:id", authenticateUser,createPayment);
 router.post("/verify-payment/:id", verifyPayment);
 
 module.exports = router;

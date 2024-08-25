@@ -10,25 +10,20 @@ const crypto = require("crypto");
 
 const createPayment = async (req, res) => {
   const { id } = req.user ?? {};
-  const order_id = req.params.id;
+  const orderNumber= req.params.id;
   const { payment_mode } = req.body;
   const conn = mongoose.connection;
   const session = await conn.startSession();
   session.startTransaction();
   try {
-    if (!id && order_id) {
-      return sendRes(res, 404, {
-        message: "Customer_id and order_id not found",
-      });
-    }
 
-    const orderDetails = await Order.findOne({ _id: order_id }).lean();
-    const { order_number, total_billed_amount, amount_due, payment_status } =
+    const orderDetails = await Order.findOne({ order_number: orderNumber }).lean();
+    const { order_number, total_billed_amount, amount_due, payment_status, _id } =
       orderDetails;
 
     if (!orderDetails) {
       return sendRes(res, 404, {
-        message: "Order details not found",
+        message: "Order not found",
       });
     }
 
@@ -69,7 +64,7 @@ const createPayment = async (req, res) => {
       [
         {
           order_number: order_number,
-          order_id: order_id,
+          order_id: _id,
           payment_amount: amount_to_be_paid,
           payment_status: "init",
           razorpay_order_id: payment_call?.id,
