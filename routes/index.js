@@ -7,6 +7,7 @@ const packageRoutes = require("./packagesRoutes");
 const cartRoutes = require("./cartRoutes");
 const orderRoutes = require("./orderRoutes");
 const profileRoutes = require("./profileRoutes");
+const paymentRoutes = require("./paymentRoutes");
 const express = require("express");
 const validateLocation = require("../middlewares/validateLocation");
 const authenticateUser = require("../middlewares/authenticateUser");
@@ -28,6 +29,7 @@ router.use("/packages", validateLocation, packageRoutes);
 router.use("/cart", authenticateUser, cartRoutes);
 router.use("/order", authenticateUser, orderRoutes);
 router.use("/profile", authenticateUser, profileRoutes);
+router.use("/payment", authenticateUser, paymentRoutes);
 
 router.use("/", (req, res) => {
   res.status(404).send("Route not defined!");
