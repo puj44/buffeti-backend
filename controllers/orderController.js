@@ -22,7 +22,6 @@ const placeOrder = async (req, res) => {
     }
     let cartCacheData = await get(`cart-${id}`, true);
 
-
     if (!cartCacheData || !cartCacheData.cart_data) {
       return sendRes(res, 400, {
         message: "Cart data not found!",
@@ -43,7 +42,10 @@ const placeOrder = async (req, res) => {
     } = cartCacheData;
     const ordersCount = await Order.countDocuments({ customer_id: id });
     const order_number = generateOrderNumber(menu_option, ordersCount);
-    const existingOrder = await Order.findOne({ customer_id: id,order_number:order_number });
+    const existingOrder = await Order.findOne({
+      customer_id: id,
+      order_number: order_number,
+    });
 
     if (existingOrder) {
       return sendRes(res, 400, {
@@ -51,10 +53,16 @@ const placeOrder = async (req, res) => {
       });
     }
 
-   
+    let { items, no_of_people, package_name } = cart_data;
 
-    
-    const { items, no_of_people, package_name } = cart_data;
+    if (!items && !no_of_people && !package_name) {
+      Object.keys(cart_data).forEach((key) => {
+        items = cart_data[key].items;
+        no_of_people = cart_data[key].no_of_people;
+        package_name = cart_data[key].package_name;
+      });
+    }
+
     const {
       item_pricing,
       addon_charges,
@@ -74,8 +82,6 @@ const placeOrder = async (req, res) => {
         message: "Cart not found",
       });
     }
-
-    
 
     const orderInsert = await Order.create(
       [
@@ -97,6 +103,7 @@ const placeOrder = async (req, res) => {
           addon_charges: addon_charges,
           total_amount: total_amount,
           total_billed_amount: total_billed_amount,
+          amount_due: total_billed_amount,
         },
       ],
       { session }
