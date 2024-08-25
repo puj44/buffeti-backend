@@ -11,7 +11,7 @@ const crypto = require("crypto");
 const createPayment = async (req, res) => {
   const { id } = req.user ?? {};
   const order_id = req.params.id;
-  const { payment_mode, payment_status, payment_type } = req.body;
+  const { payment_mode} = req.body;
   const conn = mongoose.connection;
   const session = await conn.startSession();
   session.startTransaction();
@@ -23,7 +23,7 @@ const createPayment = async (req, res) => {
     }
 
     const orderDetails = await Order.findOne({ _id: order_id }).lean();
-    const { order_number, total_billed_amount, amount_due } = orderDetails;
+    const { order_number, total_billed_amount, amount_due, payment_status } = orderDetails;
 
     if (!orderDetails) {
       return sendRes(res, 404, {
