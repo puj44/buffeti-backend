@@ -1,6 +1,6 @@
 const sendRes = require("../common/sendResponse");
 const sendErr = require("../common/sendError");
-const Customers = require('../db/models/customers');
+const {Customers} = require('../db/models/customers');
 const jwt = require('jsonwebtoken');
 const errorHandling = require("../common/mongoErrorHandling");
 const verifyCustomer = require("../controllers/authenticationController");
