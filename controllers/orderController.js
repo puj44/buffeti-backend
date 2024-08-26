@@ -6,7 +6,7 @@ const { get, set, remove } = require("../common/redisGetterSetter");
 const { Order, OrderItems } = require("../db/models/order");
 const { Cart, CartItems } = require("../db/models/cart");
 const { delivery_fees } = require("../config/keys");
-const { generateOrderNumber } = require("../common/commonHelper");
+const { generateOrderNumber, getCartDetails } = require("../common/commonHelper");
 
 const placeOrder = async (req, res) => {
   const { id } = req.user ?? {};
@@ -131,15 +131,18 @@ const placeOrder = async (req, res) => {
         message: "Failed to create order items",
       });
     }
-
+    
+    await remove(`cart-${id}`);
     await Cart.deleteOne({ _id: dbCartData?._id }, { session });
     await CartItems.deleteMany({ cart_id: dbCartData?._id }, { session });
-    await remove(`cart-${id}`);
 
     await session.commitTransaction();
-
+    const cartDetails = await getCartDetails(id);
     return sendRes(res, 200, {
       message: "Order placed successfully",
+      data: {
+        cartDetails: cartDetails ?? {},
+      },
     });
   } catch (err) {
     await session.abortTransaction();
