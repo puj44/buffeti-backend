@@ -6,7 +6,7 @@ const sendRes = require("../common/sendResponse");
 const sendError = require("../common/sendError");
 const { remove} = require("../common/redisGetterSetter");
 const prefix = process.env.PREFIX_OTP;
-const Customers = require("../db/models/customers");
+const {Customers} = require("../db/models/customers");
 const { signJWT, verifyJWT } = require("./utils/jwtUtils");
 
 const signin =  async (req, res) => {
