@@ -160,7 +160,7 @@ const getOrder = async (req, res) => {
         message: "Customer id not found",
       });
     }
-    const orderDetails = await Order.find({ customer_id: id }).lean();
+    const orderDetails = await Order.find({ customer_id: id }).sort({createdAt:-1}).lean();
     if (!orderDetails) {
       return sendRes(res, 404, {
         message: "Order not found",
