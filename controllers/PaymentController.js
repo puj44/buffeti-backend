@@ -125,7 +125,6 @@ const verifyPayment = async (req, res) => {
     data.update(JSON.stringify(req.body));
     const digest = data.digest("hex");
 
-    console.log("LOG", digest);
     if (digest === req.headers["x-razorpay-signature"]) {
       //legit request...
     } else {
