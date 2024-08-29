@@ -8,7 +8,7 @@ const orderPaymentSchema = new Schema({
   payment_status: {
     type: String,
     required: false,
-    enum: ["init", "completed"],
+    enum: ["init", "completed", "failed"],
   },
   payment_method: { type: String, required: false },
   razorpay_order_id: { type: String, required: false, unqiue: true },

@@ -126,7 +126,45 @@ const verifyPayment = async (req, res) => {
     const digest = data.digest("hex");
 
     if (digest === req.headers["x-razorpay-signature"]) {
-      //legit request...
+      const { event, payload } = req.body;
+      const { amount, order_id } = event.payload.payment.entity;
+      const orderPaymentDetails = await OrderPayment.findOne({
+        razorpay_order_id: order_id,
+      }).lean();
+      const orderDetails = await Order.findOne({
+        _id: orderPaymentDetails.order_id,
+      }).lean();
+
+      switch (event.event) {
+        case "payment.captured":
+          if (amount === orderDetails.amount_due) {
+            await Order.updateOne(
+              { _id: orderDetails._id },
+              { $set: { payment_status: "fully_paid" } }
+            );
+          }
+          await Order.updateOne(
+            { _id: orderDetails._id },
+            { $set: { payment_status: "partially_paid" } }
+          );
+          await OrderPayment.updateOne(
+            { razorpay_order_id: order_id },
+            { $set: { payment_status: "completed" } }
+          );
+          break;
+        case "payment.failed":
+          await OrderPayment.updateOne(
+            { razorpay_order_id: order_id },
+            { $set: { payment_status: "failed" } }
+          );
+          break;
+        default:
+          // console.log(`Unhandled event: ${event}`);
+          break;
+      }
+      return sendRes(res, 200, {
+        message: "Payment captured successfully",
+      });
     } else {
       return sendRes(res, 401, {
         message: "Invalid Signature",
