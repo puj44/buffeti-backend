@@ -1,9 +1,12 @@
 const sendError = require("../common/sendError");
 const sendResponse = require("../common/sendResponse");
+const verifyEmail = require("../common/verifyEmail");
 const CustomerAddresses = require("../db/models/customerAddresses");
 const Customers = require("../db/models/customers");
 const sendEmail = require("../services/email/sendEmail");
 const otpGenerator = require("otp-generator");
+const { get, set, remove } = require("./redisGetterSetter");
+const prefix = process.env.PREFIX_OTP;
 const getAddress = async (req, res) => {
   try {
     const addresses = await CustomerAddresses.find({ customer: req.user.id });
@@ -110,7 +113,8 @@ const updateProfile = async (req, res) => {
       });
     }
 
-    if (email != null && email !== customerDetails.email) {
+    const dbEmail = customerDetails.email;
+    if (email != null && email !== dbEmail) {
       const OTP =
         process.env.ENV === "DEV"
           ? "1234"
@@ -128,7 +132,16 @@ const updateProfile = async (req, res) => {
         process.env.AUTH_EMAIL_NOREPLY
       );
       if (!sendEmailResponse) {
-        return sendResponse(res, 500, { message: "Failed to send email" });
+        return sendResponse(res, 400, { message: "Failed to send email" });
+      }
+      let obj = {
+        otp: OTP,
+      };
+      const emailCacheKey = prefix + email;
+      await set(emailCacheKey, obj, true);
+      const emailVerificationResponse = await verifyEmail(email, OTP);
+      if (!emailVerificationResponse) {
+        return sendResponse(res, 400, { message: "Failed to verify email" });
       }
       const emailUpdate = await Customers.findByIdAndUpdate(
         { _id: id },
@@ -136,6 +149,9 @@ const updateProfile = async (req, res) => {
           email,
         }
       );
+      if (!emailUpdate) {
+        return sendResponse(res, 400, { message: "Failed to update email" });
+      }
     }
     if (name) {
       const customerUpdate = await Customers.findByIdAndUpdate(
@@ -144,6 +160,9 @@ const updateProfile = async (req, res) => {
           name,
         }
       );
+      if (!customerUpdate) {
+        return sendResponse(res, 400, { message: "Failed to update name" });
+      }
     }
 
     return sendResponse(res, 200, {
