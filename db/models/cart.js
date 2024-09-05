@@ -22,7 +22,7 @@ const cartSchema = new Schema({
     validate: {
       validator: function (date) {
         // Check if the date is a valid date
-        return moment(date).isValid();
+        return !date || date === null || moment(date).isValid();
       },
       message: "Invalid delivery date.",
     },
@@ -33,7 +33,7 @@ const cartSchema = new Schema({
     validate: {
       validator: function (time) {
         // Validate time format (HH:mm)
-        return moment(time, "HH:mm", true).isValid();
+        return !time || time === null || moment(time, "HH:mm", true).isValid();
       },
       message: "Invalid delivery time format. Use HH:mm.",
     },
