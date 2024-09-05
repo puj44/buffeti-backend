@@ -243,7 +243,7 @@ const generateOrderNumber = (menuOption, currentOrderCount, customer_id) => {
       ? `0${currentOrderCount + 1}`
       : currentOrderCount + 1;
   const slicedCustId = customer_id.slice(0, 4);
-  orderNumber = orderNumber.concat(number, slicedCustId);
+  orderNumber = orderNumber.concat(slicedCustId,number);
   return orderNumber;
 };
 module.exports = {
