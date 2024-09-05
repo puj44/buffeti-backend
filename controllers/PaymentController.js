@@ -144,8 +144,6 @@ const verifyPayment = async (req, res) => {
       const orderDetails = await Order.findOne({
         _id: orderId,
       }).lean();
-      const updatedAmountDue =
-        orderDetails.amount_due - orderPaymentDetails.payment_amount;
 
       switch (event) {
         case "payment.captured":
@@ -209,11 +207,11 @@ const verifyPayment = async (req, res) => {
       }
       const OrderConfirmationSmsNotification = await OrderConfirmationSms(
         customerData.name,
-        order_number,
+        orderDetails.order_number,
         customerData.mobile_number
       );
 
-      if (!OrderPlacedSmsNotification) {
+      if (!OrderConfirmationSmsNotification) {
         return sendRes(res, 400, {
           message:
             "There is some problem sending the sms for the order placed!",
