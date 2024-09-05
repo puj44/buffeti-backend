@@ -119,7 +119,6 @@ const createPayment = async (req, res) => {
 };
 
 const verifyPayment = async (req, res) => {
-  console.log("INFO: Webhook called",req)
   try {
     const secret_key = process.env.TEST_KEY_SECRET;
     const data = crypto.createHmac("sha256", secret_key);
