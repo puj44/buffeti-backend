@@ -199,7 +199,9 @@ const verifyPayment = async (req, res) => {
           // console.log(`Unhandled event: ${event}`);
           break;
       }
-      const customerData = await Customers.findOne({ _id: id }).lean();
+      const customerData = await Customers.findOne({
+        _id: orderDetails.customer_id,
+      }).lean();
       if (!customerData) {
         return sendRes(res, 400, {
           message: "Customer data not found",
