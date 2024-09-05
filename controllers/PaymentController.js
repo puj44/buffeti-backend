@@ -143,6 +143,8 @@ const verifyPayment = async (req, res) => {
       const orderDetails = await Order.findOne({
         _id: orderId,
       }).lean();
+      const updatedAmountDue =
+        orderDetails.amount_due - orderPaymentDetails.payment_amount;
 
       switch (event) {
         case "payment.captured":
@@ -163,12 +165,14 @@ const verifyPayment = async (req, res) => {
               { $set: { payment_status: "fully_paid" } }
             );
           } else {
+            const updatedAmountDue =
+              orderDetails.amount_due - orderPaymentDetails.payment_amount;
             await Order.updateOne(
               { _id: orderId },
               {
                 $set: {
                   payment_status: "partially_paid",
-                  amount_due: amount_due - orderPaymentDetails.payment_amount,
+                  amount_due: updatedAmountDue,
                 },
               }
             );
