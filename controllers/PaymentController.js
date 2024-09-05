@@ -168,7 +168,9 @@ const verifyPayment = async (req, res) => {
               {
                 $set: {
                   payment_status: "partially_paid",
-                  amount_due: amount_due - orderPaymentDetails.payment_amount,
+                  amount_due:
+                    orderDetails.amount_due -
+                    orderPaymentDetails.payment_amount,
                 },
               }
             );
