@@ -125,13 +125,13 @@ const verifyPayment = async (req, res) => {
     const data = crypto.createHmac("sha256", secret_key);
     data.update(JSON.stringify(req.body));
     const digest = data.digest("hex");
-
+    await webhookApiLogs.create({
+      order_number:payload?.payment?.entity?.order_id ?? null,
+      request_body:JSON.stringify(req.body ?? {})
+    })
     if (digest === req.headers["x-razorpay-signature"]) {
       const { event, payload } = req.body;
-      await webhookApiLogs.create({
-        order_number:payload?.payment?.entity?.order_id ?? null,
-        request_body:JSON.stringify(req.body ?? {})
-      })
+      
       if(!event || !payload || !payload?.payment?.entity){
         return sendRes(res, 402, {
           message: "Invalid Payload",
