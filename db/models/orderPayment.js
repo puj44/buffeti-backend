@@ -11,7 +11,7 @@ const orderPaymentSchema = new Schema({
     enum: ["init", "completed", "failed","cancelled"],
   },
   razorypay_payment_id:{type:String,required:false,default:null},
-  payment_method: { type: String, required: false },
+  payment_method: { type: String, required: false,default:null },
   razorpay_order_id: { type: String, required: false, unqiue: true },
   razorpay_payment_id: {
     type: String,

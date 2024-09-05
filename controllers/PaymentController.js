@@ -139,28 +139,31 @@ const verifyPayment = async (req, res) => {
       const { amount, order_id, id } = payload.payment.entity;
       const orderPaymentDetails = await OrderPayment.findOne({
         razorpay_order_id: order_id,
-      }).lean();
+      });
+      const orderId = orderPaymentDetails.order_id;
       const orderDetails = await Order.findOne({
-        _id: orderPaymentDetails.order_id,
+        _id: orderId,
       }).lean();
 
-      switch (event.event) {
+      switch (event) {
         case "payment.captured":
         case "payment.authorized":
-          if (amount === orderDetails.amount_due) {
+          const amountDueInPaise = Number(orderDetails.amount_due * 100)
+          console.log("Order Payment ID:",order_id,amountDueInPaise,"----Amount Paid:",amount,"----Order Details:",orderDetails)
+          if (amount === amountDueInPaise) {
             await Order.updateOne(
-              { _id: orderDetails._id },
-              { $set: { payment_status: "fully_paid",razorpay_payment_id: id} }
+              { _id: orderId },
+              { $set: { payment_status: "fully_paid"} }
             );
           }else{
             await Order.updateOne(
-              { _id: orderDetails._id },
-              { $set: { payment_status: "partially_paid",razorpay_payment_id: id } }
+              { _id: orderId },
+              { $set: { payment_status: "partially_paid" } }
             );
           }
           await OrderPayment.updateOne(
             { razorpay_order_id: order_id },
-            { $set: { payment_status: "completed" } }
+            { $set: { payment_status: "completed", payment_method:payload.payment.entity?.method ?? null, razorpay_payment_id: id } }
           );
           break;
         case "payment.failed":
