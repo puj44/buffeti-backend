@@ -60,7 +60,6 @@ const createPayment = async (req, res) => {
 
     const payment_call = await razorpay.orders.create(options);
 
-
     if (!payment_call) {
       return sendRes(res, 402, {
         message: "Failed to create payment",
@@ -125,13 +124,13 @@ const verifyPayment = async (req, res) => {
     data.update(JSON.stringify(req.body));
     const digest = data.digest("hex");
     await webhookApiLogs.create({
-      order_number:req?.body?.payload?.payment?.entity?.order_id ?? null,
-      request_body:JSON.stringify(req?.body ?? {})
-    })
+      order_number: req?.body?.payload?.payment?.entity?.order_id ?? null,
+      request_body: JSON.stringify(req?.body ?? {}),
+    });
     if (digest === req.headers["x-razorpay-signature"]) {
       const { event, payload } = req.body;
-      
-      if(!event || !payload || !payload?.payment?.entity){
+
+      if (!event || !payload || !payload?.payment?.entity) {
         return sendRes(res, 402, {
           message: "Invalid Payload",
         });
@@ -148,22 +147,42 @@ const verifyPayment = async (req, res) => {
       switch (event) {
         case "payment.captured":
         case "payment.authorized":
-          const amountDueInPaise = Number(orderDetails.amount_due * 100)
-          console.log("Order Payment ID:",order_id,amountDueInPaise,"----Amount Paid:",amount,"----Order Details:",orderDetails)
+          const amountDueInPaise = Number(orderDetails.amount_due * 100);
+          console.log(
+            "Order Payment ID:",
+            order_id,
+            amountDueInPaise,
+            "----Amount Paid:",
+            amount,
+            "----Order Details:",
+            orderDetails
+          );
           if (amount === amountDueInPaise) {
             await Order.updateOne(
               { _id: orderId },
-              { $set: { payment_status: "fully_paid"} }
+              { $set: { payment_status: "fully_paid" } }
             );
-          }else{
+          } else {
             await Order.updateOne(
               { _id: orderId },
-              { $set: { payment_status: "partially_paid" } }
+              {
+                $set: {
+                  payment_status: "partially_paid",
+                  amount_due: amount_due - orderPaymentDetails.payment_amount,
+                },
+              }
             );
           }
+
           await OrderPayment.updateOne(
             { razorpay_order_id: order_id },
-            { $set: { payment_status: "completed", payment_method:payload.payment.entity?.method ?? null, razorpay_payment_id: id } }
+            {
+              $set: {
+                payment_status: "completed",
+                payment_method: payload.payment.entity?.method ?? null,
+                razorpay_payment_id: id,
+              },
+            }
           );
           break;
         case "payment.failed":

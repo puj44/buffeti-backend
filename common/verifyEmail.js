@@ -2,10 +2,10 @@ const { get } = require("./redisGetterSetter");
 
 const prefix = process.env.PREFIX_OTP;
 
-async function verifyOtp(mobile_number, otp) {
-  const phoneCacheKey = prefix + mobile_number;
-  const loginData = await get(phoneCacheKey, true);
-  if (!loginData || !loginData?.otp) {
+async function verifyEmail(email, otp) {
+  const emailCacheKey = prefix + email;
+  const emailData = await get(emailCacheKey, true);
+  if (!emailData || !emailData?.otp) {
     return {
       status: 500,
       message: "There's a problem verifying the OTP, try again",
@@ -23,4 +23,4 @@ async function verifyOtp(mobile_number, otp) {
   }
 }
 
-module.exports = verifyOtp;
+module.exports = verifyEmail;
