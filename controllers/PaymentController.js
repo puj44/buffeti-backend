@@ -125,7 +125,7 @@ const verifyPayment = async (req, res) => {
     data.update(JSON.stringify(req.body));
     const digest = data.digest("hex");
     await webhookApiLogs.create({
-      order_number:payload?.payment?.entity?.order_id ?? null,
+      order_number:req?.body?.payload?.payment?.entity?.order_id ?? null,
       request_body:JSON.stringify(req?.body ?? {})
     })
     if (digest === req.headers["x-razorpay-signature"]) {
