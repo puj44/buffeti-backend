@@ -8,6 +8,7 @@ const axios = require("axios");
 const { default: mongoose } = require("mongoose");
 const crypto = require("crypto");
 const webhookApiLogs = require("../db/models/webhookApiLogs");
+const { OrderConfirmationSms } = require("../config/smsRequests");
 
 const createPayment = async (req, res) => {
   const { id } = req.user ?? {};
@@ -199,6 +200,24 @@ const verifyPayment = async (req, res) => {
         default:
           // console.log(`Unhandled event: ${event}`);
           break;
+      }
+      const customerData = await Customers.findOne({ _id: id }).lean();
+      if (!customerData) {
+        return sendRes(res, 400, {
+          message: "Customer data not found",
+        });
+      }
+      const OrderConfirmationSmsNotification = await OrderConfirmationSms(
+        customerData.name,
+        order_number,
+        customerData.mobile_number
+      );
+
+      if (!OrderPlacedSmsNotification) {
+        return sendRes(res, 400, {
+          message:
+            "There is some problem sending the sms for the order placed!",
+        });
       }
       return sendRes(res, 200, {
         message: "Payment captured successfully",

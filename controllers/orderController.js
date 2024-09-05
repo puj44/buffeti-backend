@@ -160,7 +160,8 @@ const placeOrder = async (req, res) => {
 
     if (!OrderPlacedSmsNotification) {
       return sendRes(res, 400, {
-        message: "There is some problem sending the sms for the order placed!",
+        message:
+          "There is some problem sending the sms for the order confirmation!",
       });
     }
 
