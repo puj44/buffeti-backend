@@ -10,16 +10,22 @@ const crypto = require("crypto");
 
 const createPayment = async (req, res) => {
   const { id } = req.user ?? {};
-  const orderNumber= req.params.id;
+  const orderNumber = req.params.id;
   const { payment_mode } = req.body;
   const conn = mongoose.connection;
   const session = await conn.startSession();
   session.startTransaction();
   try {
-
-    const orderDetails = await Order.findOne({ order_number: orderNumber }).lean();
-    const { order_number, total_billed_amount, amount_due, payment_status, _id } =
-      orderDetails;
+    const orderDetails = await Order.findOne({
+      order_number: orderNumber,
+    }).lean();
+    const {
+      order_number,
+      total_billed_amount,
+      amount_due,
+      payment_status,
+      _id,
+    } = orderDetails;
 
     if (!orderDetails) {
       return sendRes(res, 404, {
@@ -113,16 +119,52 @@ const createPayment = async (req, res) => {
 };
 
 const verifyPayment = async (req, res) => {
-  const { id } = req.user.id;
-  const order_id = req.params.id;
   try {
-    const secret_key = "1234567890";
+    const secret_key = process.env.TEST_KEY_SECRET;
     const data = crypto.createHmac("sha256", secret_key);
     data.update(JSON.stringify(req.body));
     const digest = data.digest("hex");
 
     if (digest === req.headers["x-razorpay-signature"]) {
-      //legit request...
+      const { event, payload } = req.body;
+      const { amount, order_id } = event.payload.payment.entity;
+      const orderPaymentDetails = await OrderPayment.findOne({
+        razorpay_order_id: order_id,
+      }).lean();
+      const orderDetails = await Order.findOne({
+        _id: orderPaymentDetails.order_id,
+      }).lean();
+
+      switch (event.event) {
+        case "payment.captured":
+          if (amount === orderDetails.amount_due) {
+            await Order.updateOne(
+              { _id: orderDetails._id },
+              { $set: { payment_status: "fully_paid" } }
+            );
+          }
+          await Order.updateOne(
+            { _id: orderDetails._id },
+            { $set: { payment_status: "partially_paid" } }
+          );
+          await OrderPayment.updateOne(
+            { razorpay_order_id: order_id },
+            { $set: { payment_status: "completed" } }
+          );
+          break;
+        case "payment.failed":
+          await OrderPayment.updateOne(
+            { razorpay_order_id: order_id },
+            { $set: { payment_status: "failed" } }
+          );
+          break;
+        default:
+          // console.log(`Unhandled event: ${event}`);
+          break;
+      }
+      return sendRes(res, 200, {
+        message: "Payment captured successfully",
+      });
     } else {
       return sendRes(res, 401, {
         message: "Invalid Signature",

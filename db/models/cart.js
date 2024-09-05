@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const { Schema, Model } = mongoose;
+const moment = require("moment");
 
 const cartSchema = new Schema({
   customer_id: {
@@ -14,10 +15,31 @@ const cartSchema = new Schema({
     ref: "customer_addresses",
     required: false,
   }, //ref to customer address
-  delivery_date: { type: Date, required: false, default:null },
-  delivery_time: { type: String, required: false, default:null },
-  cooking_instruction: { type: String, required: false, default:null },
-  coupon_code: { type: String ,required:false, default:null},
+  delivery_date: {
+    type: Date,
+    required: false,
+    default: null,
+    validate: {
+      validator: function (date) {
+        // Check if the date is a valid date
+        return moment(date).isValid();
+      },
+      message: "Invalid delivery date.",
+    },
+  },
+  delivery_time: {
+    type: String,
+    required: true,
+    validate: {
+      validator: function (time) {
+        // Validate time format (HH:mm)
+        return moment(time, "HH:mm", true).isValid();
+      },
+      message: "Invalid delivery time format. Use HH:mm.",
+    },
+  },
+  cooking_instruction: { type: String, required: false, default: null },
+  coupon_code: { type: String, required: false, default: null },
   delivery_charges: { type: Number, required: false, default: 0 },
   extra_services: { type: [String], default: null },
 });

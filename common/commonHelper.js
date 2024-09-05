@@ -184,6 +184,20 @@ async function validatePackage(items, packages) {
 
 //Validate Delivery logic here
 function validateDelivery(delivery_date, delivery_time) {
+  if (!moment(delivery_date, "YYYY-MM-DD", true).isValid()) {
+    return {
+      isValid: false,
+      message: "Invalid delivery date format. Use YYYY-MM-DD.",
+    };
+  }
+
+  if (!moment(delivery_time, "HH:mm", true).isValid()) {
+    return {
+      isValid: false,
+      message: "Invalid delivery time format. Use HH:mm.",
+    };
+  }
+
   const deliveryDateTime = moment(
     `${delivery_date} ${delivery_time}`,
     "YYYY-MM-DD HH:mm"
@@ -216,6 +230,7 @@ function validateDelivery(delivery_date, delivery_time) {
   };
 }
 
+// Generate Order Number
 const generateOrderNumber = (menuOption, currentOrderCount) => {
   let orderNumber =
     menuOption === "snack-boxes"

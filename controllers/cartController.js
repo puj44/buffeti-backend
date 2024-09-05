@@ -216,6 +216,13 @@ const updateCart = async (req, res) => {
     const deliveryAddressData = await CustomersAddresses.findOne({
       _id: delivery_address_id,
     });
+
+    if (!deliveryAddressData) {
+      return sendRes(res, 404, {
+        message: "Delivery address not found",
+      });
+    }
+
     if (delivery_date && delivery_time) {
       const validation = validateDelivery(delivery_date, delivery_time);
 

@@ -5,8 +5,13 @@ const { default: mongoose } = require("mongoose");
 const { get, set, remove } = require("../common/redisGetterSetter");
 const { Order, OrderItems } = require("../db/models/order");
 const { Cart, CartItems } = require("../db/models/cart");
+const { Customers } = require("../db/models/customers");
 const { delivery_fees } = require("../config/keys");
-const { generateOrderNumber, getCartDetails } = require("../common/commonHelper");
+const {
+  generateOrderNumber,
+  getCartDetails,
+} = require("../common/commonHelper");
+const { OrderPlacedSms } = require("../config/smsRequests");
 
 const placeOrder = async (req, res) => {
   const { id } = req.user ?? {};
@@ -40,7 +45,10 @@ const placeOrder = async (req, res) => {
       delivery_charges,
       extra_services,
     } = cartCacheData;
-    const ordersCount = await Order.countDocuments({ customer_id: id, menu_option: menu_option});
+    const ordersCount = await Order.countDocuments({
+      customer_id: id,
+      menu_option: menu_option,
+    });
     const order_number = generateOrderNumber(menu_option, ordersCount);
     const existingOrder = await Order.findOne({
       customer_id: id,
@@ -131,10 +139,30 @@ const placeOrder = async (req, res) => {
         message: "Failed to create order items",
       });
     }
-    
+
     await remove(`cart-${id}`);
     await Cart.deleteOne({ _id: dbCartData?._id }, { session });
     await CartItems.deleteMany({ cart_id: dbCartData?._id }, { session });
+
+    // Send sms notification to customer
+
+    const customerData = await Customers.findOne({ _id: id }).lean();
+    if (!customerData) {
+      return sendRes(res, 400, {
+        message: "Customer data not found",
+      });
+    }
+    const OrderPlacedSmsNotification = await OrderPlacedSms(
+      customerData.name,
+      order_number,
+      customerData.mobile_number
+    );
+
+    if (!OrderPlacedSmsNotification) {
+      return sendRes(res, 400, {
+        message: "There is some problem sending the sms for the order placed!",
+      });
+    }
 
     await session.commitTransaction();
     const cartDetails = await getCartDetails(id);
@@ -160,7 +188,9 @@ const getOrder = async (req, res) => {
         message: "Customer id not found",
       });
     }
-    const orderDetails = await Order.find({ customer_id: id }).sort({createdAt:-1}).lean();
+    const orderDetails = await Order.find({ customer_id: id })
+      .sort({ createdAt: -1 })
+      .lean();
     if (!orderDetails) {
       return sendRes(res, 404, {
         message: "Order not found",

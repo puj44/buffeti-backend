@@ -29,7 +29,7 @@ router.use("/packages", validateLocation, packageRoutes);
 router.use("/cart", authenticateUser, cartRoutes);
 router.use("/order", authenticateUser, orderRoutes);
 router.use("/profile", authenticateUser, profileRoutes);
-router.use("/payment", paymentRoutes);
+router.use("/payment", authenticateUser, paymentRoutes);
 
 router.use("/", (req, res) => {
   res.status(404).send("Route not defined!");

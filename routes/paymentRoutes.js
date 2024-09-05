@@ -7,7 +7,7 @@ const {
 const validateLocation = require("../middlewares/validateLocation");
 const authenticateUser = require("../middlewares/authenticateUser");
 
-router.post("/create-payment/:id", authenticateUser,createPayment);
-router.post("/verify-payment/:id", verifyPayment);
+router.post("/create-payment/:id", createPayment);
+router.post("/verify-payment", verifyPayment);
 
 module.exports = router;
