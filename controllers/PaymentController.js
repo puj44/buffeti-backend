@@ -139,7 +139,8 @@ const verifyPayment = async (req, res) => {
       const { amount, order_id, id } = payload.payment.entity;
       const orderPaymentDetails = await OrderPayment.findOne({
         razorpay_order_id: order_id,
-      }).lean();
+      });
+      console.log("Order Payment ID:",order_id,orderPaymentDetails)
       const orderDetails = await Order.findOne({
         _id: orderPaymentDetails.order_id,
       }).lean();
