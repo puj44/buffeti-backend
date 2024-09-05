@@ -7,7 +7,7 @@ const sendRes = require("../common/sendResponse");
 const axios = require("axios");
 const { default: mongoose } = require("mongoose");
 const crypto = require("crypto");
-const webhookApiLogs = require("../db/models/webhook_api_logs");
+const webhookApiLogs = require("../db/models/webhookApiLogs");
 
 const createPayment = async (req, res) => {
   const { id } = req.user ?? {};
@@ -130,7 +130,7 @@ const verifyPayment = async (req, res) => {
       const { event, payload } = req.body;
       await webhookApiLogs.create({
         order_number:payload?.payment?.entity?.order_id ?? null,
-        request_body:req.body ?? {}
+        request_body:JSON.stringify(req.body ?? {})
       })
       if(!event || !payload || !payload?.payment?.entity){
         return sendRes(res, 402, {
