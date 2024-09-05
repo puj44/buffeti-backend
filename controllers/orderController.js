@@ -49,7 +49,7 @@ const placeOrder = async (req, res) => {
       customer_id: id,
       menu_option: menu_option,
     });
-    const order_number = generateOrderNumber(menu_option, ordersCount);
+    const order_number = generateOrderNumber(menu_option, ordersCount, id);
     const existingOrder = await Order.findOne({
       customer_id: id,
       order_number: order_number,
