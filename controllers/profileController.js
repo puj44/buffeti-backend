@@ -5,7 +5,7 @@ const CustomerAddresses = require("../db/models/customerAddresses");
 const Customers = require("../db/models/customers");
 const sendEmail = require("../services/email/sendEmail");
 const otpGenerator = require("otp-generator");
-const { get, set, remove } = require("./redisGetterSetter");
+const { get, set, remove } = require("../common/redisGetterSetter");
 const prefix = process.env.PREFIX_OTP;
 const getAddress = async (req, res) => {
   try {
