@@ -60,7 +60,6 @@ const createPayment = async (req, res) => {
 
     const payment_call = await razorpay.orders.create(options);
 
-    console.log(payment_call);
 
     if (!payment_call) {
       return sendRes(res, 402, {
@@ -120,6 +119,7 @@ const createPayment = async (req, res) => {
 };
 
 const verifyPayment = async (req, res) => {
+  console.log("INFO: Webhook called",req)
   try {
     const secret_key = process.env.TEST_KEY_SECRET;
     const data = crypto.createHmac("sha256", secret_key);
@@ -127,7 +127,7 @@ const verifyPayment = async (req, res) => {
     const digest = data.digest("hex");
     await webhookApiLogs.create({
       order_number:payload?.payment?.entity?.order_id ?? null,
-      request_body:JSON.stringify(req.body ?? {})
+      request_body:JSON.stringify(req?.body ?? {})
     })
     if (digest === req.headers["x-razorpay-signature"]) {
       const { event, payload } = req.body;
