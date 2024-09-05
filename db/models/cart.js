@@ -29,7 +29,7 @@ const cartSchema = new Schema({
   },
   delivery_time: {
     type: String,
-    required: true,
+    required: false,
     validate: {
       validator: function (time) {
         // Validate time format (HH:mm)
