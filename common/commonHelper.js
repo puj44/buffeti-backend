@@ -231,7 +231,7 @@ function validateDelivery(delivery_date, delivery_time) {
 }
 
 // Generate Order Number
-const generateOrderNumber = (menuOption, currentOrderCount) => {
+const generateOrderNumber = (menuOption, currentOrderCount, customer_id) => {
   let orderNumber =
     menuOption === "snack-boxes"
       ? "SB"
@@ -242,10 +242,10 @@ const generateOrderNumber = (menuOption, currentOrderCount) => {
     currentOrderCount + 1 < 10
       ? `0${currentOrderCount + 1}`
       : currentOrderCount + 1;
-  orderNumber = orderNumber.concat(number);
+  const slicedCustId = customer_id.slice(0, 4);
+  orderNumber = orderNumber.concat(number, slicedCustId);
   return orderNumber;
 };
-
 module.exports = {
   getCartDetails,
   calculateItems,
