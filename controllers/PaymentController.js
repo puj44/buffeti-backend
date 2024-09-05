@@ -145,7 +145,7 @@ const verifyPayment = async (req, res) => {
         _id: orderId,
       }).lean();
 
-      switch (event.event) {
+      switch (event) {
         case "payment.captured":
         case "payment.authorized":
           const amountDueInPaise = Number(orderDetails.amount_due * 100)
