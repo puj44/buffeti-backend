@@ -7,6 +7,7 @@ const sendRes = require("../common/sendResponse");
 const axios = require("axios");
 const { default: mongoose } = require("mongoose");
 const crypto = require("crypto");
+const webhookApiLogs = require("../db/models/webhookApiLogs");
 
 const createPayment = async (req, res) => {
   const { id } = req.user ?? {};
@@ -124,10 +125,19 @@ const verifyPayment = async (req, res) => {
     const data = crypto.createHmac("sha256", secret_key);
     data.update(JSON.stringify(req.body));
     const digest = data.digest("hex");
-
+    await webhookApiLogs.create({
+      order_number:payload?.payment?.entity?.order_id ?? null,
+      request_body:JSON.stringify(req.body ?? {})
+    })
     if (digest === req.headers["x-razorpay-signature"]) {
       const { event, payload } = req.body;
-      const { amount, order_id } = event.payload.payment.entity;
+      
+      if(!event || !payload || !payload?.payment?.entity){
+        return sendRes(res, 402, {
+          message: "Invalid Payload",
+        });
+      }
+      const { amount, order_id, id } = payload.payment.entity;
       const orderPaymentDetails = await OrderPayment.findOne({
         razorpay_order_id: order_id,
       }).lean();
@@ -137,16 +147,18 @@ const verifyPayment = async (req, res) => {
 
       switch (event.event) {
         case "payment.captured":
+        case "payment.authorized":
           if (amount === orderDetails.amount_due) {
             await Order.updateOne(
               { _id: orderDetails._id },
-              { $set: { payment_status: "fully_paid" } }
+              { $set: { payment_status: "fully_paid",razorpay_payment_id: id} }
+            );
+          }else{
+            await Order.updateOne(
+              { _id: orderDetails._id },
+              { $set: { payment_status: "partially_paid",razorpay_payment_id: id } }
             );
           }
-          await Order.updateOne(
-            { _id: orderDetails._id },
-            { $set: { payment_status: "partially_paid" } }
-          );
           await OrderPayment.updateOne(
             { razorpay_order_id: order_id },
             { $set: { payment_status: "completed" } }
