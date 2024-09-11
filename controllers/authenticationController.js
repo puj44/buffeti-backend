@@ -8,12 +8,19 @@ const { remove} = require("../common/redisGetterSetter");
 const prefix = process.env.PREFIX_OTP;
 const {Customers} = require("../db/models/customers");
 const { signJWT, verifyJWT } = require("./utils/jwtUtils");
+const { default: axios } = require("axios");
 
 const signin =  async (req, res) => {
 
-    const {mobile_number} = req.body;
+    const {mobile_number, token} = req.body;
 
     try{
+        const captchaResponse = await axios.post(`https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${token}`);
+       
+        
+        if(!captchaResponse?.data?.success){
+            return sendRes(res,400, {message:"ReCaptcha Failed, Please try again"})
+        }
         const customer = await Customers.findOne({mobile_number}).then((d) => d);
         if(!customer) return sendRes(res, 400, {message:"Mobile Number is not registered"})
         //CALL sendOtp function
