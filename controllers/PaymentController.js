@@ -148,46 +148,39 @@ const verifyPayment = async (req, res) => {
       switch (event) {
         case "payment.captured":
         case "payment.authorized":
-          const amountDueInPaise = Number(orderDetails.amount_due * 100);
-          console.log(
-            "Order Payment ID:",
-            order_id,
-            amountDueInPaise,
-            "----Amount Paid:",
-            amount,
-            "----Order Details:",
-            orderDetails
-          );
-          if (amount === amountDueInPaise) {
-            await Order.updateOne(
-              { _id: orderId },
-              { $set: { payment_status: "fully_paid" } }
-            );
-          } else {
-            const updatedAmountDue =
-              orderDetails.amount_due - orderPaymentDetails.payment_amount;
-            await Order.updateOne(
-              { _id: orderId },
+          if(orderPaymentDetails?.payment_status !== "completed"){
+            const amountDueInPaise = Number(orderDetails.amount_due * 100);
+            if (amount === amountDueInPaise) {
+              await Order.updateOne(
+                { _id: orderId },
+                { $set: { payment_status: "fully_paid" } }
+              );
+            } else {
+              const updatedAmountDue =
+                orderDetails.amount_due - orderPaymentDetails.payment_amount;
+              await Order.updateOne(
+                { _id: orderId },
+                {
+                  $set: {
+                    payment_status: "partially_paid",
+                    amount_due: updatedAmountDue,
+                    order_status: "confirmed",
+                  },
+                }
+              );
+            }
+  
+            await OrderPayment.updateOne(
+              { razorpay_order_id: order_id },
               {
                 $set: {
-                  payment_status: "partially_paid",
-                  amount_due: updatedAmountDue,
-                  order_status: "confirmed",
+                  payment_status: "completed",
+                  payment_method: payload.payment.entity?.method ?? null,
+                  razorpay_payment_id: id,
                 },
               }
             );
           }
-
-          await OrderPayment.updateOne(
-            { razorpay_order_id: order_id },
-            {
-              $set: {
-                payment_status: "completed",
-                payment_method: payload.payment.entity?.method ?? null,
-                razorpay_payment_id: id,
-              },
-            }
-          );
           break;
         case "payment.failed":
           await OrderPayment.updateOne(
