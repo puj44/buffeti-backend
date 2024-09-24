@@ -6,7 +6,7 @@ const validator = require("../middlewares/validator/validator");
 const { uploadFile } = require('../admin/controllers/fileController');
 const multer = require("multer");
 const authenticateUser = require('../middlewares/authenticateUser');
-
+const orderRoutes = require("./adminRoutes/orderRoutes")
 const storage = multer.memoryStorage();
 const upload = multer({storage:storage})
 
@@ -15,6 +15,7 @@ router.post("/sign-in",validator(adminRequests.signin),authentication.signin);
 
 //Authenticated Routes
 router.post("/csv-upload",authenticateUser,upload.single("file"),uploadFile);
+router.use("/order", authenticateUser, orderRoutes);
 
 
 module.exports = router;
