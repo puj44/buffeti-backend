@@ -35,7 +35,7 @@ const signin = async (req,res) =>{
         )
         
         res.cookie(
-            "token",
+            "accessToken",
             accessToken,
             {
                 maxAge:300000,
