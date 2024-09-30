@@ -134,7 +134,6 @@ const orderItemsSchema = new Schema({
   no_of_people: { type: Number, required: true },
   package_name: { type: String, required: false, default: null },
   items: { type: Map, of: orderitemSchema },
-  total_items_amount: { type: Number, required: true },
 });
 
 const Order = mongoose.model("order", orderSchema);

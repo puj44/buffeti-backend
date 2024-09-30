@@ -38,9 +38,12 @@ const addAddress = async (req, res) => {
     await CustomerAddresses.create({
       ...data,
     });
+    const updatedAddresses = await CustomerAddresses.find({
+      customer: req.user.id,
+    });
     return sendResponse(res, 200, {
       data: {
-        addresses: addresses ?? [],
+        addresses: updatedAddresses ?? [],
       },
       message: "Address added successfully",
     });
