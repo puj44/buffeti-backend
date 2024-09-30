@@ -13,12 +13,6 @@ const prefix = process.env.PREFIX_OTP;
 const insertCustomer = async (req, res) => {
   const { name, mobile_number, email, token } = req.body;
   try {
-    const captchaResponse = await axios.post(`https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${token}`);
-       
-        
-    if(!captchaResponse?.data?.success){
-        return sendRes(res,400, {message:"ReCaptcha Failed, Please try again"})
-    }
     //if account exists...
     const customer = await Customers.findOne({ mobile_number }).then((d) => d);
 

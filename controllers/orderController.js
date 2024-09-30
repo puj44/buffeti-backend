@@ -90,6 +90,9 @@ const placeOrder = async (req, res) => {
         message: "Cart not found",
       });
     }
+    const dbCartItemsData = await CartItems.find({
+      cart_id: dbCartData?._id,
+    }).lean();
 
     const orderInsert = await Order.create(
       [
@@ -116,24 +119,22 @@ const placeOrder = async (req, res) => {
       ],
       { session }
     );
-
+    const orderItems = dbCartItemsData.map((d, idx) => {
+      const info = JSON.parse(JSON.stringify(d));
+      let obj = {
+        order_id: orderInsert[0]._id.toString(),
+        no_of_people: info?.no_of_people,
+        package_name: info?.package_name,
+        items: info?.items,
+      };
+      return obj;
+    });
     if (!orderInsert) {
       return sendRes(res, 400, {
         message: "Failed to create order",
       });
     }
-    const orderItemsInsert = await OrderItems.create(
-      [
-        {
-          order_id: orderInsert[0]._id.toString(),
-          no_of_people: no_of_people,
-          package_name: package_name,
-          items: items,
-          total_items_amount: total_items_amount,
-        },
-      ],
-      { session }
-    );
+    const orderItemsInsert = await OrderItems.create(orderItems, { session });
     if (!orderItemsInsert) {
       return sendRes(res, 400, {
         message: "Failed to create order items",
@@ -171,6 +172,7 @@ const placeOrder = async (req, res) => {
       message: "Order placed successfully",
       data: {
         cartDetails: cartDetails ?? {},
+        order_number: order_number,
       },
     });
   } catch (err) {
@@ -212,22 +214,45 @@ const getOrder = async (req, res) => {
 //Get Order info
 const getOrderInfo = async (req, res) => {
   const { id } = req.user ?? {};
-  const { order_id } = req.params;
+  const order_number = req.params.id;
   try {
     if (!id) {
       return sendRes(res, 404, {
         message: "Customer id not found",
       });
     }
-    const orderDetails = await Order.findOne({ customer_id: id }).lean();
-    if (!orderDetails) {
+    const orderCustomerCheck = await Order.findOne({ customer_id: id }).lean();
+    if (!orderCustomerCheck) {
       return sendRes(res, 404, {
         message: "Order not found",
       });
     }
+
+    const orderDetails = await Order.findOne({
+      order_number: order_number,
+    }).lean();
+    if (!orderDetails) {
+      return sendRes(res, 404, {
+        message: "Order Details not found",
+      });
+    }
+
+    const orderItemDetails = await OrderItems.find({
+      order_id: orderDetails._id,
+    }).lean();
+    if (!orderItemDetails) {
+      return sendRes(res, 404, {
+        message: "Order Item Details not found",
+      });
+    }
+    let totalNoOfPeople = 0;
+    orderItemDetails.forEach((item) => {
+      totalNoOfPeople += item.no_of_people;
+    });
     return sendRes(res, 200, {
       data: {
         orderDetails: orderDetails ?? {},
+        no_of_people: totalNoOfPeople,
       },
       message: "Order Info fetched successfully",
     });
