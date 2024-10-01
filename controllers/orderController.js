@@ -172,7 +172,7 @@ const placeOrder = async (req, res) => {
       message: "Order placed successfully",
       data: {
         cartDetails: cartDetails ?? {},
-        order_number: order_number,
+        orderNumber: order_number,
       },
     });
   } catch (err) {
