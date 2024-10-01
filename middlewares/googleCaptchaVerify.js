@@ -1,5 +1,5 @@
 const { default: axios } = require("axios");
-const sendResponse = require("../../common/sendResponse");
+const sendResponse = require("../common/sendResponse");
 async function captchaVerify(req, res, next) {
   if (process.env.ENV === "LOCAL") {
     return next();
