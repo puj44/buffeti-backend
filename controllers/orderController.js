@@ -251,8 +251,7 @@ const getOrderInfo = async (req, res) => {
     });
     return sendRes(res, 200, {
       data: {
-        orderDetails: orderDetails ?? {},
-        no_of_people: totalNoOfPeople,
+        orderDetails: {...orderDetails,no_of_people: totalNoOfPeople},
       },
       message: "Order Info fetched successfully",
     });
