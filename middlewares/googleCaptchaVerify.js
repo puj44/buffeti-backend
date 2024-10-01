@@ -1,6 +1,8 @@
 const { default: axios } = require("axios");
 const sendResponse = require("../common/sendResponse");
 async function captchaVerify(req, res, next) {
+  try{
+    
   if (process.env.ENV === "LOCAL") {
     return next();
   }
@@ -13,6 +15,12 @@ async function captchaVerify(req, res, next) {
       message: "ReCaptcha Failed, Please try again",
     });
   }
-  return next();
+  next();
+  }catch(err){
+    console.log("GOOGLE CAPTCHA MIDDLEWARE ERR:",err);
+     return sendResponse(res, 400, {
+      message: "ReCaptcha Failed, Please try again",
+    });
+  }
 }
 module.exports = captchaVerify;
