@@ -13,6 +13,7 @@ const customersAddressesSchema = new Schema(
     address: { type: String, maxLength: 100, required: true },
     area: { type: String, maxLength: 70, required: true },
     city: { type: String, maxLength: 50, required: true },
+    state: { type: String, maxLength: 50, required: false },
     pincode: { type: String, minLength: 6, maxLength: 6, required: true },
     lattitude: { type: String, default: null },
     longitude: { type: String, default: null },
@@ -25,4 +26,4 @@ const CustomersAddresses = mongoose.model(
   customersAddressesSchema
 );
 
-module.exports =  CustomersAddresses ;
+module.exports = CustomersAddresses;

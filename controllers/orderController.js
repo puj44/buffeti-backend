@@ -12,6 +12,7 @@ const {
   getCartDetails,
 } = require("../common/commonHelper");
 const { OrderPlacedSms } = require("../config/smsRequests");
+const CustomersAddresses = require("../db/models/customerAddresses");
 
 const placeOrder = async (req, res) => {
   const { id } = req.user ?? {};
@@ -249,9 +250,35 @@ const getOrderInfo = async (req, res) => {
     orderItemDetails.forEach((item) => {
       totalNoOfPeople += item.no_of_people;
     });
+    const addressData = await CustomersAddresses.findOne({
+      _id: orderDetails.delivery_address_id,
+    }).lean();
+    if (!addressData) {
+      return sendRes(res, 404, {
+        message: "Delivery Address not found",
+      });
+    }
+    let deliveryAddress =
+      addressData.house_building_no +
+      " " +
+      addressData.address +
+      " " +
+      addressData.area +
+      " " +
+      addressData.city +
+      " " +
+      addressData.state +
+      " " +
+      addressData.pincode;
+
+    console.log(deliveryAddress);
     return sendRes(res, 200, {
       data: {
-        orderDetails: {...orderDetails,no_of_people: totalNoOfPeople},
+        orderDetails: {
+          ...orderDetails,
+          no_of_people: totalNoOfPeople,
+          delivery_address: deliveryAddress,
+        },
       },
       message: "Order Info fetched successfully",
     });
