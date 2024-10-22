@@ -1,7 +1,9 @@
 const { Cart, CartItems } = require("../db/models/cart");
+const DeliveryFees = require("../db/models/deliveryFees");
 const keys = require("../config/keys");
 const { get } = require("./redisGetterSetter");
 const moment = require("moment");
+const axios = require("axios");
 async function calculatePackages(itemsData) {
   try {
     let itemsPricing = [],
@@ -243,9 +245,64 @@ const generateOrderNumber = (menuOption, currentOrderCount, customer_id) => {
       ? `0${currentOrderCount + 1}`
       : currentOrderCount + 1;
   const slicedCustId = customer_id.slice(0, 4);
-  orderNumber = orderNumber.concat(slicedCustId,number);
+  orderNumber = orderNumber.concat(slicedCustId, number);
   return orderNumber;
 };
+
+const getDevileryCharges = async (data) => {
+  const { from, to } = data;
+  const { fLat, fLng } = from;
+  const { tLat, tLng, tPincode } = to;
+  let source = `${fLat},${fLng}`,
+    destination = "";
+
+  if (!tLat && !tLng) {
+    // if lat and lng are null than get lat and lng from pincodes
+    const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+      tPincode
+    )}&key=${process.env.GOOGLE_MAPS_API_KEY}`;
+    const response = await axios.get(geocodeUrl);
+    let results = response.data.results;
+
+    if (results.length > 0) {
+      results = results[0].geometry.location;
+    } else {
+      return "No results found for the address: " + address;
+    }
+
+    destination = `${results.lat},${results.lng}`;
+  } else {
+    destination = `${tLat},${tLng}`;
+  }
+  const distanceUrl = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${source}&destinations=${destination}&key=${process.env.GOOGLE_MAPS_API_KEY}`;
+  const distanceInfo = await axios.get(distanceUrl);
+
+  let distance = distanceInfo.data.rows[0].elements[0].distance.text;
+  distance = Math.ceil(distance.split(" ")[0]);
+  const distanceString = distance.toString(); // got the difference between two locations
+  // get the distance fees
+  const distanceFees = await DeliveryFees.find(
+    {
+      $or: [
+        {
+          min: { $lte: distanceString }, // Greater than or equal to min
+          max: { $gte: distanceString }, // Less than or equal to max
+        },
+        {
+          min: { $lte: distanceString }, // Greater than or equal to min only
+          max: { $exists: false }, // No max field
+        },
+      ],
+    },
+    {
+      fees: 1,
+      _id: 0,
+    }
+  );
+
+  return distanceFees[0].fees;
+};
+
 module.exports = {
   getCartDetails,
   calculateItems,
@@ -253,4 +310,5 @@ module.exports = {
   validateDelivery,
   calculatePackages,
   generateOrderNumber,
+  getDevileryCharges,
 };

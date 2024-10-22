@@ -10,10 +10,15 @@ const {
 } = require("../common/calculateCart");
 const { Cart, CartItems } = require("../db/models/cart");
 const CustomersAddresses = require("../db/models/customerAddresses");
+const LocationStores = require("../db/models/locationStores");
 const sendError = require("../common/sendError");
 const sendRes = require("../common/sendResponse");
 const { default: mongoose } = require("mongoose");
-const { getCartDetails, validateDelivery } = require("../common/commonHelper");
+const {
+  getCartDetails,
+  validateDelivery,
+  getDevileryCharges,
+} = require("../common/commonHelper");
 const { ExtraServices } = require("../db/models/extraServices");
 const CouponCodes = require("../db/models/couponCode");
 const { get, set, remove } = require("../common/redisGetterSetter");
@@ -197,7 +202,8 @@ const updateCart = async (req, res) => {
       extra_services,
     } = req.body;
 
-    const delivery_charges = 0; // TODO: get the distance between the outlet and customer address
+    //TODO: check if delivery_address_id is new -> flag true than call deliverycommon function ... if false -> than add existing delivery_chagres
+    // TODO: get the distance between the outlet and customer address
     //TODO: delivery charges to be calculated
     if (!cart_id) {
       return sendRes(res, 404, {
@@ -221,6 +227,31 @@ const updateCart = async (req, res) => {
       return sendRes(res, 404, {
         message: "Delivery address not found",
       });
+    }
+
+    const locationStores = await LocationStores.find().lean();
+    if (locationStores.length === 0) {
+      return sendRes(res, 404, {
+        message: "No location stores found",
+      });
+    }
+
+    const data = {
+      from: {
+        fLat: locationStores[0].lattitude,
+        fLng: locationStores[0].longitude,
+      },
+      to: {
+        tLat: deliveryAddressData.lattitude,
+        tLng: deliveryAddressData.longitude,
+        tPincode: deliveryAddressData.pincode,
+      },
+    };
+    let IsDeliveryIdUpdated = false;
+    let delivery_charges = 0;
+    if (cart.delivery_address_id !== delivery_address_id) {
+      IsDeliveryIdUpdated = true;
+      delivery_charges = await getDevileryCharges(data);
     }
 
     if (delivery_date && delivery_time) {
