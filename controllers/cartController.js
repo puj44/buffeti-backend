@@ -202,9 +202,6 @@ const updateCart = async (req, res) => {
       extra_services,
     } = req.body;
 
-    //TODO: check if delivery_address_id is new -> flag true than call deliverycommon function ... if false -> than add existing delivery_chagres
-    // TODO: get the distance between the outlet and customer address
-    //TODO: delivery charges to be calculated
     if (!cart_id) {
       return sendRes(res, 404, {
         message: "Cart id not found",
@@ -247,10 +244,8 @@ const updateCart = async (req, res) => {
         tPincode: deliveryAddressData.pincode,
       },
     };
-    let IsDeliveryIdUpdated = false;
     let delivery_charges = 0;
     if (cart.delivery_address_id !== delivery_address_id) {
-      IsDeliveryIdUpdated = true;
       delivery_charges = await getDevileryCharges(data);
     }
 

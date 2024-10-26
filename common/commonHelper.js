@@ -267,7 +267,11 @@ const getDevileryCharges = async (data) => {
     if (results.length > 0) {
       results = results[0].geometry.location;
     } else {
-      return "No results found for the address: " + address;
+      console.error(
+        " Delivery Charges: Error during GEOCode location:",
+        response
+      );
+      return 0;
     }
 
     destination = `${results.lat},${results.lng}`;
@@ -276,21 +280,22 @@ const getDevileryCharges = async (data) => {
   }
   const distanceUrl = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${source}&destinations=${destination}&key=${process.env.GOOGLE_MAPS_API_KEY}`;
   const distanceInfo = await axios.get(distanceUrl);
-
+  if (!distanceInfo.data.rows[0].elements[0].distance) {
+    console.error("Delivery Charges: Error Decoding Distance:");
+    return 0;
+  }
   let distance = distanceInfo.data.rows[0].elements[0].distance.text;
   distance = Math.ceil(distance.split(" ")[0]);
-  const distanceString = distance.toString(); // got the difference between two locations
-  // get the distance fees
-  const distanceFees = await DeliveryFees.find(
+  const distanceFees = await DeliveryFees.findOne(
     {
       $or: [
         {
-          min: { $lte: distanceString }, // Greater than or equal to min
-          max: { $gte: distanceString }, // Less than or equal to max
+          min: { $lte: distance },
+          max: { $gte: distance },
         },
         {
-          min: { $lte: distanceString }, // Greater than or equal to min only
-          max: { $exists: false }, // No max field
+          min: { $lte: distance },
+          max: { $exists: false },
         },
       ],
     },
@@ -299,8 +304,7 @@ const getDevileryCharges = async (data) => {
       _id: 0,
     }
   );
-
-  return distanceFees[0].fees;
+  return distanceFees?.fees ?? 0;
 };
 
 module.exports = {
