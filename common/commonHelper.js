@@ -250,61 +250,69 @@ const generateOrderNumber = (menuOption, currentOrderCount, customer_id) => {
 };
 
 const getDevileryCharges = async (data) => {
-  const { from, to } = data;
-  const { fLat, fLng } = from;
-  const { tLat, tLng, tPincode } = to;
-  let source = `${fLat},${fLng}`,
-    destination = "";
+  try {
+    const { from, to } = data;
+    const { fLat, fLng } = from;
+    const { tLat, tLng, tPincode } = to;
+    let source = `${fLat},${fLng}`,
+      destination = "";
 
-  if (!tLat && !tLng) {
-    // if lat and lng are null than get lat and lng from pincodes
-    const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-      tPincode
-    )}&key=${process.env.GOOGLE_MAPS_API_KEY}`;
-    const response = await axios.get(geocodeUrl);
-    let results = response.data.results;
+    if (!tLat && !tLng) {
+      // if lat and lng are null than get lat and lng from pincodes
+      const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+        tPincode
+      )}&key=${process.env.GOOGLE_MAPS_API_KEY}`;
+      const response = await axios.get(geocodeUrl);
+      let results = response.data.results;
 
-    if (results.length > 0) {
-      results = results[0].geometry.location;
+      if (results.length > 0) {
+        results = results[0].geometry.location;
+      } else {
+        console.error(
+          " Delivery Charges: Error during GEOCode location:",
+          response
+        );
+        return 0;
+      }
+
+      destination = `${results.lat},${results.lng}`;
     } else {
-      console.error(
-        " Delivery Charges: Error during GEOCode location:",
-        response
-      );
+      destination = `${tLat},${tLng}`;
+    }
+    const distanceUrl = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${source}&destinations=${destination}&key=${process.env.GOOGLE_MAPS_API_KEY}`;
+    const distanceInfo = await axios.get(distanceUrl);
+    if (!distanceInfo.data.rows[0].elements[0].distance) {
+      console.error("Delivery Charges: Error Decoding Distance:");
       return 0;
     }
-
-    destination = `${results.lat},${results.lng}`;
-  } else {
-    destination = `${tLat},${tLng}`;
-  }
-  const distanceUrl = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${source}&destinations=${destination}&key=${process.env.GOOGLE_MAPS_API_KEY}`;
-  const distanceInfo = await axios.get(distanceUrl);
-  if (!distanceInfo.data.rows[0].elements[0].distance) {
-    console.error("Delivery Charges: Error Decoding Distance:");
+    let distance = distanceInfo.data.rows[0].elements[0].distance.text;
+    distance = Math.ceil(distance.split(" ")[0]);
+    const distanceFees = await DeliveryFees.findOne(
+      {
+        $or: [
+          {
+            min: { $lte: distance },
+            max: { $gte: distance },
+          },
+          {
+            min: { $lte: distance },
+            max: { $exists: false },
+          },
+        ],
+      },
+      {
+        fees: 1,
+        _id: 0,
+      }
+    );
+    return distanceFees?.fees ?? 0;
+  } catch (error) {
+    console.error(
+      "Delivery Charges: Error during Distance Calculation:",
+      error
+    );
     return 0;
   }
-  let distance = distanceInfo.data.rows[0].elements[0].distance.text;
-  distance = Math.ceil(distance.split(" ")[0]);
-  const distanceFees = await DeliveryFees.findOne(
-    {
-      $or: [
-        {
-          min: { $lte: distance },
-          max: { $gte: distance },
-        },
-        {
-          min: { $lte: distance },
-          max: { $exists: false },
-        },
-      ],
-    },
-    {
-      fees: 1,
-      _id: 0,
-    }
-  );
-  return distanceFees?.fees ?? 0;
 };
 
 module.exports = {
