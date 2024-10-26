@@ -15,6 +15,7 @@ const CouponCodes = require("../db/models/couponCode");
 const Items = require("../db/models/items");
 
 const calculateFromItemsAmount = async (data, cartData) => {
+  //TODO: add delivery charges and add it in amount
   try {
     let billingDetails = data;
     let extra_services_charges = [];
@@ -51,6 +52,11 @@ const calculateFromItemsAmount = async (data, cartData) => {
         billingDetails?.total_amount - coupon_discount_value
       );
     }
+
+    if (cartData?.delivery_charges && cartData?.delivery_charges !== null) {
+      billingDetails.total_amount += Number(cartData?.delivery_charges);
+    }
+
     billingDetails.coupon_type = coupon_type;
     billingDetails.coupon_discount = coupon_discount;
     billingDetails.coupon_discount_value = coupon_discount_value;
@@ -310,6 +316,8 @@ const addCartToCache = async (data, customerId) => {
       if (packagesData) {
         isPackageValid = await validatePackage(cartItemValues, packagesData);
       }
+      const deliveryCharges = 0;
+
       const {
         itemsPricing,
         extraChargesArray,
@@ -339,6 +347,7 @@ const addCartToCache = async (data, customerId) => {
           addOnChargesQty: addOnChargesQty ?? 0,
         },
         extra_charges: extraChargesArray,
+        delivery_charges: deliveryCharges, // delivery charges
         total_amount: totalItemsAmount,
         total_items_amount: totalItemsAmount,
       };

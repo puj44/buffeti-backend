@@ -5,6 +5,7 @@ const users = require("../models/users");
 const Locations = require("../models/locations");
 const { ExtraServices } = require("../models/extraServices");
 const CouponCodeServices = require("../models/couponCode");
+const LocationStores = require("../models/locationStores");
 require("dotenv").config();
 
 const menuOptionsData = [
@@ -89,6 +90,19 @@ const couponCode = [
   },
 ];
 
+const locationStores = [
+  {
+    store_name: "Gwalia SBR",
+    address: "Gwalia Sindhu Bhavan Road",
+    area: "Sindhu Bhavan Marg, PRL Colony, Bodakdev",
+    city: "Ahmedabad",
+    state: "Gujarat",
+    pincode: "380054",
+    lattitude: "23.04203469089882",
+    longitude: "72.50561221751664",
+  },
+];
+
 async function SeedDatabase() {
   try {
     await mongoose.connect(process.env.MONGO_URL);
@@ -126,7 +140,14 @@ async function SeedDatabase() {
       .catch((err) => console.log("Delivery Fees: ", err));
 
     await CouponCodeServices.deleteMany({});
-    await CouponCodeServices.insertMany(couponCode).then((d)=>d).catch((err) => console.log("Coupon Error:",err))
+    await CouponCodeServices.insertMany(couponCode)
+      .then((d) => d)
+      .catch((err) => console.log("Coupon Error:", err));
+
+    await LocationStores.deleteMany({});
+    await LocationStores.insertMany(locationStores)
+      .then((d) => d)
+      .catch((err) => console.log("Location Stores Error:", err));
     process.exit(0);
   } catch (err) {
     console.log("Seed error:", err);
