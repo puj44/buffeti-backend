@@ -45,6 +45,11 @@ const orderSchema = new Schema(
       ref: "customer_addresses",
       required: false,
     }, //ref to customer address
+    delivery_address: {
+      type: String,
+      required: true,
+      default: null,
+    },
     delivery_date: {
       type: Date,
       required: false,

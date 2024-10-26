@@ -95,6 +95,28 @@ const placeOrder = async (req, res) => {
       cart_id: dbCartData?._id,
     }).lean();
 
+    const db_delivery_address = await CustomersAddresses.findById(
+      delivery_address_id
+    ).lean();
+    if (!db_delivery_address) {
+      return sendRes(res, 400, {
+        message: "Delivery address not found",
+      });
+    }
+
+    let delivery_address =
+      db_delivery_address?.house_building_no +
+      " " +
+      db_delivery_address?.address +
+      " " +
+      db_delivery_address?.area +
+      " " +
+      db_delivery_address?.city +
+      " " +
+      db_delivery_address?.state +
+      " " +
+      db_delivery_address?.pincode;
+
     const orderInsert = await Order.create(
       [
         {
@@ -103,6 +125,7 @@ const placeOrder = async (req, res) => {
           menu_option: menu_option,
           location: location,
           delivery_address_id: delivery_address_id,
+          delivery_address: delivery_address,
           extra_charges: extra_charges,
           delivery_date: delivery_date,
           delivery_time: delivery_time,
@@ -250,26 +273,6 @@ const getOrderInfo = async (req, res) => {
     orderItemDetails.forEach((item) => {
       totalNoOfPeople += item.no_of_people;
     });
-    const addressData = await CustomersAddresses.findOne({
-      _id: orderDetails.delivery_address_id,
-    }).lean();
-    if (!addressData) {
-      return sendRes(res, 404, {
-        message: "Delivery Address not found",
-      });
-    }
-    let deliveryAddress =
-      addressData.house_building_no +
-      " " +
-      addressData.address +
-      " " +
-      addressData.area +
-      " " +
-      addressData.city +
-      " " +
-      addressData.state +
-      " " +
-      addressData.pincode;
 
     console.log(deliveryAddress);
     return sendRes(res, 200, {
@@ -277,7 +280,7 @@ const getOrderInfo = async (req, res) => {
         orderDetails: {
           ...orderDetails,
           no_of_people: totalNoOfPeople,
-          delivery_address: deliveryAddress,
+          delivery_address: orderDetails.delivery_address,
         },
       },
       message: "Order Info fetched successfully",
