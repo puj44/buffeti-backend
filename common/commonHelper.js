@@ -193,7 +193,7 @@ function validateDelivery(delivery_date, delivery_time) {
     };
   }
 
-  if (!moment(delivery_time, "hh:mm a", true).isValid()) {
+  if (!moment(delivery_time, "h:mm a", true).isValid()) {
     return {
       isValid: false,
       message:
@@ -203,7 +203,7 @@ function validateDelivery(delivery_date, delivery_time) {
 
   const deliveryDateTime = moment(
     `${delivery_date} ${delivery_time}`,
-    "YYYY-MM-DD hh:mm a"
+    "YYYY-MM-DD h:mm a"
   );
 
   if (!deliveryDateTime.isValid()) {
