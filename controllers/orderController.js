@@ -105,17 +105,17 @@ const placeOrder = async (req, res) => {
     }
 
     let delivery_address =
-      db_delivery_address?.house_building_no +
+      (db_delivery_address?.house_building_no ?? "") +
       " " +
-      db_delivery_address?.address +
+      (db_delivery_address?.address ?? "") +
       " " +
-      db_delivery_address?.area +
+      (db_delivery_address?.area ?? "") +
       " " +
-      db_delivery_address?.city +
+      (db_delivery_address?.city ?? "") +
       " " +
-      db_delivery_address?.state +
+      (db_delivery_address?.state ?? "") +
       " " +
-      db_delivery_address?.pincode;
+      (db_delivery_address?.pincode ?? "");
 
     const orderInsert = await Order.create(
       [
