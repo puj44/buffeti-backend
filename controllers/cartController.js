@@ -67,6 +67,38 @@ const addtocart = async (req, res) => {
         }
       }
     }
+    //selecting delivery delivery address
+    const deliveryAddress = await CustomersAddresses.findOne({
+      customer: id,
+    }).lean();
+
+    console.log(deliveryAddress?._id);
+
+    if (!deliveryAddress) {
+      return sendRes(res, 404, {
+        message: "Delivery address not found",
+      });
+    }
+
+    const locationStores = await LocationStores.find().lean();
+    if (locationStores.length === 0) {
+      return sendRes(res, 404, {
+        message: "No location stores found",
+      });
+    }
+
+    const data = {
+      from: {
+        fLat: locationStores[0].lattitude,
+        fLng: locationStores[0].longitude,
+      },
+      to: {
+        tLat: deliveryAddress.lattitude,
+        tLng: deliveryAddress.longitude,
+        tPincode: deliveryAddress.pincode,
+      },
+    };
+    const delivery_charges = await getDevileryCharges(data);
 
     const cartInsert =
       cart_id ??
@@ -77,6 +109,8 @@ const addtocart = async (req, res) => {
             menu_option: menu_option,
             location: location,
             extra_services: extra_services,
+            delivery_address_id: deliveryAddress?._id,
+            delivery_charges: delivery_charges,
           },
         ],
         { session }
@@ -118,7 +152,8 @@ const addtocart = async (req, res) => {
           items: menu_option !== "mini-meals" ? cartItems[0].items : cartItems,
           package_name: package_name,
         },
-        id
+        id,
+        delivery_charges
       );
     } else {
       response = await addToCurrentCartCache(
@@ -128,12 +163,10 @@ const addtocart = async (req, res) => {
           no_of_people: no_of_people,
           package_name: package_name,
         },
-        id
+        id,
+        delivery_charges
       );
     }
-    // if(!response){
-    //   throw Error("Data not found");
-    // }
 
     const cartDetails = await getCartDetails(id);
     return sendRes(res, 200, {
