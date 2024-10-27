@@ -193,16 +193,17 @@ function validateDelivery(delivery_date, delivery_time) {
     };
   }
 
-  if (!moment(delivery_time, "HH:mm", true).isValid()) {
+  if (!moment(delivery_time, "hh:mm a", true).isValid()) {
     return {
       isValid: false,
-      message: "Invalid delivery time format. Use HH:mm.",
+      message:
+        "Invalid delivery time format. Use hh:mm a (12 hour format with am/pm).",
     };
   }
 
   const deliveryDateTime = moment(
     `${delivery_date} ${delivery_time}`,
-    "YYYY-MM-DD HH:mm"
+    "YYYY-MM-DD hh:mm a"
   );
 
   if (!deliveryDateTime.isValid()) {
@@ -226,6 +227,42 @@ function validateDelivery(delivery_date, delivery_time) {
       message: "Delivery date and time must be within the next 5 days",
     };
   }
+
+  // // lunch and dinner slot times
+  // const lunchSlotStart = moment("01:30 PM", "hh:mm a");
+  // const lunchSlotEnd = moment("02:30 PM", "hh:mm a");
+  // const dinnerSlotStart = moment("07:00 PM", "hh:mm a");
+  // const dinnerSlotEnd = moment("09:30 PM", "hh:mm a");
+
+  // const deliveryTime = moment(delivery_time, "hh:mm a");
+
+  // // Validate lunch slot condition
+  // if (deliveryTime.isBetween(lunchSlotStart, lunchSlotEnd, undefined, "[]")) {
+  //   const cutoffForLunch = moment(delivery_date, "YYYY-MM-DD")
+  //     .subtract(1, "days")
+  //     .set({ hour: 21, minute: 0 });
+  //   if (now.isAfter(cutoffForLunch)) {
+  //     return {
+  //       isValid: false,
+  //       message:
+  //         "For lunch slot, order should be placed before 9 PM on the previous day.",
+  //     };
+  //   }
+  // }
+
+  // // Validate dinner slot condition
+  // if (deliveryTime.isBetween(dinnerSlotStart, dinnerSlotEnd, undefined, "[]")) {
+  //   const cutoffForDinner = moment(delivery_date, "YYYY-MM-DD")
+  //     .subtract(1, "days")
+  //     .endOf("day");
+  //   if (now.isAfter(cutoffForDinner)) {
+  //     return {
+  //       isValid: false,
+  //       message:
+  //         "For dinner slot, order should be placed before midnight on the previous day.",
+  //     };
+  //   }
+  // }
 
   return {
     isValid: true,
