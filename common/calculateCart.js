@@ -60,7 +60,7 @@ const calculateFromItemsAmount = async (data, cartData) => {
       billingDetails.total_amount + (billingDetails.total_amount * 5) / 100
     );
     if (cartData?.delivery_charges && cartData?.delivery_charges !== null) {
-      billingDetails.total_amount += Number(cartData?.delivery_charges);
+      billingDetails.total_billed_amount += Number(cartData?.delivery_charges);
     }
     billingDetails.extra_services_charges = extra_services_charges;
     return billingDetails;
@@ -222,7 +222,7 @@ const updateCartItemsCache = async (customerId, newCartItems, data = null) => {
   }
 };
 
-const addToCurrentCartCache = async (data, customerId) => {
+const addToCurrentCartCache = async (data, customerId, delivery_charges) => {
   const { cart_id, cart_item_id, no_of_people, package_name } = data;
   try {
     let currentCartData = await get(`cart-${customerId}`, true);
@@ -256,6 +256,11 @@ const addToCurrentCartCache = async (data, customerId) => {
       billingDetails.total_billed_amount = Math.ceil(
         billingDetails.total_billed_amount + totalPrice
       );
+      if (delivery_charges) {
+        currentCartData.delivery_charges = delivery_charges;
+        billingDetails.total_billed_amount += Number(delivery_charges);
+      }
+
       currentCartData.billing_details = billingDetails;
       await set(`cart-${customerId}`, currentCartData, true);
     }
@@ -265,7 +270,7 @@ const addToCurrentCartCache = async (data, customerId) => {
   }
 };
 
-const addCartToCache = async (data, customerId) => {
+const addCartToCache = async (data, customerId, delivery_charges) => {
   const {
     cart_id,
     cart_item_id,
@@ -315,7 +320,6 @@ const addCartToCache = async (data, customerId) => {
       if (packagesData) {
         isPackageValid = await validatePackage(cartItemValues, packagesData);
       }
-      const deliveryCharges = 0;
 
       const {
         itemsPricing,
@@ -346,7 +350,7 @@ const addCartToCache = async (data, customerId) => {
           addOnChargesQty: addOnChargesQty ?? 0,
         },
         extra_charges: extraChargesArray,
-        delivery_charges: deliveryCharges, // delivery charges
+        delivery_charges: delivery_charges, // delivery charges
         total_amount: totalItemsAmount,
         total_items_amount: totalItemsAmount,
       };
@@ -361,17 +365,22 @@ const addCartToCache = async (data, customerId) => {
         total_amount: totalItemsAmount,
       };
     }
-    //TODO: Coupon code charges, extra services, delivery charges(centralize)
+    if (delivery_charges) {
+      billingDetails.total_billed_amount += Number(delivery_charges);
+    } else {
+      console.log("delivery charges not found!");
+    }
     billingDetails.total_billed_amount = Math.ceil(
       billingDetails.total_amount + (billingDetails.total_amount * 5) / 100
     );
-    //add same calculateFromItemsAmount here and also in addToCurrentCartCache
+
     globalData = {
       cart_id: cart_id,
       location: location,
       menu_option: menu_option,
       cart_data: cartItemValues,
       billing_details: billingDetails,
+      delivery_charges: delivery_charges,
     };
     await set(`cart-${customerId}`, globalData, true);
     return true;

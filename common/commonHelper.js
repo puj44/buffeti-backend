@@ -155,6 +155,7 @@ async function getCartDetails(customerId, data = null) {
         }
         return {
           menu_option: currentCartData.menu_option,
+          delivery_charges: currentCartData.delivery_charges,
           items: items,
         };
       }
