@@ -53,16 +53,15 @@ const calculateFromItemsAmount = async (data, cartData) => {
       );
     }
 
-    if (cartData?.delivery_charges && cartData?.delivery_charges !== null) {
-      billingDetails.total_amount += Number(cartData?.delivery_charges);
-    }
-
     billingDetails.coupon_type = coupon_type;
     billingDetails.coupon_discount = coupon_discount;
     billingDetails.coupon_discount_value = coupon_discount_value;
     billingDetails.total_billed_amount = Math.ceil(
       billingDetails.total_amount + (billingDetails.total_amount * 5) / 100
     );
+    if (cartData?.delivery_charges && cartData?.delivery_charges !== null) {
+      billingDetails.total_amount += Number(cartData?.delivery_charges);
+    }
     billingDetails.extra_services_charges = extra_services_charges;
     return billingDetails;
   } catch (err) {
@@ -366,6 +365,7 @@ const addCartToCache = async (data, customerId) => {
     billingDetails.total_billed_amount = Math.ceil(
       billingDetails.total_amount + (billingDetails.total_amount * 5) / 100
     );
+    //add same calculateFromItemsAmount here and also in addToCurrentCartCache
     globalData = {
       cart_id: cart_id,
       location: location,
