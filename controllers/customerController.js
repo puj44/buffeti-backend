@@ -64,6 +64,7 @@ const getCustomerDetails = async (req, res) => {
       email: customer.email,
       is_email_verified: customer.is_email_verified,
     };
+
     return sendRes(res, 200, {
       data: {
         profile: details,
