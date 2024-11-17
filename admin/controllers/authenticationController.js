@@ -55,7 +55,7 @@ const signin = async (req, res) => {
 const checkstatus = async (req, res) => {
   const token = req.cookies?.accessToken;
   if (token === null || token === undefined) {
-    return sendRes(res, 401, {
+    return sendResponse(res, 401, {
       message: "Access token is missing or invalid",
     });
   }
@@ -63,12 +63,12 @@ const checkstatus = async (req, res) => {
   const payload = verifyJWT(token).payload;
 
   if (payload === null) {
-    return sendRes(res, 403, {
+    return sendResponse(res, 403, {
       message: "Access token is not valid",
     });
   }
 
-  return sendRes(res, 200, {
+  return sendResponse(res, 200, {
     data: {
       user: payload ?? {},
     },
