@@ -1,10 +1,11 @@
 //Models
 const sendSMS = require("./../common/sendOtp");
-const verifyUser = require("./../common/verifyOtp");
+const verifyEmail = require("./../common/verifyEmail");
 const sendRes = require("../common/sendResponse");
 const sendError = require("../common/sendError");
 const { remove } = require("../common/redisGetterSetter");
-const prefix = process.env.PREFIX_OTP;
+const PREFIX_OTP = process.env.PREFIX_OTP;
+const PREFIX_EMAIL = process.env.PREFIX_EMAIL;
 const { Customers } = require("../db/models/customers");
 const { signJWT, verifyJWT } = require("./utils/jwtUtils");
 const { default: axios } = require("axios");
@@ -30,7 +31,7 @@ const signin = async (req, res) => {
 const verifyOtp = async (req, res) => {
   try {
     const { mobile_number, otp } = req.body;
-    const phoneCacheKey = prefix + mobile_number;
+    const phoneCacheKey = PREFIX_OTP + mobile_number;
     let accessToken;
 
     const response = await verifyUser(mobile_number, otp);

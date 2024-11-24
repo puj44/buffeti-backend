@@ -8,7 +8,6 @@ const { get } = require("../common/redisGetterSetter");
 const verifyUser = require("../common/verifyOtp");
 const sendSMS = require("./../common/sendOtp");
 const { default: axios } = require("axios");
-const prefix = process.env.PREFIX_OTP;
 
 const insertCustomer = async (req, res) => {
   const { name, mobile_number, email, token } = req.body;
