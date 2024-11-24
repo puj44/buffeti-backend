@@ -1,16 +1,18 @@
 const { get } = require("./redisGetterSetter");
 
-const prefix = process.env.PREFIX_OTP;
+const PREFIX_EMAIL = process.env.PREFIX_EMAIL;
 
 async function verifyEmail(email, otp) {
-  const emailCacheKey = prefix + email;
+  const emailCacheKey = PREFIX_EMAIL + email;
   const emailData = await get(emailCacheKey, true);
+  console.log(emailData);
+
   if (!emailData || !emailData?.otp) {
     return {
       status: 500,
       message: "There's a problem verifying the OTP, try again",
     };
-  } else if (loginData.otp.toString() !== otp.toString()) {
+  } else if (emailData.otp.toString() !== otp.toString()) {
     return {
       status: 401,
       message: "OTP is invalid.",

@@ -6,8 +6,10 @@ const {
   deleteAddress,
   getAddress,
   updateProfile,
+  verifyEmail,
 } = require("../controllers/profileController");
 const { addressRequests } = require("../middlewares/requests/addressRequests");
+const { profileRequests } = require("../middlewares/requests/profileRequests");
 const validator = require("../middlewares/validator/validator");
 
 router.get("/address/list", getAddress);
@@ -15,5 +17,10 @@ router.post("/address/add", validator(addressRequests.add), addAddress);
 router.put("/address/edit/:id", validator(addressRequests.edit), editAddress);
 router.delete("/address/delete/:id", deleteAddress);
 router.put("/update-profile", updateProfile);
+router.post(
+  "/verify-email",
+  validator(profileRequests.verifyEmail),
+  verifyEmail
+);
 
 module.exports = router;

@@ -283,7 +283,11 @@ const updateCart = async (req, res) => {
     }
 
     if (delivery_date && delivery_time) {
-      const validation = validateDelivery(delivery_date, delivery_time);
+      const validation = validateDelivery(
+        delivery_date,
+        delivery_time,
+        cart.menu_option
+      );
 
       if (validation.isValid !== true) {
         return sendRes(res, 400, {

@@ -1,12 +1,13 @@
 const sendError = require("../common/sendError");
 const sendResponse = require("../common/sendResponse");
-const verifyEmail = require("../common/verifyEmail");
+const verifyEmailOtp = require("../common/verifyEmail");
 const CustomerAddresses = require("../db/models/customerAddresses");
 const { Customers } = require("../db/models/customers");
 const sendEmail = require("../services/email/sendEmail");
 const otpGenerator = require("otp-generator");
 const { get, set, remove } = require("../common/redisGetterSetter");
-const prefix = process.env.PREFIX_OTP;
+const PREFIX_OTP = process.env.PREFIX_OTP;
+const PREFIX_EMAIL = process.env.PREFIX_EMAIL;
 const getAddress = async (req, res) => {
   try {
     const addresses = await CustomerAddresses.find({ customer: req.user.id });
@@ -108,12 +109,19 @@ const deleteAddress = async (req, res) => {
 const updateProfile = async (req, res) => {
   const id = req.user.id;
   const { name, email } = req.body;
+  const emailCacheKey = PREFIX_EMAIL + email;
   try {
     const customerDetails = await Customers.findOne({ _id: id }).lean();
     if (!customerDetails) {
       return sendResponse(res, 404, {
         message: "Customer not found",
       });
+    }
+
+    let pattern = /^[a-z0-9]+@[a-z]+\.[a-z]{2,3}$/;
+    const emailChecker = pattern.test(email);
+    if (!emailChecker) {
+      return sendRes(res, 400, { message: "Email id is not valid!" });
     }
 
     const dbEmail = customerDetails.email;
@@ -140,16 +148,13 @@ const updateProfile = async (req, res) => {
       let obj = {
         otp: OTP,
       };
-      const emailCacheKey = prefix + email;
+
       await set(emailCacheKey, obj, true);
-      const emailVerificationResponse = await verifyEmail(email, OTP);
-      if (!emailVerificationResponse) {
-        return sendResponse(res, 400, { message: "Failed to verify email" });
-      }
       const emailUpdate = await Customers.findByIdAndUpdate(
         { _id: id },
         {
-          email,
+          email: email,
+          is_email_verified: false,
         }
       );
       if (!emailUpdate) {
@@ -160,7 +165,7 @@ const updateProfile = async (req, res) => {
       const customerUpdate = await Customers.findByIdAndUpdate(
         { _id: id },
         {
-          name,
+          name: name,
         }
       );
       if (!customerUpdate) {
@@ -177,10 +182,45 @@ const updateProfile = async (req, res) => {
   }
 };
 
+const verifyEmail = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    const emailCacheKey = PREFIX_EMAIL + email;
+
+    const response = await verifyEmailOtp(email, otp);
+
+    if (response.status !== 200) {
+      return sendResponse(res, response?.status, {
+        response: response?.message,
+      });
+    }
+    const emailVerify = await Customers.findOneAndUpdate(
+      { email: email },
+      {
+        is_email_verified: true,
+      }
+    );
+    if (!emailVerify) {
+      return sendResponse(res, 400, {
+        message: "Failed to verify email!",
+      });
+    }
+    await remove(emailCacheKey);
+
+    return sendResponse(res, response?.status, {
+      message: response?.message,
+    });
+  } catch (error) {
+    console.log("VERIFY EMAIL Error: ", error);
+    sendError(res, error);
+  }
+};
+
 module.exports = {
   addAddress,
   getAddress,
   editAddress,
   deleteAddress,
   updateProfile,
+  verifyEmail,
 };

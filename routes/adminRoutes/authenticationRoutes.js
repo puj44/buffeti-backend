@@ -1,7 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const { adminRequests } = require("../../admin/requests/adminRequests");
-const validator = require("../../middlewares/validator/validator");
+const {
+  adminRequests,
+} = require("../../admin/middlewares/requests/adminRequests");
+const validator = require("../../admin/middlewares/validator/validator");
 const {
   signin,
   checkstatus,

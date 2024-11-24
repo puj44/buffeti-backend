@@ -1,3 +1,4 @@
+const sendError = require("../../common/sendError");
 const sendResponse = require("../../common/sendResponse");
 const { Order } = require("../../db/models/order");
 const { OrderPayment } = require("../../db/models/orderPayment");
@@ -47,8 +48,129 @@ const orderTransactionInfo = async (req, res) => {
   }
 };
 
-const getOrder = async (req, res) => {};
+const getOrders = async (req, res) => {
+  const { search, sort } = req.query;
+  const pipeline = {};
+  let sortOption = {};
+  try {
+    if (search) {
+      const [searchField, searchQuery] = search.split(",");
 
-const getOrderInfo = async (req, res) => {};
+      if (searchField === "name" || searchField === "mobile_number") {
+        pipeline.push(
+          {
+            $lookup: {
+              from: "customers",
+              localField: "customer_id",
+              foreignField: "_id",
+              as: "customer",
+            },
+          },
+          {
+            $match: {
+              "customer.0": { $exist: true },
+              [`customer.${searchField}`]: {
+                $regex: searchQuery,
+                $options: "i",
+              },
+            },
+          }
+        );
+      } else if (searchField === "from" || searchField === "to") {
+        const date = moment(searchQuery, "YYYY-MM-DD").toDate();
+        const dateQuery = {};
+        if (searchField === "from") {
+          dateQuery.$gte = date;
+        } else if (searchField === "to") {
+          dateQuery.$lte = date;
+        }
 
-module.exports = { orderTransactionInfo, getOrder, getOrderInfo };
+        pipeline.push({
+          $match: {
+            updateAt: dateQuery,
+          },
+        });
+      } else {
+        pipeline.push({
+          $match: {
+            [searchField]: { $regex: searchQuery, $options: "i" },
+          },
+        });
+      }
+    }
+
+    if (sort) {
+      const [sortField, sortOrder] = sort.split(",");
+      sortOption[sortField] = sortOrder === "a" ? 1 : -1;
+
+      pipeline.push({
+        $sort: sortOption,
+      });
+    }
+
+    pipeline.push({ $project: { customer: 0 } });
+
+    const allOrders = await Order.aggregate(pipeline);
+
+    if (!allOrders.length) {
+      return sendResponse(res, 404, { message: "No orders found" });
+    }
+
+    return sendResponse(res, 200, {
+      data: {
+        allOrders: allOrders ?? {},
+      },
+      message: "Orders fetched successfully",
+    });
+  } catch (err) {
+    console.log("Get Orders Err:", err);
+    return sendResponse(res, 400, { message: err?.message });
+  }
+};
+
+const getOrderInfo = async (req, res) => {
+  const { id } = req.user ?? {};
+  const order_number = req.params.id;
+  try {
+    if (!id) {
+      return sendResponse(res, 404, { message: "Customer id not found" });
+    }
+    const orderCustomerCheck = await Order.findOne({ customer_id: id }).lean();
+    if (!orderCustomerCheck) {
+      return sendResponse(res, 404, {
+        message: "No orders found for this customer",
+      });
+    }
+
+    const orderDetails = await Order.findOne({
+      order_number: order_number,
+    }).lean();
+    if (!orderDetails) {
+      return sendRes(res, 404, {
+        message: "Order Details not found",
+      });
+    }
+
+    const orderPayments = await OrderPayment.find({
+      order_number: order_number,
+    }).lean();
+    if (!orderPayments.length) {
+      return sendResponse(res, 404, {
+        message: "No payment details found for this order",
+      });
+    }
+
+    return sendResponse(res, 200, {
+      data: {
+        orderDetails: orderDetails,
+        orderPayments: orderPayments,
+      },
+      message: "Order info fetched successfully",
+    });
+  } catch (err) {
+    console.log("Get Order Info Err:", err);
+    return sendResponse(res, 400, { message: err?.message });
+  }
+};
+
+module.exports = { orderTransactionInfo, getOrders, getOrderInfo };
