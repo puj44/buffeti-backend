@@ -14,3 +14,5 @@ const validateBaseURL = async (req, res, next) => {
     return sendError(res, err);
   }
 };
+
+module.exports = validateBaseURL;

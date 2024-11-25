@@ -4,7 +4,8 @@ const {
   getLocation,
   getDevileryCharges,
 } = require("../controllers/locationController");
+const validateBaseURL = require("../middlewares/validateBaseURL");
 
-router.post("/get-location", getLocation);
+router.post("/get-location", validateBaseURL, getLocation);
 
 module.exports = router;
