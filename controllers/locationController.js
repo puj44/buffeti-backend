@@ -23,11 +23,9 @@ const getLocation = async (req, res) => {
     }
     if (response.data.status === "OK") {
       const addressComponents = response.data.results[0].address_components;
-      console.log(addressComponents);
 
       addressDetails.address = response.data.results[0].formatted_address;
-
-      addressComponents.forEach((component) => {
+      for (const component of addressComponents) {
         const types = component.types;
         if (types.includes("locality")) {
           addressDetails.city = component.long_name;
@@ -44,9 +42,8 @@ const getLocation = async (req, res) => {
         if (types.includes("sublocality_level_1")) {
           addressDetails.area = component.long_name;
         }
-      });
+      }
     }
-    console.log(addressDetails);
 
     return sendRes(res, 200, {
       data: {
