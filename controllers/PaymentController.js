@@ -98,7 +98,6 @@ const createPayment = async (req, res) => {
     const { name, mobile_number, email } = customer_data;
 
     await session.commitTransaction();
-    console.log("DATA", payment_call);
 
     return sendRes(res, 200, {
       data: {
@@ -109,6 +108,7 @@ const createPayment = async (req, res) => {
           contact: mobile_number,
           email: email,
         },
+        key_id: process.env.TEST_KEY_ID,
       },
       message: "payment status updated successfully",
     });
