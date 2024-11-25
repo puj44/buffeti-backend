@@ -121,10 +121,12 @@ async function initializeCache() {
       }
       if (extraItemsObj && Object.keys(extraItemsObj).length > 0) {
         for (const loc in extraItemsObj) {
-          console.log("locloc: " + `${loc}_click2cater_${keys.extra_items}`);
+          console.log(
+            "locloc: " + `${loc?.trim()}_click2cater_${keys.extra_items}`
+          );
           await set(
-            `${loc}_click2cater_${keys.extra_items}`,
-            extraItemsObj[loc],
+            `${loc?.trim()}_click2cater_${keys.extra_items}`,
+            extraItemsObj[loc?.trim()],
             true
           );
         }
@@ -187,10 +189,10 @@ async function initializeCache() {
       }
       if (locationBasedObj && Object.keys(locationBasedObj).length > 0) {
         for (const loc in locationBasedObj) {
-          for (const menu in locationBasedObj[loc]) {
+          for (const menu in locationBasedObj[loc?.trim()]) {
             await set(
-              `${loc}_${menu}_${keys.items}`,
-              locationBasedObj[loc][menu],
+              `${loc?.trim()}_${menu}_${keys.items}`,
+              locationBasedObj[loc?.trim()][menu],
               true
             );
           }
@@ -220,8 +222,8 @@ async function initializeCache() {
       if (preparationsObj && Object.keys(preparationsObj).length > 0)
         for (const loc of Object.keys(preparationsObj)) {
           await set(
-            `${loc}_click2cater_${keys.preparations}`,
-            preparationsObj[loc],
+            `${loc?.trim()}_click2cater_${keys.preparations}`,
+            preparationsObj[loc?.trim()],
             true
           );
         }
@@ -297,13 +299,17 @@ async function initializeCache() {
           };
       }
       for (const loc of Object.keys(globalObj)) {
-        for (const menu of Object.keys(globalObj[loc])) {
+        for (const menu of Object.keys(globalObj[loc?.trim()])) {
           await set(
-            `${loc}_${menu}_${keys.packages}`,
-            globalObj[loc][menu],
+            `${loc?.trim()}_${menu}_${keys.packages}`,
+            globalObj[loc?.trim()][menu],
             true
           );
-          await set(`${loc}_${menu}_${keys.filters}`, filters[loc][menu], true);
+          await set(
+            `${loc?.trim()}_${menu}_${keys.filters}`,
+            filters[loc?.trim()][menu],
+            true
+          );
         }
       }
     } else {
@@ -351,8 +357,16 @@ async function initializeCache() {
           };
       }
       for (const loc of Object.keys(globalObj)) {
-        await set(`${loc}_mini-meals_${keys.packages}`, globalObj[loc], true);
-        await set(`${loc}_mini-meals_${keys.filters}`, filters[loc], true);
+        await set(
+          `${loc?.trim()}_mini-meals_${keys.packages}`,
+          globalObj[loc?.trim()],
+          true
+        );
+        await set(
+          `${loc?.trim()}_mini-meals_${keys.filters}`,
+          filters[loc?.trim()],
+          true
+        );
       }
     } else {
       console.log("Err Mini Meals Packages: ", JSON.stringify(miniMealsData));
@@ -376,7 +390,11 @@ async function initializeCache() {
         });
       }
       for (const loc of Object.keys(globalObj)) {
-        await set(`${loc}_${keys.delivery_fees}`, globalObj[loc], true);
+        await set(
+          `${loc?.trim()}_${keys.delivery_fees}`,
+          globalObj[loc?.trim()],
+          true
+        );
       }
     } else {
       console.log("Err Delivery Fees: ", JSON.stringify(deliveryFeesData));
