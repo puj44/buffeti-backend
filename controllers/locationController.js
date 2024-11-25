@@ -60,7 +60,7 @@ const getLocation = async (req, res) => {
     });
   } catch (err) {
     console.log("Get Location Error:", err);
-    sendErr(res, err);
+    return sendErr(res, err);
   }
 };
 
