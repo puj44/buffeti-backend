@@ -99,7 +99,7 @@ const createPayment = async (req, res) => {
 
     await session.commitTransaction();
 
-    sendRes(res, 200, {
+    return sendRes(res, 200, {
       data: {
         amount: amount_to_be_paid,
         order_id: payment_call.id,
@@ -114,7 +114,7 @@ const createPayment = async (req, res) => {
   } catch (err) {
     await session.abortTransaction();
     console.log("Create Payment Error:", err);
-    sendError(res, err);
+    return sendError(res, err);
   }
 };
 
@@ -148,7 +148,7 @@ const verifyPayment = async (req, res) => {
       switch (event) {
         case "payment.captured":
         case "payment.authorized":
-          if(orderPaymentDetails?.payment_status !== "completed"){
+          if (orderPaymentDetails?.payment_status !== "completed") {
             const amountDueInPaise = Number(orderDetails.amount_due * 100);
             if (amount === amountDueInPaise) {
               await Order.updateOne(
@@ -169,7 +169,7 @@ const verifyPayment = async (req, res) => {
                 }
               );
             }
-  
+
             await OrderPayment.updateOne(
               { razorpay_order_id: order_id },
               {
