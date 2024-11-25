@@ -5,7 +5,6 @@ const PREFIX_EMAIL = process.env.PREFIX_EMAIL;
 async function verifyEmail(email, otp) {
   const emailCacheKey = PREFIX_EMAIL + email;
   const emailData = await get(emailCacheKey, true);
-  console.log(emailData);
 
   if (!emailData || !emailData?.otp) {
     return {

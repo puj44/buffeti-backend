@@ -38,13 +38,7 @@ async function calculateItems(data, itemsData, packagesData) {
     if (location && menu_option && itemsData && no_of_people) {
       if (isPackageValid) {
         let packagePrice = 0;
-        if (no_of_people >= 10 && no_of_people <= 20) {
-          packagePrice = packagesData._10_20_pax;
-        } else if (no_of_people >= 20 && no_of_people <= 30) {
-          packagePrice = packagesData._20_30_pax;
-        } else {
-          packagePrice = packagesData._30_plus_pax;
-        }
+        packagePrice = packagesData.rate;
         totalItemsAmount += packagePrice;
         itemsPricing.push({
           item_name: packagesData?.package_name,
