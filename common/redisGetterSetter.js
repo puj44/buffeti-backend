@@ -19,7 +19,7 @@ async function set(key, data, stringify = false) {
       await client.connect();
     }
     const value = stringify ? JSON.stringify(data) : data;
-    await client.set((prefix + key)?.toString()?.replaceAll("/n", ""), value);
+    await client.set((prefix + key)?.toString()?.replaceAll("\n", ""), value);
     return true;
   } catch (err) {
     console.log(key, "Error Cache SET: ", err);
