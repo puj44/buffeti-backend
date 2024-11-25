@@ -121,12 +121,9 @@ async function initializeCache() {
       }
       if (extraItemsObj && Object.keys(extraItemsObj).length > 0) {
         for (const loc in extraItemsObj) {
-          console.log(
-            "locloc: " + `${loc?.trim()}_click2cater_${keys.extra_items}`
-          );
           await set(
-            `${loc?.trim()}_click2cater_${keys.extra_items}`,
-            extraItemsObj[loc?.trim()],
+            `${loc}_click2cater_${keys.extra_items}`,
+            extraItemsObj[loc],
             true
           );
         }
@@ -189,10 +186,10 @@ async function initializeCache() {
       }
       if (locationBasedObj && Object.keys(locationBasedObj).length > 0) {
         for (const loc in locationBasedObj) {
-          for (const menu in locationBasedObj[loc?.trim()]) {
+          for (const menu in locationBasedObj[loc]) {
             await set(
-              `${loc?.trim()}_${menu}_${keys.items}`,
-              locationBasedObj[loc?.trim()][menu],
+              `${loc}_${menu}_${keys.items}`,
+              locationBasedObj[loc][menu],
               true
             );
           }
@@ -222,8 +219,8 @@ async function initializeCache() {
       if (preparationsObj && Object.keys(preparationsObj).length > 0)
         for (const loc of Object.keys(preparationsObj)) {
           await set(
-            `${loc?.trim()}_click2cater_${keys.preparations}`,
-            preparationsObj[loc?.trim()],
+            `${loc}_click2cater_${keys.preparations}`,
+            preparationsObj[loc],
             true
           );
         }
@@ -299,17 +296,13 @@ async function initializeCache() {
           };
       }
       for (const loc of Object.keys(globalObj)) {
-        for (const menu of Object.keys(globalObj[loc?.trim()])) {
+        for (const menu of Object.keys(globalObj[loc])) {
           await set(
-            `${loc?.trim()}_${menu}_${keys.packages}`,
-            globalObj[loc?.trim()][menu],
+            `${loc}_${menu}_${keys.packages}`,
+            globalObj[loc][menu],
             true
           );
-          await set(
-            `${loc?.trim()}_${menu}_${keys.filters}`,
-            filters[loc?.trim()][menu],
-            true
-          );
+          await set(`${loc}_${menu}_${keys.filters}`, filters[loc][menu], true);
         }
       }
     } else {
@@ -357,16 +350,8 @@ async function initializeCache() {
           };
       }
       for (const loc of Object.keys(globalObj)) {
-        await set(
-          `${loc?.trim()}_mini-meals_${keys.packages}`,
-          globalObj[loc?.trim()],
-          true
-        );
-        await set(
-          `${loc?.trim()}_mini-meals_${keys.filters}`,
-          filters[loc?.trim()],
-          true
-        );
+        await set(`${loc}_mini-meals_${keys.packages}`, globalObj[loc], true);
+        await set(`${loc}_mini-meals_${keys.filters}`, filters[loc], true);
       }
     } else {
       console.log("Err Mini Meals Packages: ", JSON.stringify(miniMealsData));
@@ -390,11 +375,7 @@ async function initializeCache() {
         });
       }
       for (const loc of Object.keys(globalObj)) {
-        await set(
-          `${loc?.trim()}_${keys.delivery_fees}`,
-          globalObj[loc?.trim()],
-          true
-        );
+        await set(`${loc}_${keys.delivery_fees}`, globalObj[loc], true);
       }
     } else {
       console.log("Err Delivery Fees: ", JSON.stringify(deliveryFeesData));
