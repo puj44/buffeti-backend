@@ -10,11 +10,12 @@ module.exports = slackLog = async (
         // const isDev = process.env.ENV === 'DEV';
 
         // if (isDev) `errors-ecom-csd-mre`;
-
+        console.log("HH");
+        
         const channelName = process.env.SLACK_CHANNEL_NAME;
         const body = JSON.stringify(data);
         await wh.send({
-            channel: channelName,
+            // channel: channelName,
             blocks: [
                 {
                     type: "divider"
