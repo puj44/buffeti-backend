@@ -72,33 +72,27 @@ const addtocart = async (req, res) => {
       customer: id,
     }).lean();
 
-    console.log(deliveryAddress?._id);
-
-    if (!deliveryAddress) {
-      return sendRes(res, 404, {
-        message: "Delivery address not found",
-      });
-    }
-
     const locationStores = await LocationStores.find().lean();
     if (locationStores.length === 0) {
       return sendRes(res, 404, {
         message: "No location stores found",
       });
     }
-
-    const data = {
-      from: {
-        fLat: locationStores[0].lattitude,
-        fLng: locationStores[0].longitude,
-      },
-      to: {
-        tLat: deliveryAddress.lattitude,
-        tLng: deliveryAddress.longitude,
-        tPincode: deliveryAddress.pincode,
-      },
-    };
-    const delivery_charges = await getDevileryCharges(data);
+    let delivery_charges = null;
+    if (deliveryAddress?._id) {
+      const data = {
+        from: {
+          fLat: locationStores[0].lattitude,
+          fLng: locationStores[0].longitude,
+        },
+        to: {
+          tLat: deliveryAddress.lattitude,
+          tLng: deliveryAddress.longitude,
+          tPincode: deliveryAddress.pincode,
+        },
+      };
+      delivery_charges = await getDevileryCharges(data);
+    }
 
     const cartInsert =
       cart_id ??
@@ -109,7 +103,7 @@ const addtocart = async (req, res) => {
             menu_option: menu_option,
             location: location,
             extra_services: extra_services,
-            delivery_address_id: deliveryAddress?._id,
+            delivery_address_id: deliveryAddress?._id ?? null,
             delivery_charges: delivery_charges,
           },
         ],
@@ -179,7 +173,7 @@ const addtocart = async (req, res) => {
     //ROLLBACK
     await session.abortTransaction();
     console.log("ADD CART ERROR: ", err);
-    sendError(res, err);
+    return sendError(res, err);
   }
 };
 
@@ -217,7 +211,7 @@ const getCartInformation = async (req, res) => {
     });
   } catch (err) {
     console.log("GET CART INFORMATION ERROR:", err);
-    sendError(res, err);
+    return sendError(res, err);
   }
 };
 
@@ -529,7 +523,7 @@ const getExtraServices = async (req, res) => {
     });
   } catch (err) {
     console.log("GET EXTRA SERVICES ERROR:", err);
-    sendError(res, err);
+    return sendError(res, err);
   }
 };
 

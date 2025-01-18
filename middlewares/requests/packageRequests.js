@@ -4,7 +4,7 @@ const packageRequests = {
     min: Joi.number().min(0).empty(["", null]),
     max: Joi.number().greater(Joi.ref("min")).empty(["", null]),
     category: Joi.string().empty(["", null]),
-    no_of_people: Joi.string().valid("15").empty(["", null]),
+    no_of_people: Joi.string().empty(["", null]),
   },
 };
 

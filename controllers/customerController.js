@@ -20,7 +20,7 @@ const insertCustomer = async (req, res) => {
     }
     let pattern = /^[a-z0-9]+@[a-z]+\.[a-z]{2,3}$/;
     const emailChecker = pattern.test(email);
-    if (!emailChecker) {
+    if (email && email !== "" && !emailChecker) {
       return sendRes(res, 400, { message: "Email id is not valid!" });
     }
     //Send OTP

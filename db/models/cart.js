@@ -33,9 +33,11 @@ const cartSchema = new Schema({
     validate: {
       validator: function (time) {
         // Validate time format (HH:mm)
-        return !time || time === null || moment(time, "HH:mm", true).isValid();
+        return (
+          !time || time === null || moment(time, "hh:mm a", true).isValid()
+        );
       },
-      message: "Invalid delivery time format. Use HH:mm.",
+      message: "Invalid delivery time format. Use hh:mm a.",
     },
   },
   cooking_instruction: { type: String, required: false, default: null },
