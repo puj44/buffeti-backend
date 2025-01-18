@@ -274,7 +274,6 @@ const getOrderInfo = async (req, res) => {
       totalNoOfPeople += item.no_of_people;
     });
 
-    console.log(deliveryAddress);
     return sendRes(res, 200, {
       data: {
         orderDetails: {
