@@ -4,7 +4,7 @@ name: Deploy
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    branches: [main]
+    branches: [dev]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -24,7 +24,7 @@ jobs:
           password: ${{ secrets.SSH_PASSWORD }}
           port: 22
           script: |
-            cd /home/buffeti/www/buffeti-backend
+            cd /home/buffeti/www/dev/buffeti-backend
             export NVM_DIR=~/.nvm
             source ~/.nvm/nvm.sh
             git fetch --all
