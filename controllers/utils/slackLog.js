@@ -1,6 +1,6 @@
-import { IncomingWebhook } from "@slack/webhook";
-
-const slackLog = async (
+// import { IncomingWebhook } from "@slack/webhook";
+const {IncomingWebhook} = require("@slack/webhook");
+module.exports = slackLog = async (
     moduleName,
     data,
     type = 'error'
@@ -48,4 +48,3 @@ const slackLog = async (
     }
 }
 
-export default slackLog

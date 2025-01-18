@@ -16,6 +16,7 @@ const signin = async (req, res) => {
   const { mobile_number, token } = req.body;
 
   try {
+    await slackLog("VERIFY_OTP",{})
     const customer = await Customers.findOne({ mobile_number }).then((d) => d);
     if (!customer)
       return sendRes(res, 400, { message: "Mobile Number is not registered" });

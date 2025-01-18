@@ -30,4 +30,4 @@ jobs:
             git fetch --all
             git pull --rebase
             npm install
-            pm2 restart buffeti_backend
+            pm2 restart buffeti_backend_dev
