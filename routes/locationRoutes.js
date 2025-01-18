@@ -4,7 +4,8 @@ const {
   getLocation,
   getDevileryCharges,
 } = require("../controllers/locationController");
+const captchaVerify = require("../middlewares/googleCaptchaVerify");
 
-router.post("/get-location", getLocation);
+router.post("/get-location", captchaVerify, getLocation);
 
 module.exports = router;

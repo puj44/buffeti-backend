@@ -1,4 +1,3 @@
-const { serviceSID, client } = require("../config/twilio");
 const moment = require("moment");
 const { get, set, remove } = require("./redisGetterSetter");
 const otpGenerator = require("otp-generator");

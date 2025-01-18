@@ -188,7 +188,7 @@ function validateDelivery(delivery_date, delivery_time, menu_option) {
     };
   }
 
-  if (!moment(delivery_time, "h:mm a", true).isValid()) {
+  if (!moment(delivery_time, "hh:mm a", true).isValid()) {
     return {
       isValid: false,
       message:

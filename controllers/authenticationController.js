@@ -1,6 +1,7 @@
 //Models
 const sendSMS = require("./../common/sendOtp");
 const verifyEmail = require("./../common/verifyEmail");
+const verifyUser = require("../common/verifyOtp");
 const sendRes = require("../common/sendResponse");
 const sendError = require("../common/sendError");
 const { remove } = require("../common/redisGetterSetter");
