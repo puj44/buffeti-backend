@@ -10,6 +10,7 @@ const PREFIX_EMAIL = process.env.PREFIX_EMAIL;
 const { Customers } = require("../db/models/customers");
 const { signJWT, verifyJWT } = require("./utils/jwtUtils");
 const { default: axios } = require("axios");
+const { default: slackLog } = require("./utils/slackLog");
 
 const signin = async (req, res) => {
   const { mobile_number, token } = req.body;
@@ -67,7 +68,8 @@ const verifyOtp = async (req, res) => {
     });
   } catch (error) {
     console.log("VERIFY OTP: ", error);
-    sendError(res, error);
+    await slackLog("VERIFY_OTP",error)
+    return sendError(res, error);
   }
 };
 
