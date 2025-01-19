@@ -4,10 +4,11 @@ const orderSearchConstants = [
   "mobile_number",
   "from",
   "to",
+  "order_status",
 ];
 const customerSearchConstants = ["name", "mobile_number"];
 
-const orderSortingConstants = ["created_at", "updated_at"];
+const orderSortingConstants = ["createdAt", "updatedAt"];
 const customerSortingConstants = ["name"];
 
 module.exports = {
