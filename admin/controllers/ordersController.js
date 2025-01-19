@@ -90,6 +90,29 @@ const getOrders = async (req, res) => {
           });
         }
       }
+
+      if (searchField === "order_number") {
+        pipeline.push({
+          $match: {
+            order_number: {
+              $regex: `^${searchQuery}$`,
+              $options: "i",
+            },
+          },
+        });
+        orderCheck = await Order.findOne({
+          [searchField]: {
+            $regex: `^${searchQuery}$`,
+            $options: "i",
+          },
+        });
+
+        if (!orderCheck) {
+          return sendResponse(res, 404, {
+            message: `No order found with ${searchField}: ${searchQuery}`,
+          });
+        }
+      }
       if (searchField === "from" || searchField === "to") {
         const date = moment(searchQuery, "YYYY-MM-DD").toDate();
         if (!moment(date).isValid()) {

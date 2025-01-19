@@ -4,6 +4,7 @@ const orderSearchConstants = [
   "mobile_number",
   "from",
   "to",
+  "order_status",
 ];
 const customerSearchConstants = ["name", "mobile_number"];
 
