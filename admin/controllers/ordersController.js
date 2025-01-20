@@ -1,7 +1,7 @@
 const sendError = require("../../common/sendError");
 const sendResponse = require("../../common/sendResponse");
 const { Customers } = require("../../db/models/customers");
-const { Order } = require("../../db/models/order");
+const { Order, OrderItems } = require("../../db/models/order");
 const { OrderPayment } = require("../../db/models/orderPayment");
 const reader = require("xlsx");
 const orderTransactionInfo = async (req, res) => {
@@ -229,16 +229,11 @@ const getOrders = async (req, res) => {
 };
 
 const getOrderInfo = async (req, res) => {
-  const { id } = req.user ?? {};
   const order_number = req.params.id;
   try {
-    if (!id) {
-      return sendResponse(res, 404, { message: "Customer id not found" });
-    }
-    const orderCustomerCheck = await Order.findOne({ customer_id: id }).lean();
-    if (!orderCustomerCheck) {
-      return sendResponse(res, 404, {
-        message: "No orders found for this customer",
+    if (!order_number) {
+      return sendRes(res, 404, {
+        message: "Order Number not found",
       });
     }
 
@@ -247,9 +242,31 @@ const getOrderInfo = async (req, res) => {
     }).lean();
     if (!orderDetails) {
       return sendRes(res, 404, {
-        message: "Order Details not found",
+        message: "Order Details not found for this order",
       });
     }
+
+    const customerDetails = await Customers.findOne({
+      _id: orderDetails.customer_id,
+    }).lean();
+    if (!customerDetails) {
+      return sendResponse(res, 404, {
+        message: "Customer Details not found for this order",
+      });
+    }
+
+    const orderItemDetails = await OrderItems.find({
+      order_id: orderDetails._id,
+    }).lean();
+    if (!orderItemDetails) {
+      return sendRes(res, 404, {
+        message: "Order Item Details not found",
+      });
+    }
+    let totalNoOfPeople = 0;
+    orderItemDetails.forEach((item) => {
+      totalNoOfPeople += item.no_of_people;
+    });
 
     const orderPayments = await OrderPayment.find({
       order_number: order_number,
@@ -262,7 +279,14 @@ const getOrderInfo = async (req, res) => {
 
     return sendResponse(res, 200, {
       data: {
-        orderDetails: orderDetails,
+        customerDetails: {
+          name: customerDetails.name,
+          mobile_number: customerDetails.mobile_number,
+        },
+        orderDetails: {
+          ...orderDetails,
+          no_of_people: totalNoOfPeople,
+        },
         orderPayments: orderPayments,
       },
       message: "Order info fetched successfully",
