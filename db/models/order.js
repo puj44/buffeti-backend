@@ -83,10 +83,11 @@ const orderSchema = new Schema(
       required: false,
       enum: [
         "placed",
-        "cancelled",
         "confirmed",
-        "out_for_delivery",
         "preparing",
+        "out_for_delivery",
+        "cancelled",
+        "auto_rejected",
       ],
       default: "placed",
     },

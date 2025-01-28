@@ -1,9 +1,12 @@
 const sendError = require("../../common/sendError");
 const sendResponse = require("../../common/sendResponse");
+const slackLog = require("../../controllers/utils/slackLog");
 const { Customers } = require("../../db/models/customers");
 const { Order, OrderItems } = require("../../db/models/order");
 const { OrderPayment } = require("../../db/models/orderPayment");
 const reader = require("xlsx");
+const { updateOrderStatusEnum } = require("../common/constants");
+const { OrderStatusEmailNotification } = require("../../config/emailRequests");
 const orderTransactionInfo = async (req, res) => {
   try {
     const { orderIds } = req.body;
@@ -68,20 +71,43 @@ const getOrders = async (req, res) => {
             },
           },
           {
+            $addFields: {
+              // Convert mobile_number to string for regex matching
+              "customer.mobile_number_str": {
+                $toString: { $arrayElemAt: ["$customer.mobile_number", 0] },
+              },
+            },
+          },
+          {
             $match: {
               "customer.0": { $exists: true },
-              [`customer.${searchField}`]: {
-                $regex: `^${searchQuery}$`,
-                $options: "i",
-              },
+              ...(searchField === "mobile_number"
+                ? {
+                    "customer.mobile_number_str": {
+                      $regex: `^${searchQuery}$`,
+                      $options: "i",
+                    },
+                  }
+                : {
+                    [`customer.${searchField}`]: {
+                      $regex: `^${searchQuery}$`,
+                      $options: "i",
+                    },
+                  }),
             },
           }
         );
         customerCheck = await Customers.findOne({
-          [searchField]: {
-            $regex: `^${searchQuery}$`,
-            $options: "i",
-          },
+          ...(searchField === "mobile_number"
+            ? {
+                mobile_number: searchQuery, // Compare as number in Mongoose query
+              }
+            : {
+                [searchField]: {
+                  $regex: `^${searchQuery}$`,
+                  $options: "i",
+                },
+              }),
         });
 
         if (!customerCheck) {
@@ -149,6 +175,12 @@ const getOrders = async (req, res) => {
 
     const pageNumber = parseInt(page, 10) || 1;
     const pageSize = parseInt(limit, 10) || 10;
+
+    if (pageNumber <= 0 || pageSize <= 0) {
+      return sendResponse(res, 400, {
+        message: "Page and limit must be greater than 0.",
+      });
+    }
     const skip = (pageNumber - 1) * pageSize;
 
     pipeline.push({ $skip: skip });
@@ -208,6 +240,16 @@ const getOrders = async (req, res) => {
 
     const totalCountResult = await Order.aggregate(countPipeline);
     const totalDocuments = totalCountResult[0]?.totalDocuments || 0;
+    const totalPages = Math.ceil(totalDocuments / pageSize);
+    if (pageNumber > totalPages && totalPages > 0) {
+      return sendResponse(res, 400, {
+        message: `Page number exceeds total pages. Max page: ${totalPages}`,
+      });
+    }
+    if (totalDocuments === 0) {
+      return sendResponse(res, 404, { message: "No customers found." });
+    }
+
     if (!allOrders.length) {
       return sendResponse(res, 404, { message: "No orders found" });
     }
@@ -216,8 +258,9 @@ const getOrders = async (req, res) => {
         allOrders: allOrders ?? {},
         pagination: {
           totalDocuments,
-          totalPages: Math.ceil(totalDocuments / pageSize),
+          totalPages,
           currentPage: pageNumber,
+          pageSize,
         },
       },
       message: "Orders fetched successfully",
@@ -297,4 +340,88 @@ const getOrderInfo = async (req, res) => {
   }
 };
 
-module.exports = { orderTransactionInfo, getOrders, getOrderInfo };
+const updateOrderStatus = async (req, res) => {
+  const { order_number, order_status } = req.body;
+  try {
+    if (!order_number || !order_status) {
+      return sendResponse(res, 400, {
+        message: "Order Number and Order Status are required",
+      });
+    }
+    const orderDetails = await Order.findOne({
+      order_number: order_number,
+    }).lean();
+    if (!orderDetails) {
+      return sendResponse(res, 404, {
+        message: "No order found with this order number",
+      });
+    }
+
+    if (order_status === orderDetails.order_status) {
+      return sendResponse(res, 400, {
+        message: `${order_status} already exists`,
+      });
+    } else {
+      if (
+        updateOrderStatusEnum[order_status] >
+        updateOrderStatusEnum[orderDetails.order_status]
+      ) {
+        const orderStatusUpdate = await Order.findOneAndUpdate(
+          {
+            order_number: order_number,
+          },
+          {
+            order_status: order_status,
+          }
+        );
+        if (!orderStatusUpdate) {
+          return sendResponse(res, 500, {
+            message: "Failed to update order status",
+          });
+        }
+      } else {
+        return sendResponse(res, 400, {
+          message: `Cannot update status to ${order_status}. Current status is ${orderDetails?.order_status}`,
+        });
+      }
+    }
+
+    //TODO: email notification to user
+    const customerDetails = await Customers.findOne({
+      _id: orderDetails.customer_id,
+    }).lean();
+    if (!customerDetails) {
+      return sendResponse(res, 404, {
+        message: "Customer Details not found for this order",
+      });
+    }
+
+    const emailNotifyRes = await OrderStatusEmailNotification(
+      customerDetails.name,
+      order_number,
+      customerDetails.email,
+      order_status
+    );
+
+    if (!emailNotifyRes) {
+      return sendResponse(res, 404, {
+        message: "Couldn't sent email notification!",
+      });
+    }
+
+    return sendResponse(res, 200, {
+      message: "Order status updated successfully",
+    });
+  } catch (err) {
+    console.log("Update Order Status Err:", err);
+    // await slackLog("UPDATE_ORDER_STATUS", err);
+    return sendResponse(res, 400, { message: err?.message });
+  }
+};
+
+module.exports = {
+  orderTransactionInfo,
+  getOrders,
+  getOrderInfo,
+  updateOrderStatus,
+};

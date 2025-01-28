@@ -1,8 +1,10 @@
+const sendResponse = require("../../../common/sendResponse");
 const {
   orderSearchConstants,
   customerSearchConstants,
   orderSortingConstants,
   customerSortingConstants,
+  sortConstants,
 } = require("../../common/constants");
 
 const validateQueryParams = (entity) => (req, res, next) => {
@@ -16,19 +18,17 @@ const validateQueryParams = (entity) => (req, res, next) => {
     searchConstants = customerSearchConstants;
     sortingConstants = customerSortingConstants;
   } else {
-    return {
-      status: 400,
+    return sendResponse(res, 400, {
       message: `Invalid entity type for validation`,
-    };
+    });
   }
 
   if (search) {
     const [searchField, searchQuery] = search.split(",");
     if (!searchConstants.includes(searchField)) {
-      return {
-        status: 400,
-        message: `Invalid search query: ${searchQuery}`,
-      };
+      return sendResponse(res, 400, {
+        message: `Invalid search Field: ${search}`,
+      });
     }
   }
 
@@ -36,12 +36,11 @@ const validateQueryParams = (entity) => (req, res, next) => {
     const [sortField, sortOrder] = sort.split(",");
     if (
       !sortingConstants.includes(sortField) ||
-      !["d", "a"].includes(sortOrder)
+      !sortConstants.includes(sortOrder)
     ) {
-      return {
-        status: 400,
+      return sendResponse(res, 400, {
         message: `Invalid sort field or order: ${sort}`,
-      };
+      });
     }
   }
 
