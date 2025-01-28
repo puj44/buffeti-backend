@@ -10,20 +10,46 @@ const getCustomers = async (req, res) => {
   try {
     if (search) {
       const [searchField, searchQuery] = search.split(",");
-      query[searchField] = { $regex: `^${searchQuery}$`, $options: "i" };
-      customerCheck = await Customers.findOne({
-        [searchField]: {
-          $regex: `^${searchQuery}$`,
-          $options: "i",
-        },
-      });
+      if (searchField === "mobile_number") {
+        pipeline.push({
+          $addFields: {
+            mobile_number_str: { $toString: "$mobile_number" }, // Convert mobile_number to string
+          },
+        });
+        pipeline.push({
+          $match: {
+            mobile_number_str: {
+              $regex: `^${searchQuery}$`,
+              $options: "i",
+            },
+          },
+        });
+      } else {
+        pipeline.push({
+          $match: {
+            [searchField]: {
+              $regex: `^${searchQuery}$`,
+              $options: "i",
+            },
+          },
+        });
+      }
+      const customerCheck = await Customers.findOne(
+        searchField === "mobile_number"
+          ? { mobile_number: searchQuery }
+          : {
+              [searchField]: {
+                $regex: `^${searchQuery}$`,
+                $options: "i",
+              },
+            }
+      );
+
       if (!customerCheck) {
         return sendResponse(res, 404, {
           message: `No customer found with ${searchField}: ${searchQuery}`,
         });
       }
-
-      pipeline.push({ $match: query });
     }
     if (sort) {
       const [sortField, sortOrder] = sort.split(",");
@@ -34,10 +60,17 @@ const getCustomers = async (req, res) => {
     pipeline.push({ $sort: sortOption });
     const pageNumber = parseInt(page, 10) || 1;
     const pageSize = parseInt(limit, 10) || 10;
+
+    if (pageNumber <= 0 || pageSize <= 0) {
+      return sendResponse(res, 400, {
+        message: "Page and limit must be greater than 0.",
+      });
+    }
     const skip = (pageNumber - 1) * pageSize;
 
     pipeline.push({ $skip: skip });
     pipeline.push({ $limit: pageSize });
+
     const allCustomers = await Customers.aggregate(pipeline);
     const countPipeline = pipeline.filter(
       (stage) => !("$skip" in stage || "$limit" in stage)
@@ -46,6 +79,15 @@ const getCustomers = async (req, res) => {
 
     const totalCountResult = await Customers.aggregate(countPipeline);
     const totalDocuments = totalCountResult[0]?.totalDocuments || 0;
+    const totalPages = Math.ceil(totalDocuments / pageSize);
+    if (pageNumber > totalPages && totalPages > 0) {
+      return sendResponse(res, 400, {
+        message: `Page number exceeds total pages. Max page: ${totalPages}`,
+      });
+    }
+    if (totalDocuments === 0) {
+      return sendResponse(res, 404, { message: "No customers found." });
+    }
     if (!allCustomers.length) {
       return sendResponse(res, 404, { message: "No customers found" });
     }
@@ -53,8 +95,9 @@ const getCustomers = async (req, res) => {
       customers: allCustomers ?? {},
       pagination: {
         totalDocuments,
-        totalPages: Math.ceil(totalDocuments / pageSize),
+        totalPages,
         currentPage: pageNumber,
+        pageSize,
       },
     });
   } catch (err) {
