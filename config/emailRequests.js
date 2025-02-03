@@ -46,6 +46,9 @@ async function OrderStatusEmailNotification(
       case "cancelled":
         body = `Dear ${name}, your order (ID: ${order_number}) has been cancelled. We'll be waiting for you to order again with us! GNV CLICK2CATER.`;
         break;
+      case "delivered":
+        body = `Dear ${name}, your order (ID: ${order_number}) has been delivered. We'll be waiting for you to order again with us! GNV CLICK2CATER.`;
+        break;
 
       default:
         break;

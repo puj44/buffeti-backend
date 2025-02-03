@@ -314,11 +314,11 @@ const getOrderInfo = async (req, res) => {
     const orderPayments = await OrderPayment.find({
       order_number: order_number,
     }).lean();
-    if (!orderPayments.length) {
-      return sendResponse(res, 404, {
-        message: "No payment details found for this order",
-      });
-    }
+    // if (!orderPayments.length) {
+    //   return sendResponse(res, 404, {
+    //     message: "No payment details found for this order",
+    //   });
+    // }
 
     return sendResponse(res, 200, {
       data: {
@@ -366,6 +366,15 @@ const updateOrderStatus = async (req, res) => {
         updateOrderStatusEnum[order_status] >
         updateOrderStatusEnum[orderDetails.order_status]
       ) {
+        if (
+          (orderDetails.order_status === "out_for_delivery" ||
+            orderDetails.order_status === "delivered") &&
+          order_status === "cancelled"
+        ) {
+          return sendResponse(res, 400, {
+            message: `Cannot update status to cancelled. Current status is ${orderDetails?.order_status}`,
+          });
+        }
         const orderStatusUpdate = await Order.findOneAndUpdate(
           {
             order_number: order_number,

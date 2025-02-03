@@ -17,7 +17,8 @@ const updateOrderStatusEnum = {
   confirmed: 1,
   preparing: 2,
   out_for_delivery: 3,
-  cancelled: 4,
+  delivered: 4,
+  cancelled: 5,
 };
 
 module.exports = {
