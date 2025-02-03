@@ -129,18 +129,11 @@ const updateProfile = async (req, res) => {
       }
       const dbEmail = customerDetails.email;
       const isVerified = customerDetails.is_email_verified ?? false;
-      await Customers.findByIdAndUpdate(
-        id,
-        {
-          name,
-          email,
-          is_email_verified: email !== dbEmail ? false : isVerified,
-        },
-        {
-          new: true,
-          session,
-        }
-      );
+      await Customers.findByIdAndUpdate(id, {
+        name,
+        email,
+        is_email_verified: email !== dbEmail ? false : isVerified,
+      });
     }
 
     // await session.commitTransaction();
