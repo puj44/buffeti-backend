@@ -110,73 +110,87 @@ const deleteAddress = async (req, res) => {
 const updateProfile = async (req, res) => {
   const id = req.user.id;
   const { name, email } = req.body;
-  const emailCacheKey = PREFIX_EMAIL + email;
-  const conn = mongoose.connection;
-  const session = await conn.startSession();
-  session.startTransaction();
+  // const conn = mongoose.connection;
+  // const session = await conn.startSession();
+  // session.startTransaction();
   try {
-    console.log(id, name, email);
-
     const customerDetails = await Customers.findOne({ _id: id }).lean();
     if (!customerDetails) {
       return sendResponse(res, 404, {
         message: "Customer not found",
       });
     }
-    console.log(customerDetails);
 
     let pattern = /^[a-z0-9]+@[a-z]+\.[a-z]{2,3}$/;
-    const dbEmail = customerDetails.email;
-    const isVerified = customerDetails.is_email_verified ?? false;
-    await Customers.findByIdAndUpdate(
-      [
-        { _id: id },
-        {
-          name: name,
-          email: email,
-          is_email_verified: email !== dbEmail ? false : isVerified,
-        },
-      ],
-      { session }
-    );
     if (email) {
       const emailChecker = pattern.test(email);
       if (!emailChecker) {
         return sendRes(res, 400, { message: "Email id is not valid!" });
       }
-
-      if (email !== dbEmail) {
-        const OTP = otpGenerator.generate(4, {
-          digits: true,
-          upperCaseAlphabets: false,
-          lowerCaseAlphabets: false,
-          specialChars: false,
-        });
-        const body = `Your OTP is: ${OTP}. Use this code for verification. Do not share it with anyone. GNV CLICK2CATER`;
-        const sendEmailResponse = sendEmail(
+      const dbEmail = customerDetails.email;
+      const isVerified = customerDetails.is_email_verified ?? false;
+      await Customers.findByIdAndUpdate(
+        id,
+        {
+          name,
           email,
-          "Email verification required",
-          body,
-          process.env.AUTH_EMAIL_NOREPLY
-        );
-        if (!sendEmailResponse) {
-          throw new Error("Failed to send email");
+          is_email_verified: email !== dbEmail ? false : isVerified,
+        },
+        {
+          new: true,
+          session,
         }
-        let obj = {
-          otp: OTP,
-        };
-
-        await set(emailCacheKey, obj, true);
-      }
+      );
     }
 
-    await session.commitTransaction();
+    // await session.commitTransaction();
     return sendResponse(res, 200, {
       message: "Updated profile succesfully",
     });
   } catch (err) {
-    await session.abortTransaction();
+    // await session.abortTransaction();
     console.log("UPDATE PROFILE ERROR:", err);
+    return sendError(res, err);
+  }
+};
+
+const sendOtpEmail = async (req, res) => {
+  try {
+    const id = req.user.id;
+    const { email } = req.body;
+    let pattern = /^[a-z0-9]+@[a-z]+\.[a-z]{2,3}$/;
+    if (email) {
+      const emailChecker = pattern.test(email);
+      if (!emailChecker) {
+        return sendRes(res, 400, { message: "Email id is not valid!" });
+      }
+    }
+    const emailCacheKey = PREFIX_EMAIL + email;
+    const OTP = otpGenerator.generate(4, {
+      digits: true,
+      upperCaseAlphabets: false,
+      lowerCaseAlphabets: false,
+      specialChars: false,
+    });
+    const body = `Your OTP is: ${OTP}. Use this code for verification. Do not share it with anyone. GNV CLICK2CATER`;
+    const sendEmailResponse = sendEmail(
+      email,
+      "Email verification required",
+      body,
+      process.env.AUTH_EMAIL_NOREPLY
+    );
+    if (!sendEmailResponse) {
+      throw new Error("Failed to send email");
+    }
+    let obj = {
+      otp: OTP,
+    };
+    await set(emailCacheKey, obj, true);
+    return sendResponse(res, 200, {
+      message: "Otp sent succesfully",
+    });
+  } catch (err) {
+    console.log("SEND OTP EMAIL ERROR:", err);
     return sendError(res, err);
   }
 };
@@ -232,5 +246,6 @@ module.exports = {
   editAddress,
   deleteAddress,
   updateProfile,
+  sendOtpEmail,
   verifyEmail,
 };
