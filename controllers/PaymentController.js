@@ -9,6 +9,7 @@ const { default: mongoose } = require("mongoose");
 const crypto = require("crypto");
 const webhookApiLogs = require("../db/models/webhookApiLogs");
 const { OrderConfirmationSms } = require("../config/smsRequests");
+const slackLog = require("./utils/slackLog");
 
 const createPayment = async (req, res) => {
   const { id } = req.user ?? {};
@@ -115,6 +116,7 @@ const createPayment = async (req, res) => {
   } catch (err) {
     await session.abortTransaction();
     console.log("Create Payment Error:", err);
+    await slackLog("Create Payment Error: ", err);
     return sendError(res, err);
   }
 };
@@ -223,6 +225,7 @@ const verifyPayment = async (req, res) => {
     }
   } catch (err) {
     console.log("Verify Payment Error:", err);
+    await slackLog("Verify Payment Error: ", err);
     sendError(res, err);
   }
 };
