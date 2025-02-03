@@ -23,6 +23,7 @@ const { ExtraServices } = require("../db/models/extraServices");
 const CouponCodes = require("../db/models/couponCode");
 const { get, set, remove } = require("../common/redisGetterSetter");
 const ObjectId = require("mongodb").ObjectId;
+const slackLog = require("./utils/slackLog");
 
 //Add To Cart
 const addtocart = async (req, res) => {
@@ -173,6 +174,7 @@ const addtocart = async (req, res) => {
     //ROLLBACK
     await session.abortTransaction();
     console.log("ADD CART ERROR: ", err);
+    await slackLog("ADD CART ERROR: ", err);
     return sendError(res, err);
   }
 };
@@ -193,6 +195,7 @@ const getCart = async (req, res) => {
     });
   } catch (err) {
     console.log("GET CART ERROR:", err);
+    await slackLog("GET CART ERROR:", err);
     sendError(res, err);
   }
 };
@@ -211,6 +214,7 @@ const getCartInformation = async (req, res) => {
     });
   } catch (err) {
     console.log("GET CART INFORMATION ERROR:", err);
+    await slackLog("GET CART INFORMATION ERROR:", err);
     return sendError(res, err);
   }
 };
@@ -321,6 +325,7 @@ const updateCart = async (req, res) => {
     );
   } catch (err) {
     console.log("UPDATE CART ERROR:", err);
+    await slackLog("UPDATE CART ERROR:", err);
     return sendError(res, err);
   }
 };
@@ -426,6 +431,7 @@ const updateCartItems = async (req, res) => {
     }
   } catch (err) {
     console.log("UPDATE CART ITEMS ERROR:", err);
+    await slackLog("UPDATE CART ITEMS ERROR:", err);
     return sendError(res, err);
   }
 };
@@ -455,6 +461,7 @@ const deleteCart = async (req, res) => {
     });
   } catch (err) {
     console.log("DELETE CART ERROR:", err);
+    await slackLog("DELETE CART ERROR:", err);
     return sendError(res, err);
   }
 };
@@ -506,7 +513,8 @@ const deleteCartItems = async (req, res) => {
     }
     return;
   } catch (err) {
-    console.log("DELETE CART ERROR:", err);
+    console.log("DELETE CART ITEMS ERROR:", err);
+    await slackLog("DELETE CART ITEMS ERROR:", err);
     return sendError(res, err);
   }
 };
@@ -523,6 +531,7 @@ const getExtraServices = async (req, res) => {
     });
   } catch (err) {
     console.log("GET EXTRA SERVICES ERROR:", err);
+    await slackLog("GET EXTRA SERVICES ERROR:", err);
     return sendError(res, err);
   }
 };
@@ -564,6 +573,7 @@ const addCoupon = async (req, res) => {
     );
   } catch (err) {
     console.log("ADD COUPON ERROR:", err);
+    await slackLog("ADD COUPON ERROR:", err);
     return sendError(res, err);
   }
 };
@@ -589,6 +599,7 @@ const removeCoupon = async (req, res) => {
     );
   } catch (err) {
     console.log("REMOVE COUPON ERROR:", err);
+    await slackLog("REMOVE COUPON ERROR:", err);
     return sendError(res, err);
   }
 };
