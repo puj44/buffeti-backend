@@ -88,6 +88,8 @@ const orderSchema = new Schema(
         "out_for_delivery",
         "cancelled",
         "auto_rejected",
+        "auto_canceled",
+        "delivered",
       ],
       default: "placed",
     },
