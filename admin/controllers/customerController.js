@@ -1,27 +1,105 @@
 const sendResponse = require("../../common/sendResponse");
 const CustomersAddresses = require("../../db/models/customerAddresses");
-const { Customer } = require("../../db/models/customers");
+const { Customers } = require("../../db/models/customers");
 
 const getCustomers = async (req, res) => {
-  const { search, sort } = req.query;
-  const pipeline = {};
+  const { search, sort, limit, page } = req.query;
+  const query = {};
+  const pipeline = [];
   let sortOption = {};
   try {
     if (search) {
-      const [searchQuery, searchField] = search.split(",");
+      const [searchField, searchQuery] = search.split(",");
+      if (searchField === "mobile_number") {
+        pipeline.push({
+          $addFields: {
+            mobile_number_str: { $toString: "$mobile_number" }, // Convert mobile_number to string
+          },
+        });
+        pipeline.push({
+          $match: {
+            mobile_number_str: {
+              $regex: `^${searchQuery}$`,
+              $options: "i",
+            },
+          },
+        });
+      } else {
+        pipeline.push({
+          $match: {
+            [searchField]: {
+              $regex: `^${searchQuery}$`,
+              $options: "i",
+            },
+          },
+        });
+      }
+      const customerCheck = await Customers.findOne(
+        searchField === "mobile_number"
+          ? { mobile_number: searchQuery }
+          : {
+              [searchField]: {
+                $regex: `^${searchQuery}$`,
+                $options: "i",
+              },
+            }
+      );
 
-      query[searchField] = { $regex: searchQuery, $options: "i" };
+      if (!customerCheck) {
+        return sendResponse(res, 404, {
+          message: `No customer found with ${searchField}: ${searchQuery}`,
+        });
+      }
     }
     if (sort) {
       const [sortField, sortOrder] = sort.split(",");
       sortOption[sortField] = sortOrder === "a" ? 1 : -1;
+    } else {
+      sortOption = { createdAt: -1 };
     }
-    const allCustomers = await Customer.find(query).sort(sortOption).lean();
+    pipeline.push({ $sort: sortOption });
+    const pageNumber = parseInt(page, 10) || 1;
+    const pageSize = parseInt(limit, 10) || 10;
 
+    if (pageNumber <= 0 || pageSize <= 0) {
+      return sendResponse(res, 400, {
+        message: "Page and limit must be greater than 0.",
+      });
+    }
+    const skip = (pageNumber - 1) * pageSize;
+
+    pipeline.push({ $skip: skip });
+    pipeline.push({ $limit: pageSize });
+
+    const allCustomers = await Customers.aggregate(pipeline);
+    const countPipeline = pipeline.filter(
+      (stage) => !("$skip" in stage || "$limit" in stage)
+    );
+    countPipeline.push({ $count: "totalDocuments" });
+
+    const totalCountResult = await Customers.aggregate(countPipeline);
+    const totalDocuments = totalCountResult[0]?.totalDocuments || 0;
+    const totalPages = Math.ceil(totalDocuments / pageSize);
+    if (pageNumber > totalPages && totalPages > 0) {
+      return sendResponse(res, 400, {
+        message: `Page number exceeds total pages. Max page: ${totalPages}`,
+      });
+    }
+    if (totalDocuments === 0) {
+      return sendResponse(res, 404, { message: "No customers found." });
+    }
     if (!allCustomers.length) {
       return sendResponse(res, 404, { message: "No customers found" });
     }
-    return sendResponse(res, 200, { customers: allCustomers });
+    return sendResponse(res, 200, {
+      customers: allCustomers ?? {},
+      pagination: {
+        totalDocuments,
+        totalPages,
+        currentPage: pageNumber,
+        pageSize,
+      },
+    });
   } catch (err) {
     console.log("Get Customers Err:", err);
     return sendResponse(res, 400, { message: err?.message });
@@ -29,18 +107,21 @@ const getCustomers = async (req, res) => {
 };
 
 const getCustomerDetails = async (req, res) => {
-  const { id } = req.user ?? {};
+  const customer_id = req.params.id;
   try {
-    if (!id) {
-      return sendResponse(res, 404, { message: "Customer id not found" });
+    if (!customer_id) {
+      return sendResponse(res, 404, { message: "customer id not found" });
     }
-    const customerDetails = await Customer.findById(id).lean();
+
+    const customerDetails = await Customers.findById({
+      _id: customer_id,
+    }).lean();
     if (!customerDetails) {
-      return sendResponse(res, 404, { message: "Customer not found" });
+      return sendResponse(res, 404, { message: "Customer Details not found" });
     }
 
     const addressDetails = await CustomersAddresses.find({
-      customer_id: id,
+      customer: customer_id,
     }).lean();
 
     if (!addressDetails) {

@@ -39,10 +39,10 @@ async function calculateItems(data, itemsData, packagesData) {
       if (isPackageValid) {
         let packagePrice = 0;
         packagePrice = packagesData.rate;
-        totalItemsAmount += packagePrice;
+        totalItemsAmount += Number(packagePrice * no_of_people) ;
         itemsPricing.push({
           item_name: packagesData?.package_name,
-          amount: Number(packagePrice),
+          amount: Number(packagePrice * no_of_people),
           qty: no_of_people,
         });
       }

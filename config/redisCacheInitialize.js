@@ -230,7 +230,9 @@ async function initializeCache() {
     }
 
     //SET TYPE OF PACKAGES (Click2Cater)
-    const packagesData = await Packages.find({})
+    const packagesData = await Packages.aggregate([
+      { $sort: { "category.slug": -1, slug: 1 } },
+    ])
       .then((d) => d)
       .catch((err) => ({ errorResponse: err }));
     if (!packagesData?.errorResponse && packagesData?.length) {

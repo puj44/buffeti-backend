@@ -10,6 +10,7 @@ const PREFIX_EMAIL = process.env.PREFIX_EMAIL;
 const { Customers } = require("../db/models/customers");
 const { signJWT, verifyJWT } = require("./utils/jwtUtils");
 const { default: axios } = require("axios");
+const slackLog = require("./utils/slackLog");
 
 const signin = async (req, res) => {
   const { mobile_number, token } = req.body;
@@ -25,6 +26,7 @@ const signin = async (req, res) => {
       data: { ...(response?.data ?? {}) },
     });
   } catch (error) {
+    await slackLog("SEND_OTP",error)
     return sendError(res, error);
   }
 };
@@ -66,8 +68,8 @@ const verifyOtp = async (req, res) => {
       message: response?.message,
     });
   } catch (error) {
-    console.log("VERIFY OTP: ", error);
-    sendError(res, error);
+    await slackLog("VERIFY_OTP",error)
+    return sendError(res, error);
   }
 };
 

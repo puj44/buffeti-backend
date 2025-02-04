@@ -1,6 +1,7 @@
 const sendError = require("../../common/sendError");
 const sendResponse = require("../../common/sendResponse");
 const { signJWT, verifyJWT } = require("../../controllers/utils/jwtUtils");
+const slackLog = require("../../controllers/utils/slackLog");
 const users = require("../../db/models/users");
 const bcrypt = require("bcrypt");
 
@@ -48,6 +49,7 @@ const signin = async (req, res) => {
     });
   } catch (err) {
     console.log("Admin Login Error: ", err);
+    await slackLog("ADMIN_SIGNIN",err)
     return sendError(res, err);
   }
 };

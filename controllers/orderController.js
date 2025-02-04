@@ -13,6 +13,7 @@ const {
 } = require("../common/commonHelper");
 const { OrderPlacedSms } = require("../config/smsRequests");
 const CustomersAddresses = require("../db/models/customerAddresses");
+const slackLog = require("./utils/slackLog");
 
 const placeOrder = async (req, res) => {
   const { id } = req.user ?? {};
@@ -202,6 +203,7 @@ const placeOrder = async (req, res) => {
   } catch (err) {
     await session.abortTransaction();
     console.log("Place Order Error:", err);
+    await slackLog("Place Order Error: ", err);
     sendError(res, err);
   }
 };
@@ -231,6 +233,7 @@ const getOrder = async (req, res) => {
     });
   } catch (err) {
     console.log("Get Order Error:", err);
+    await slackLog("Get Order Error: ", err);
     sendError(res, err);
   }
 };
@@ -285,7 +288,8 @@ const getOrderInfo = async (req, res) => {
       message: "Order Info fetched successfully",
     });
   } catch (err) {
-    console.log("Get Order Error:", err);
+    console.log("Get Order Info Error:", err);
+    await slackLog("Get Order Info Error: ", err);
     sendError(res, err);
   }
 };

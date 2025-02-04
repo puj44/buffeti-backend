@@ -75,7 +75,7 @@ async function sendOtp(mobile_number) {
           const otpResponse = await OtpRequest(OTP, mobile_number);
           if (!otpResponse) {
             return {
-              status: 400,
+              status: 422,
               message:
                 "There was a problem sending OTP, please check mobile number & try again.",
             };
@@ -106,7 +106,7 @@ async function sendOtp(mobile_number) {
       const otpResponse = await OtpRequest(OTP, mobile_number);
       if (!otpResponse) {
         return {
-          status: 400,
+          status: 422,
           message:
             "There was a problem sending OTP, please check mobile number & try again.",
         };

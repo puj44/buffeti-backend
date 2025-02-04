@@ -7,6 +7,7 @@ const {
   getAddress,
   updateProfile,
   verifyEmail,
+  sendOtpEmail,
 } = require("../controllers/profileController");
 const { addressRequests } = require("../middlewares/requests/addressRequests");
 const { profileRequests } = require("../middlewares/requests/profileRequests");
@@ -17,6 +18,7 @@ router.post("/address/add", validator(addressRequests.add), addAddress);
 router.put("/address/edit/:id", validator(addressRequests.edit), editAddress);
 router.delete("/address/delete/:id", deleteAddress);
 router.put("/update-profile", updateProfile);
+router.post("/send-otp-email", sendOtpEmail);
 router.post(
   "/verify-email",
   validator(profileRequests.verifyEmail),
