@@ -110,9 +110,9 @@ const deleteAddress = async (req, res) => {
 const updateProfile = async (req, res) => {
   const id = req.user.id;
   const { name, email } = req.body;
-  // const conn = mongoose.connection;
-  // const session = await conn.startSession();
-  // session.startTransaction();
+  const conn = mongoose.connection;
+  const session = await conn.startSession();
+  session.startTransaction();
   try {
     const customerDetails = await Customers.findOne({ _id: id }).lean();
     if (!customerDetails) {
@@ -129,19 +129,23 @@ const updateProfile = async (req, res) => {
       }
       const dbEmail = customerDetails.email;
       const isVerified = customerDetails.is_email_verified ?? false;
-      await Customers.findByIdAndUpdate(id, {
-        name,
-        email,
-        is_email_verified: email !== dbEmail ? false : isVerified,
-      });
+      await Customers.findByIdAndUpdate(
+        id,
+        {
+          name,
+          email,
+          is_email_verified: email !== dbEmail ? false : isVerified,
+        },
+        { session }
+      );
     }
 
-    // await session.commitTransaction();
+    await session.commitTransaction();
     return sendResponse(res, 200, {
       message: "Updated profile succesfully",
     });
   } catch (err) {
-    // await session.abortTransaction();
+    await session.abortTransaction();
     console.log("UPDATE PROFILE ERROR:", err);
     return sendError(res, err);
   }
@@ -150,15 +154,26 @@ const updateProfile = async (req, res) => {
 const sendOtpEmail = async (req, res) => {
   try {
     const id = req.user.id;
-    const { email } = req.body;
-    let pattern = /^[a-z0-9]+@[a-z]+\.[a-z]{2,3}$/;
-    if (email) {
-      const emailChecker = pattern.test(email);
-      if (!emailChecker) {
-        return sendRes(res, 400, { message: "Email id is not valid!" });
-      }
+    const customerDetails = await Customers.findOne({ _id: id }).lean();
+    if (!customerDetails) {
+      return sendResponse(res, 404, {
+        message: "Customer not found",
+      });
     }
-    const emailCacheKey = PREFIX_EMAIL + email;
+
+    if (customerDetails.is_email_verified) {
+      return sendResponse(res, 400, {
+        message: "Email already verified!",
+      });
+    }
+    // let pattern = /^[a-z0-9]+@[a-z]+\.[a-z]{2,3}$/;
+    // if (email) {
+    //   const emailChecker = pattern.test(email);
+    //   if (!emailChecker) {
+    //     return sendRes(res, 400, { message: "Email id is not valid!" });
+    //   }
+    // }
+    const emailCacheKey = PREFIX_EMAIL + customerDetails.email;
     const OTP = otpGenerator.generate(4, {
       digits: true,
       upperCaseAlphabets: false,
@@ -167,7 +182,7 @@ const sendOtpEmail = async (req, res) => {
     });
     const body = `Your OTP is: ${OTP}. Use this code for verification. Do not share it with anyone. GNV CLICK2CATER`;
     const sendEmailResponse = sendEmail(
-      email,
+      customerDetails.email,
       "Email verification required",
       body,
       process.env.AUTH_EMAIL_NOREPLY
@@ -179,6 +194,7 @@ const sendOtpEmail = async (req, res) => {
       otp: OTP,
     };
     await set(emailCacheKey, obj, true);
+
     return sendResponse(res, 200, {
       message: "Otp sent succesfully",
     });
@@ -191,18 +207,16 @@ const sendOtpEmail = async (req, res) => {
 const verifyEmail = async (req, res) => {
   try {
     const id = req.user.id;
-    const { email, otp } = req.body;
-    const emailCacheKey = PREFIX_EMAIL + email;
-    if (id) {
-      const customerDetails = await Customers.findOne({ _id: id }).lean();
-      if (!customerDetails) {
-        return sendResponse(res, 404, {
-          message: "Customer not found",
-        });
-      }
+    const { otp } = req.body;
+    const customerDetails = await Customers.findOne({ _id: id }).lean();
+    if (!customerDetails) {
+      return sendResponse(res, 404, {
+        message: "Customer not found",
+      });
     }
+    const emailCacheKey = PREFIX_EMAIL + customerDetails.email;
 
-    const response = await verifyEmailOtp(email, otp);
+    const response = await verifyEmailOtp(customerDetails.email, otp);
 
     if (response.status !== 200) {
       return sendResponse(res, response?.status, {
@@ -212,7 +226,7 @@ const verifyEmail = async (req, res) => {
       const emailVerify = await Customers.findOneAndUpdate(
         { _id: id },
         {
-          email: email,
+          email: customerDetails.email,
           is_email_verified: true,
         }
       );
