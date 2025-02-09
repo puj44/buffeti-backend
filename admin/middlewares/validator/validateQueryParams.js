@@ -33,7 +33,12 @@ const validateQueryParams = (entity) => (req, res, next) => {
   }
 
   if (sort) {
-    const [sortField, sortOrder] = sort.split(",");
+    let [sortField, sortOrder] = sort.split(",");
+
+    if (!sortOrder) {
+      sortOrder = "d";
+    }
+
     if (
       !sortingConstants.includes(sortField) ||
       !sortConstants.includes(sortOrder)
