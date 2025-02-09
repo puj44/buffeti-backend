@@ -7,6 +7,7 @@ const { OrderPayment } = require("../../db/models/orderPayment");
 const reader = require("xlsx");
 const { updateOrderStatusEnum } = require("../common/constants");
 const { OrderStatusEmailNotification } = require("../../config/emailRequests");
+const moment = require("moment");
 const orderTransactionInfo = async (req, res) => {
   try {
     const { orderIds } = req.body;
@@ -52,15 +53,235 @@ const orderTransactionInfo = async (req, res) => {
   }
 };
 
+// const getOrders = async (req, res) => {
+//   const { search, sort, limit, page, order_status } = req.query;
+//   const pipeline = [];
+//   let sortOption = {};
+//   let customerCheck = {};
+//   try {
+//     if (search) {
+//       const [searchField, searchQuery] = search.split(",");
+//       if (searchField === "name" || searchField === "mobile_number") {
+//         pipeline.push(
+//           {
+//             $lookup: {
+//               from: "customers",
+//               localField: "customer_id",
+//               foreignField: "_id",
+//               as: "customer",
+//             },
+//           },
+//           {
+//             $addFields: {
+//               // Convert mobile_number to string for regex matching
+//               "customer.mobile_number_str": {
+//                 $toString: { $arrayElemAt: ["$customer.mobile_number", 0] },
+//               },
+//             },
+//           },
+//           {
+//             $match: {
+//               "customer.0": { $exists: true },
+//               ...(searchField === "mobile_number"
+//                 ? {
+//                     "customer.mobile_number_str": {
+//                       $regex: `^${searchQuery}$`,
+//                       $options: "i",
+//                     },
+//                   }
+//                 : {
+//                     [`customer.${searchField}`]: {
+//                       $regex: `^${searchQuery}$`,
+//                       $options: "i",
+//                     },
+//                   }),
+//             },
+//           }
+//         );
+//         customerCheck = await Customers.findOne({
+//           ...(searchField === "mobile_number"
+//             ? {
+//                 mobile_number: searchQuery, // Compare as number in Mongoose query
+//               }
+//             : {
+//                 [searchField]: {
+//                   $regex: `^${searchQuery}$`,
+//                   $options: "i",
+//                 },
+//               }),
+//         });
+
+//         if (!customerCheck) {
+//           return sendResponse(res, 404, {
+//             message: `No customer found with ${searchField}: ${searchQuery}`,
+//           });
+//         }
+//       }
+
+//       if (searchField === "order_number") {
+//         pipeline.push({
+//           $match: {
+//             order_number: {
+//               $regex: `^${searchQuery}$`,
+//               $options: "i",
+//             },
+//           },
+//         });
+//         orderCheck = await Order.findOne({
+//           [searchField]: {
+//             $regex: `^${searchQuery}$`,
+//             $options: "i",
+//           },
+//         });
+
+//         if (!orderCheck) {
+//           return sendResponse(res, 404, {
+//             message: `No order found with ${searchField}: ${searchQuery}`,
+//           });
+//         }
+//       }
+//       if (searchField === "from" || searchField === "to") {
+//         const date = moment(searchQuery, "YYYY-MM-DD").toDate();
+//         if (!moment(date).isValid()) {
+//           return sendResponse(res, 400, { message: "Invalid date format" });
+//         }
+//         const dateQuery = {};
+//         if (searchField === "from") {
+//           dateQuery.$gte = date;
+//         } else if (searchField === "to") {
+//           dateQuery.$lte = date;
+//         }
+//         pipeline.push({
+//           $match: {
+//             createdAt: dateQuery,
+//           },
+//         });
+//       }
+//     }
+//     if (order_status) {
+//       pipeline.push({
+//         $match: {
+//           order_status: order_status,
+//         },
+//       });
+//     }
+//     if (sort) {
+//       const [sortField, sortOrder] = sort.split(",");
+//       sortOption[sortField] = sortOrder === "a" ? 1 : -1;
+//     } else {
+//       sortOption = { createdAt: -1 };
+//     }
+
+//     pipeline.push({ $sort: sortOption });
+
+//     const pageNumber = parseInt(page, 10) || 1;
+//     const pageSize = parseInt(limit, 10) || 10;
+
+//     if (pageNumber <= 0 || pageSize <= 0) {
+//       return sendResponse(res, 400, {
+//         message: "Page and limit must be greater than 0.",
+//       });
+//     }
+//     const skip = (pageNumber - 1) * pageSize;
+
+//     pipeline.push({ $skip: skip });
+//     pipeline.push({ $limit: pageSize });
+
+//     pipeline.push(
+//       {
+//         $lookup: {
+//           from: "customers",
+//           localField: "customer_id",
+//           foreignField: "_id",
+//           as: "customer",
+//         },
+//       },
+//       {
+//         $addFields: {
+//           customer_name: { $arrayElemAt: ["$customer.name", 0] }, // Extract the customer's name
+//           customer_mobile_number: {
+//             $arrayElemAt: ["$customer.mobile_number", 0],
+//           }, // Extract the customer's mobile number
+//         },
+//       },
+//       {
+//         $project: {
+//           customer_name: 1,
+//           customer_mobile_number: 1,
+//           order_number: 1,
+//           menu_option: 1,
+//           location: 1,
+//           delivery_address: 1,
+//           delivery_date: 1,
+//           delivery_time: 1,
+//           total_amount: 1,
+//           cooking_instruction: 1,
+//           coupon_code: 1,
+//           coupon_discount_value: 1,
+//           delivery_charges: 1,
+//           order_status: 1,
+//           payment_status: 1,
+//           payment_mode: 1,
+//           payment_type: 1,
+//           total_amount: 1,
+//           total_billed_amount: 1,
+//           amount_due: 1,
+//           updatedAt: 1,
+//           createdAt: 1,
+//         },
+//       }
+//     );
+
+//     const allOrders = await Order.aggregate(pipeline);
+
+//     const countPipeline = pipeline.filter(
+//       (stage) => !("$skip" in stage || "$limit" in stage)
+//     );
+//     countPipeline.push({ $count: "totalDocuments" });
+
+//     const totalCountResult = await Order.aggregate(countPipeline);
+//     const totalDocuments = totalCountResult[0]?.totalDocuments || 0;
+//     const totalPages = Math.ceil(totalDocuments / pageSize);
+//     if (pageNumber > totalPages && totalPages > 0) {
+//       return sendResponse(res, 400, {
+//         message: `Page number exceeds total pages. Max page: ${totalPages}`,
+//       });
+//     }
+//     if (totalDocuments === 0) {
+//       return sendResponse(res, 404, { message: "No customers found." });
+//     }
+
+//     if (!allOrders.length) {
+//       return sendResponse(res, 404, { message: "No orders found" });
+//     }
+//     return sendResponse(res, 200, {
+//       data: {
+//         allOrders: allOrders ?? {},
+//         pagination: {
+//           totalDocuments,
+//           totalPages,
+//           currentPage: pageNumber,
+//           pageSize,
+//         },
+//       },
+//       message: "Orders fetched successfully",
+//     });
+//   } catch (err) {
+//     console.log("Get Orders Err:", err);
+//     return sendResponse(res, 400, { message: err?.message });
+//   }
+// };
+
 const getOrders = async (req, res) => {
-  const { search, sort, limit, page, order_status } = req.query;
+  const { search, sort, limit, page, from, to, order_status } = req.query;
   const pipeline = [];
   let sortOption = {};
-  let customerCheck = {};
+
   try {
     if (search) {
       const [searchField, searchQuery] = search.split(",");
-      if (searchField === "name" || searchField === "mobile_number") {
+
+      if (searchField === "name") {
         pipeline.push(
           {
             $lookup: {
@@ -71,120 +292,84 @@ const getOrders = async (req, res) => {
             },
           },
           {
-            $addFields: {
-              // Convert mobile_number to string for regex matching
-              "customer.mobile_number_str": {
-                $toString: { $arrayElemAt: ["$customer.mobile_number", 0] },
-              },
+            $match: {
+              "customer.0": { $exists: true },
+              "customer.name": { $regex: searchQuery, $options: "i" },
+            },
+          }
+        );
+      } else if (searchField === "mobile_number") {
+        pipeline.push(
+          {
+            $lookup: {
+              from: "customers",
+              localField: "customer_id",
+              foreignField: "_id",
+              as: "customer",
             },
           },
           {
             $match: {
               "customer.0": { $exists: true },
-              ...(searchField === "mobile_number"
-                ? {
-                    "customer.mobile_number_str": {
-                      $regex: `^${searchQuery}$`,
-                      $options: "i",
-                    },
-                  }
-                : {
-                    [`customer.${searchField}`]: {
-                      $regex: `^${searchQuery}$`,
-                      $options: "i",
-                    },
-                  }),
+              $expr: {
+                $regexMatch: {
+                  input: {
+                    $toString: { $arrayElemAt: ["$customer.mobile_number", 0] },
+                  },
+                  regex: searchQuery,
+                  options: "i",
+                },
+              },
             },
           }
         );
-        customerCheck = await Customers.findOne({
-          ...(searchField === "mobile_number"
-            ? {
-                mobile_number: searchQuery, // Compare as number in Mongoose query
-              }
-            : {
-                [searchField]: {
-                  $regex: `^${searchQuery}$`,
-                  $options: "i",
-                },
-              }),
-        });
-
-        if (!customerCheck) {
-          return sendResponse(res, 404, {
-            message: `No customer found with ${searchField}: ${searchQuery}`,
-          });
-        }
       }
-
       if (searchField === "order_number") {
         pipeline.push({
-          $match: {
-            order_number: {
-              $regex: `^${searchQuery}$`,
-              $options: "i",
-            },
-          },
-        });
-        orderCheck = await Order.findOne({
-          [searchField]: {
-            $regex: `^${searchQuery}$`,
-            $options: "i",
-          },
-        });
-
-        if (!orderCheck) {
-          return sendResponse(res, 404, {
-            message: `No order found with ${searchField}: ${searchQuery}`,
-          });
-        }
-      }
-      if (searchField === "from" || searchField === "to") {
-        const date = moment(searchQuery, "YYYY-MM-DD").toDate();
-        if (!moment(date).isValid()) {
-          return sendResponse(res, 400, { message: "Invalid date format" });
-        }
-        const dateQuery = {};
-        if (searchField === "from") {
-          dateQuery.$gte = date;
-        } else if (searchField === "to") {
-          dateQuery.$lte = date;
-        }
-        pipeline.push({
-          $match: {
-            createdAt: dateQuery,
-          },
+          $match: { order_number: { $regex: searchQuery, $options: "i" } },
         });
       }
     }
     if (order_status) {
       pipeline.push({
-        $match: {
-          order_status: order_status,
-        },
+        $match: { order_status: { $regex: order_status, $options: "i" } },
       });
     }
-    if (sort) {
-      const [sortField, sortOrder] = sort.split(",");
-      sortOption[sortField] = sortOrder === "a" ? 1 : -1;
-    } else {
-      sortOption = { createdAt: -1 };
+
+    const dateFilter = {};
+    if (from) {
+      const fromDate = moment(from, "DD-MM-YYYY").startOf("day").toDate();
+      if (!moment(fromDate).isValid()) {
+        return sendResponse(res, 400, {
+          message: "Invalid 'from' date format",
+        });
+      }
+      dateFilter.$gte = fromDate;
+    }
+    if (to) {
+      const toDate = moment(to, "DD-MM-YYYY").endOf("day").toDate();
+      if (!moment(toDate).isValid()) {
+        return sendResponse(res, 400, { message: "Invalid 'to' date format" });
+      }
+      dateFilter.$lte = toDate;
+    }
+    if (Object.keys(dateFilter).length) {
+      pipeline.push({ $match: { createdAt: dateFilter } });
     }
 
-    pipeline.push({ $sort: sortOption });
+    if (sort) {
+      const [sortField, sortOrder] = sort.split(",");
+      if (["createdAt", "updatedAt"].includes(sortField)) {
+        sortOption[sortField] = sortOrder === "a" ? 1 : -1;
+      }
+      pipeline.push({
+        $sort: sortOption,
+      });
+    }
 
     const pageNumber = parseInt(page, 10) || 1;
     const pageSize = parseInt(limit, 10) || 10;
-
-    if (pageNumber <= 0 || pageSize <= 0) {
-      return sendResponse(res, 400, {
-        message: "Page and limit must be greater than 0.",
-      });
-    }
-    const skip = (pageNumber - 1) * pageSize;
-
-    pipeline.push({ $skip: skip });
-    pipeline.push({ $limit: pageSize });
+    pipeline.push({ $skip: (pageNumber - 1) * pageSize }, { $limit: pageSize });
 
     pipeline.push(
       {
@@ -197,10 +382,10 @@ const getOrders = async (req, res) => {
       },
       {
         $addFields: {
-          customer_name: { $arrayElemAt: ["$customer.name", 0] }, // Extract the customer's name
+          customer_name: { $arrayElemAt: ["$customer.name", 0] },
           customer_mobile_number: {
             $arrayElemAt: ["$customer.mobile_number", 0],
-          }, // Extract the customer's mobile number
+          },
         },
       },
       {
@@ -246,16 +431,10 @@ const getOrders = async (req, res) => {
         message: `Page number exceeds total pages. Max page: ${totalPages}`,
       });
     }
-    if (totalDocuments === 0) {
-      return sendResponse(res, 404, { message: "No customers found." });
-    }
 
-    if (!allOrders.length) {
-      return sendResponse(res, 404, { message: "No orders found" });
-    }
     return sendResponse(res, 200, {
       data: {
-        allOrders: allOrders ?? {},
+        allOrders,
         pagination: {
           totalDocuments,
           totalPages,
