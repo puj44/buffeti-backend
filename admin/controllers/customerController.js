@@ -3,7 +3,7 @@ const CustomersAddresses = require("../../db/models/customerAddresses");
 const { Customers } = require("../../db/models/customers");
 
 const getCustomers = async (req, res) => {
-  const { search, sort, limit, page } = req.query;
+  const { search, sort_by, limit, page } = req.query;
   const query = {};
   const pipeline = [];
   let sortOption = {};
@@ -31,8 +31,8 @@ const getCustomers = async (req, res) => {
         });
       }
     }
-    if (sort) {
-      const [sortField, sortOrder] = sort.split(",");
+    if (sort_by) {
+      const [sortField, sortOrder] = sort_by.split(",");
       sortOption[sortField] = sortOrder === "a" ? 1 : -1;
       pipeline.push({ $sort: sortOption });
     }
