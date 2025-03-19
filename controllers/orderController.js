@@ -6,7 +6,7 @@ const { get, set, remove } = require("../common/redisGetterSetter");
 const { Order, OrderItems } = require("../db/models/order");
 const { Cart, CartItems } = require("../db/models/cart");
 const { Customers } = require("../db/models/customers");
-const { delivery_fees } = require("../config/keys");
+const { delivery_fees, mini_meals } = require("../config/keys");
 const {
   generateOrderNumber,
   getCartDetails,
@@ -22,12 +22,14 @@ const placeOrder = async (req, res) => {
   const session = await conn.startSession();
   session.startTransaction();
   try {
+    // await remove(`cart-${id}`);
     if (!id) {
       return sendRes(res, 404, {
         message: "Customer id not found",
       });
     }
     let cartCacheData = await get(`cart-${id}`, true);
+    console.log("cartCacheData", cartCacheData);
 
     if (!cartCacheData || !cartCacheData.cart_data) {
       return sendRes(res, 400, {
@@ -118,6 +120,25 @@ const placeOrder = async (req, res) => {
       " " +
       (db_delivery_address?.pincode ?? "");
 
+    let total_profit = 0;
+
+    if (menu_option === "mini-meals" && menu_option === "snack-boxes") {
+      Object.keys(cart_data).forEach((key) => {
+        let item_food_cost =
+          cart_data[key].price -
+          (cart_data[key].price * cart_data[key].food_cost) / 100;
+        total_profit += item_food_cost * no_of_people;
+      });
+    } else {
+      // Object.keys(cart_data).forEach((key) => {
+      //   let item_food_cost =
+      //     cart_data[key].price -
+      //     (cart_data[key].price * cart_data[key].food_cost) / 100;
+      //   total_profit += item_food_cost * no_of_people;
+      // });
+    }
+    console.log("total_profit", total_profit);
+
     const orderInsert = await Order.create(
       [
         {
@@ -139,6 +160,7 @@ const placeOrder = async (req, res) => {
           addon_charges: addon_charges,
           total_amount: total_amount,
           total_billed_amount: total_billed_amount,
+          total_profit: total_profit,
           amount_due: total_billed_amount,
         },
       ],
@@ -166,9 +188,9 @@ const placeOrder = async (req, res) => {
       });
     }
 
-    await remove(`cart-${id}`);
-    await Cart.deleteOne({ _id: dbCartData?._id }, { session });
-    await CartItems.deleteMany({ cart_id: dbCartData?._id }, { session });
+    // await remove(`cart-${id}`);
+    // await Cart.deleteOne({ _id: dbCartData?._id }, { session });
+    // await CartItems.deleteMany({ cart_id: dbCartData?._id }, { session });
 
     // Send sms notification to customer
 
@@ -202,9 +224,8 @@ const placeOrder = async (req, res) => {
     });
   } catch (err) {
     await session.abortTransaction();
-    console.log("Place Order Error:", err);
     await slackLog("Place Order Error: ", err);
-    sendError(res, err);
+    return sendError(res, err);
   }
 };
 

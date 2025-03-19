@@ -9,7 +9,7 @@ const captchaVerify = require("../middlewares/googleCaptchaVerify");
 router.post(
   "/sign-in",
   validator(authRequests.signin),
-  captchaVerify,
+  // captchaVerify,
   auth.signin
 );
 router.post("/verify", validator(authRequests.verify), auth.verifyOtp);
