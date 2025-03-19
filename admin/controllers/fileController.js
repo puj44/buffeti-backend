@@ -253,7 +253,7 @@ const uploadImages = async (req, res) => {
         }
       }
     }
-
+    await slackLog("Upload Images Error: ", menu_option, unMatchedItems);
     return sendRes(res, 200, {
       message: "Images uploaded successfully!",
       data: {
