@@ -18,6 +18,7 @@ const MiniMeals = require("../../db/models/miniMeals");
 const miniMeals = require("../common/upload-file-process/miniMeals");
 const path = require("path");
 const fs = require("fs");
+const slackLog = require("../../controllers/utils/slackLog");
 
 const uploadFile = async (req, res) => {
   const conn = mongoose.connection;
@@ -261,8 +262,9 @@ const uploadImages = async (req, res) => {
       },
     });
   } catch (err) {
+    await slackLog("Upload Images Error: ", err);
     console.log("Upload Image Error: ", err);
-    sendErr(res, err);
+    return sendErr(res, err);
   }
 };
 
