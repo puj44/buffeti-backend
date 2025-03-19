@@ -3,61 +3,39 @@ const CustomersAddresses = require("../../db/models/customerAddresses");
 const { Customers } = require("../../db/models/customers");
 
 const getCustomers = async (req, res) => {
-  const { search, sort, limit, page } = req.query;
+  const { search, sort_by, limit, page } = req.query;
   const query = {};
   const pipeline = [];
   let sortOption = {};
   try {
     if (search) {
       const [searchField, searchQuery] = search.split(",");
-      if (searchField === "mobile_number") {
-        pipeline.push({
-          $addFields: {
-            mobile_number_str: { $toString: "$mobile_number" }, // Convert mobile_number to string
-          },
-        });
-        pipeline.push({
-          $match: {
-            mobile_number_str: {
-              $regex: `^${searchQuery}$`,
-              $options: "i",
-            },
-          },
-        });
-      } else {
-        pipeline.push({
-          $match: {
-            [searchField]: {
-              $regex: `^${searchQuery}$`,
-              $options: "i",
-            },
-          },
-        });
-      }
-      const customerCheck = await Customers.findOne(
-        searchField === "mobile_number"
-          ? { mobile_number: searchQuery }
-          : {
-              [searchField]: {
-                $regex: `^${searchQuery}$`,
-                $options: "i",
-              },
-            }
-      );
 
-      if (!customerCheck) {
-        return sendResponse(res, 404, {
-          message: `No customer found with ${searchField}: ${searchQuery}`,
+      if (searchField === "name") {
+        pipeline.push({
+          $match: {
+            name: { $regex: searchQuery, $options: "i" },
+          },
+        });
+      } else if (searchField === "mobile_number") {
+        pipeline.push({
+          $match: {
+            $expr: {
+              $regexMatch: {
+                input: { $toString: "$mobile_number" }, // Convert to string for regex
+                regex: searchQuery,
+                options: "i",
+              },
+            },
+          },
         });
       }
     }
-    if (sort) {
-      const [sortField, sortOrder] = sort.split(",");
+    if (sort_by) {
+      const [sortField, sortOrder] = sort_by.split(",");
       sortOption[sortField] = sortOrder === "a" ? 1 : -1;
-    } else {
-      sortOption = { createdAt: -1 };
+      pipeline.push({ $sort: sortOption });
     }
-    pipeline.push({ $sort: sortOption });
     const pageNumber = parseInt(page, 10) || 1;
     const pageSize = parseInt(limit, 10) || 10;
 
@@ -85,12 +63,7 @@ const getCustomers = async (req, res) => {
         message: `Page number exceeds total pages. Max page: ${totalPages}`,
       });
     }
-    if (totalDocuments === 0) {
-      return sendResponse(res, 404, { message: "No customers found." });
-    }
-    if (!allCustomers.length) {
-      return sendResponse(res, 404, { message: "No customers found" });
-    }
+
     return sendResponse(res, 200, {
       customers: allCustomers ?? {},
       pagination: {

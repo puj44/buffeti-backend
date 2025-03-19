@@ -22,7 +22,7 @@ async function OrderPlacedSms(name, order_number, mobile) {
   try {
     // PLACE ORDER SMS
     const msg = `Dear ${name}, your order (ID: ${order_number}) has been placed successfully. Check your email for confirmation. Thanks for choosing us! GNV CLICK2CATER.`;
-
+    return true;
     const res = await axios.get(
       `http://13.234.156.238/api.php?username=gnvctc&apikey=${process.env.SMS_API_KEY}&senderid=${process.env.SMS_SENDER_ID}&route=TRANS&mobile=${mobile}&text=${msg}`
     );
@@ -40,7 +40,8 @@ async function OrderConfirmationSms(name, order_number, mobile) {
   try {
     // PLACE ORDER SMS
     const msg = `Dear ${name}, your order (ID: ${order_number}) has been accepted. Thank you for ordering with us! GNV CLICK2CATER.`;
-
+    //TODO REMOVE return
+    return true;
     const res = await axios.get(
       `http://13.234.156.238/api.php?username=gnvctc&apikey=${process.env.SMS_API_KEY}&senderid=${process.env.SMS_SENDER_ID}&route=TRANS&mobile=${mobile}&text=${msg}`
     );

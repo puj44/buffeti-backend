@@ -151,6 +151,7 @@ const addtocart = async (req, res) => {
         delivery_charges
       );
     } else {
+      //IF CART ID EXISTS IN CASE OF EXISTING MINI MEALS
       response = await addToCurrentCartCache(
         {
           cart_id: cart_id.toString(),

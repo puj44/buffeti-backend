@@ -44,6 +44,7 @@ const cartSchema = new Schema({
   coupon_code: { type: String, required: false, default: null },
   delivery_charges: { type: Number, required: false, default: 0 },
   extra_services: { type: [String], default: null },
+  remarks: { type: String, required: false },
 });
 
 const itemSchema = new Schema(

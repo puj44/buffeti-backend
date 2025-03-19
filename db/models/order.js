@@ -111,10 +111,12 @@ const orderSchema = new Schema(
     },
     total_amount: { type: Number, required: true },
     total_billed_amount: { type: Number, required: true },
+    total_profit: { type: Number, required: true },
     amount_due: { type: Number, required: true },
     item_pricing: [itemPricingSchema],
     addon_charges: [addOnChargesSchema],
     extra_charges: [itemPricingSchema],
+    remarks: { type: String, required: false },
   },
   { timestamps: true }
 );

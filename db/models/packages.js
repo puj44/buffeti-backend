@@ -11,6 +11,7 @@ const packagesSchema = new Schema({
   items_mapping: { type: [String], required: true },
   category: { type: Object, required: true },
   rate: { type: Number, required: true },
+  img_url: { type: String, required: false },
 });
 
 const Packages = mongoose.model("packages", packagesSchema);

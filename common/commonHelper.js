@@ -4,6 +4,7 @@ const keys = require("../config/keys");
 const { get } = require("./redisGetterSetter");
 const moment = require("moment");
 const axios = require("axios");
+const slackLog = require("../controllers/utils/slackLog");
 async function calculatePackages(itemsData) {
   try {
     let itemsPricing = [],
@@ -39,7 +40,7 @@ async function calculateItems(data, itemsData, packagesData) {
       if (isPackageValid) {
         let packagePrice = 0;
         packagePrice = packagesData.rate;
-        totalItemsAmount += Number(packagePrice * no_of_people) ;
+        totalItemsAmount += Number(packagePrice * no_of_people);
         itemsPricing.push({
           item_name: packagesData?.package_name,
           amount: Number(packagePrice * no_of_people),
@@ -290,10 +291,7 @@ const getDevileryCharges = async (data) => {
       if (results.length > 0) {
         results = results[0].geometry.location;
       } else {
-        console.error(
-          " Delivery Charges: Error during GEOCode location:",
-          response
-        );
+        await slackLog("GEO_RESULT_DELIVERY_CHARGES", results);
         return 0;
       }
 
@@ -303,8 +301,8 @@ const getDevileryCharges = async (data) => {
     }
     const distanceUrl = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${source}&destinations=${destination}&key=${process.env.GOOGLE_MAPS_API_KEY}`;
     const distanceInfo = await axios.get(distanceUrl);
-    if (!distanceInfo.data.rows[0].elements[0].distance) {
-      console.error("Delivery Charges: Error Decoding Distance:");
+    if (!distanceInfo?.data?.rows?.[0]?.elements?.[0]?.distance) {
+      await slackLog("GEO_DISTANCE_DELIVERY_CHARGES", distanceInfo);
       return 0;
     }
     let distance = distanceInfo.data.rows[0].elements[0].distance.text;
@@ -329,10 +327,8 @@ const getDevileryCharges = async (data) => {
     );
     return distanceFees?.fees ?? 0;
   } catch (error) {
-    console.error(
-      "Delivery Charges: Error during Distance Calculation:",
-      error
-    );
+    await slackLog("GEO_DELIVERY_CHARGES", error);
+
     return 0;
   }
 };
