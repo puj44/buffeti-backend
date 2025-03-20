@@ -140,7 +140,7 @@ async function initializeCache() {
     if (!itemsData?.errorResponse && itemsData?.length) {
       for (const data of itemsData) {
         let item = data.toObject({ flattenMaps: true });
-        console.log("DATA:",item)
+      
         delete item.createdAt;
         delete item.updatedAt;
         delete item.__v;
@@ -152,6 +152,7 @@ async function initializeCache() {
           }
         }
         if (item.menu_option === "snack-boxes") {
+          console.log("DATA",item)
           locationBasedObj[item.location] = {
             ...locationBasedObj[item.location],
             [item.menu_option]: {

@@ -28,6 +28,7 @@ const uploadFile = async (req, res) => {
     const location = req.body.location || req.headers?.location;
     if (!location)
       return sendRes(res, 402, { message: "Location is required" });
+    location = location?.toString()?.trim()?.replace("\n","")
     const buffer = req.file.buffer;
     let c2c = {};
     let snackBox = {};
@@ -152,7 +153,7 @@ const uploadFile = async (req, res) => {
 
         //COMMIT
         await session.commitTransaction();
-
+        await slackLog("Uploaded", location)
         return sendRes(res, 200, { message: "File uploaded successfully!" });
       }
     }
