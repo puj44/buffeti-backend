@@ -28,6 +28,7 @@ const uploadFile = async (req, res) => {
     const location = req.body.location || req.headers?.location;
     if (!location)
       return sendRes(res, 402, { message: "Location is required" });
+    location = location?.toString()?.trim()?.replace("\n","")
     const buffer = req.file.buffer;
     let c2c = {};
     let snackBox = {};
@@ -84,13 +85,13 @@ const uploadFile = async (req, res) => {
       } else {
         //ADD CATEGORIES
         await Categories.deleteOne(
-          { location: location, menu_option: "click2cater" },
+          {  menu_option: "click2cater" },
           { session }
         );
         await Categories.create(
           [
             {
-              location: location,
+              
               menu_option: "click2cater",
               categories: c2c.categories,
             },
@@ -100,19 +101,19 @@ const uploadFile = async (req, res) => {
 
         //ADD ITEMS, EXTRA ITEMS AND PREPARATIONS
         await Items.deleteMany(
-          { location: location, menu_option: "click2cater" },
+          {  menu_option: "click2cater" },
           { session }
         );
         await Items.insertMany([...c2c.items], { session });
 
         await ExtraItems.deleteMany(
-          { location: location, menu_option: "click2cater" },
+          {  menu_option: "click2cater" },
           { session }
         );
         await ExtraItems.insertMany([...c2c["extra-items"]], { session });
 
         await Preparations.deleteMany(
-          { location: location, menu_option: "click2cater" },
+          {  menu_option: "click2cater" },
           { session }
         );
         await Preparations.insertMany([...c2c.preparations], { session });
@@ -120,20 +121,20 @@ const uploadFile = async (req, res) => {
 
         //ADD TYPE OF PACKAGES
         await Packages.deleteMany(
-          { location: location, menu_option: "click2cater" },
+          {  menu_option: "click2cater" },
           { session }
         );
         await Packages.insertMany([...typeOfPackage], { session });
 
         //ADD SNACK BOX CATEGORIES AND ITEMS
         await Categories.deleteOne(
-          { location: location, menu_option: "snack-boxes" },
+          {  menu_option: "snack-boxes" },
           { session }
         );
         await Categories.create(
           [
             {
-              location: location,
+              
               menu_option: "snack-boxes",
               categories: snackBox.categories,
             },
@@ -141,7 +142,7 @@ const uploadFile = async (req, res) => {
           { session }
         );
         await Items.deleteMany(
-          { location: location, menu_option: "snack-boxes" },
+          {  menu_option: "snack-boxes" },
           { session }
         );
         await Items.insertMany([...snackBox.items], { session });
@@ -152,7 +153,7 @@ const uploadFile = async (req, res) => {
 
         //COMMIT
         await session.commitTransaction();
-
+        await slackLog("Uploaded", location)
         return sendRes(res, 200, { message: "File uploaded successfully!" });
       }
     }
