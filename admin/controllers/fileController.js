@@ -36,11 +36,13 @@ const uploadFile = async (req, res) => {
     let miniMealsPackages = [];
     let errors = [];
     const workbook = xlsx.read(buffer, { type: "buffer" });
+    console.log("FILE",req.file.buffer?.length)
+    console.log("Sheet names:", workbook.SheetNames);
     const packageMenu = workbook.Sheets[workbook.SheetNames[0]];
     const packagesData = workbook.Sheets[workbook.SheetNames[1]];
     const snackBoxMenu = workbook.Sheets[workbook.SheetNames[2]];
     const miniMealsMenu = workbook.Sheets[workbook.SheetNames[3]];
-    console.log("Sheet names:", workbook.SheetNames);
+    
     // console.log(miniMealsMenu.A1, miniMealsMenu.A5);
 
     const result = await Promise.all([
