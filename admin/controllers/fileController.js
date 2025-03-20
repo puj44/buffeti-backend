@@ -85,13 +85,13 @@ const uploadFile = async (req, res) => {
       } else {
         //ADD CATEGORIES
         await Categories.deleteOne(
-          { location: location, menu_option: "click2cater" },
+          {  menu_option: "click2cater" },
           { session }
         );
         await Categories.create(
           [
             {
-              location: location,
+              
               menu_option: "click2cater",
               categories: c2c.categories,
             },
@@ -101,19 +101,19 @@ const uploadFile = async (req, res) => {
 
         //ADD ITEMS, EXTRA ITEMS AND PREPARATIONS
         await Items.deleteMany(
-          { location: location, menu_option: "click2cater" },
+          {  menu_option: "click2cater" },
           { session }
         );
         await Items.insertMany([...c2c.items], { session });
 
         await ExtraItems.deleteMany(
-          { location: location, menu_option: "click2cater" },
+          {  menu_option: "click2cater" },
           { session }
         );
         await ExtraItems.insertMany([...c2c["extra-items"]], { session });
 
         await Preparations.deleteMany(
-          { location: location, menu_option: "click2cater" },
+          {  menu_option: "click2cater" },
           { session }
         );
         await Preparations.insertMany([...c2c.preparations], { session });
@@ -121,20 +121,20 @@ const uploadFile = async (req, res) => {
 
         //ADD TYPE OF PACKAGES
         await Packages.deleteMany(
-          { location: location, menu_option: "click2cater" },
+          {  menu_option: "click2cater" },
           { session }
         );
         await Packages.insertMany([...typeOfPackage], { session });
 
         //ADD SNACK BOX CATEGORIES AND ITEMS
         await Categories.deleteOne(
-          { location: location, menu_option: "snack-boxes" },
+          {  menu_option: "snack-boxes" },
           { session }
         );
         await Categories.create(
           [
             {
-              location: location,
+              
               menu_option: "snack-boxes",
               categories: snackBox.categories,
             },
@@ -142,7 +142,7 @@ const uploadFile = async (req, res) => {
           { session }
         );
         await Items.deleteMany(
-          { location: location, menu_option: "snack-boxes" },
+          {  menu_option: "snack-boxes" },
           { session }
         );
         await Items.insertMany([...snackBox.items], { session });
