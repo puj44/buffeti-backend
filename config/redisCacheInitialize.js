@@ -12,6 +12,7 @@ const MiniMeals = require("../db/models/miniMeals");
 const Packages = require("../db/models/packages");
 const DeliveryFees = require("../db/models/deliveryFees");
 const Locations = require("../db/models/locations");
+const slackLog = require("../controllers/utils/slackLog");
 
 //forget keys
 async function forgetCache() {
@@ -83,7 +84,6 @@ async function initializeCache() {
       .find({})
       .then((d) => d)
       .catch((err) => ({ errorResponse: err }));
-    console.log("Categories: " + categoriesData);
 
     if (!categoriesData?.errorResponse && categoriesData?.length) {
       for (const c of categoriesData) {
@@ -106,7 +106,6 @@ async function initializeCache() {
     const extraItemsData = await ExtraItems.find({})
       .then((d) => d)
       .catch((err) => ({ errorResponse: err }));
-    console.log("extraItemsData: " + extraItemsData);
     let extraItemsObj = {};
     if (!extraItemsData?.errorResponse && extraItemsData?.length) {
       for (const data of extraItemsData) {
@@ -141,6 +140,7 @@ async function initializeCache() {
     if (!itemsData?.errorResponse && itemsData?.length) {
       for (const data of itemsData) {
         let item = data.toObject({ flattenMaps: true });
+        console.log("DATA:",item)
         delete item.createdAt;
         delete item.updatedAt;
         delete item.__v;
