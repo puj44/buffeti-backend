@@ -84,7 +84,7 @@ const uploadFile = async (req, res) => {
         });
       } else {
         //ADD CATEGORIES
-        await Categories.deleteOne(
+        await Categories.deleteMany(
           {  menu_option: "click2cater" },
           { session }
         );
@@ -127,7 +127,7 @@ const uploadFile = async (req, res) => {
         await Packages.insertMany([...typeOfPackage], { session });
 
         //ADD SNACK BOX CATEGORIES AND ITEMS
-        await Categories.deleteOne(
+        await Categories.deleteMany(
           {  menu_option: "snack-boxes" },
           { session }
         );
