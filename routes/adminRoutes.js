@@ -12,7 +12,6 @@ const customerRoutes = require("./adminRoutes/customerRoutes");
 const { convertToSlug } = require("../admin/common/convertToSlug");
 const path = require("path");
 const fs = require("fs");
-console.log(__dirname);
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -36,10 +35,11 @@ const storage = multer.diskStorage({
   },
 });
 const upload = multer({ storage: storage });
-
+const memoryStorage = multer.memoryStorage();
+const memoryUpload = multer({ storage: memoryStorage });
 //all Admin Routes
 
-router.post("/csv-upload", authenticateUser, upload.single("file"), uploadFile);
+router.post("/csv-upload", authenticateUser, memoryUpload.single("file"), uploadFile);
 router.use("/order", authenticateUser, orderRoutes);
 router.use("/customers", authenticateUser, customerRoutes);
 router.use("/auth", authRoutes);
