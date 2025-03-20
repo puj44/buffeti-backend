@@ -25,7 +25,7 @@ const uploadFile = async (req, res) => {
   const session = await conn.startSession();
   session.startTransaction();
   try {
-    const location = req.body.location || req.headers?.location;
+    let location = req.body.location || req.headers?.location;
     if (!location)
       return sendRes(res, 402, { message: "Location is required" });
     location = location?.toString()?.trim()?.replace("\n","")
@@ -159,7 +159,7 @@ const uploadFile = async (req, res) => {
     }
   } catch (err) {
     await slackLog("CSV Upload Error", err)
-    // console.log("err", err);
+    console.log("err", err);
     //ROLLBACK
     await session.abortTransaction();
     return sendErr(res, err);
