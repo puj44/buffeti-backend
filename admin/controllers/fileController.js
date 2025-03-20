@@ -36,11 +36,13 @@ const uploadFile = async (req, res) => {
     let miniMealsPackages = [];
     let errors = [];
     const workbook = xlsx.read(buffer, { type: "buffer" });
+    console.log("FILE",req.file.buffer?.length)
+    console.log("Sheet names:", workbook.SheetNames);
     const packageMenu = workbook.Sheets[workbook.SheetNames[0]];
     const packagesData = workbook.Sheets[workbook.SheetNames[1]];
     const snackBoxMenu = workbook.Sheets[workbook.SheetNames[2]];
     const miniMealsMenu = workbook.Sheets[workbook.SheetNames[3]];
-
+    
     // console.log(miniMealsMenu.A1, miniMealsMenu.A5);
 
     const result = await Promise.all([
@@ -84,14 +86,14 @@ const uploadFile = async (req, res) => {
         });
       } else {
         //ADD CATEGORIES
-        await Categories.deleteMany(
-          {  menu_option: "click2cater" },
+        await Categories.deleteOne(
+          { location: location, menu_option: "click2cater" },
           { session }
         );
         await Categories.create(
           [
             {
-              
+              location: location,
               menu_option: "click2cater",
               categories: c2c.categories,
             },
@@ -101,19 +103,19 @@ const uploadFile = async (req, res) => {
 
         //ADD ITEMS, EXTRA ITEMS AND PREPARATIONS
         await Items.deleteMany(
-          {  menu_option: "click2cater" },
+          { location: location, menu_option: "click2cater" },
           { session }
         );
         await Items.insertMany([...c2c.items], { session });
 
         await ExtraItems.deleteMany(
-          {  menu_option: "click2cater" },
+          { location: location, menu_option: "click2cater" },
           { session }
         );
         await ExtraItems.insertMany([...c2c["extra-items"]], { session });
 
         await Preparations.deleteMany(
-          {  menu_option: "click2cater" },
+          { location: location, menu_option: "click2cater" },
           { session }
         );
         await Preparations.insertMany([...c2c.preparations], { session });
@@ -121,20 +123,20 @@ const uploadFile = async (req, res) => {
 
         //ADD TYPE OF PACKAGES
         await Packages.deleteMany(
-          {  menu_option: "click2cater" },
+          { location: location, menu_option: "click2cater" },
           { session }
         );
         await Packages.insertMany([...typeOfPackage], { session });
 
         //ADD SNACK BOX CATEGORIES AND ITEMS
-        await Categories.deleteMany(
-          {  menu_option: "snack-boxes" },
+        await Categories.deleteOne(
+          { location: location, menu_option: "snack-boxes" },
           { session }
         );
         await Categories.create(
           [
             {
-              
+              location: location,
               menu_option: "snack-boxes",
               categories: snackBox.categories,
             },
@@ -142,7 +144,7 @@ const uploadFile = async (req, res) => {
           { session }
         );
         await Items.deleteMany(
-          {  menu_option: "snack-boxes" },
+          { location: location, menu_option: "snack-boxes" },
           { session }
         );
         await Items.insertMany([...snackBox.items], { session });
@@ -153,13 +155,13 @@ const uploadFile = async (req, res) => {
 
         //COMMIT
         await session.commitTransaction();
-        await slackLog("Uploaded", location)
+     
         return sendRes(res, 200, { message: "File uploaded successfully!" });
       }
     }
   } catch (err) {
-    await slackLog("CSV Upload Error", err)
-    console.log("err", err);
+    await slackLog("CSV Upload Error:", {err})
+    // console.log("err", err);
     //ROLLBACK
     await session.abortTransaction();
     return sendErr(res, err);
