@@ -158,6 +158,7 @@ const uploadFile = async (req, res) => {
       }
     }
   } catch (err) {
+    await slackLog("CSV Upload Error", err)
     // console.log("err", err);
     //ROLLBACK
     await session.abortTransaction();
